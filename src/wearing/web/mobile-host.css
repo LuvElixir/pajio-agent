@@ -29,12 +29,12 @@
 .native-composer-host .conversation{max-width:720px;min-height:0;margin:0 auto;padding:20px 24px 28px}
 .native-composer-host .conversation-turn{margin-bottom:28px;scroll-margin-top:16px}
 .native-composer-host .message{margin-bottom:12px}
-.native-composer-host .assistant-copy{font-size:calc(17px * var(--app-font-scale,1));line-height:1.65;letter-spacing:0;background:transparent;border:0;border-radius:0;padding:0;color:var(--ink)}
+.native-composer-host .assistant-copy{font-size:calc(17px * var(--app-font-scale,1));line-height:1.65;letter-spacing:0;background:var(--host-surface);border:1px solid var(--line);border-radius:6px 18px 18px 18px;padding:14px 16px;color:var(--ink)}
 .native-composer-host .message-assistant{gap:0;margin-bottom:12px;max-width:100%;width:100%}
 .native-composer-host .assistant-content{padding:0}
 .native-composer-host .wearing-face,.native-composer-host .artifact-avatar-space,.native-composer-host .presence,.native-composer-host .desktop-input-heading>img{display:none!important}
 .native-composer-host .message-user{font-size:calc(17px * var(--app-font-scale,1));line-height:1.72;padding:0;margin:18px 0 24px}
-.native-composer-host .user-bubble{max-width:88%;font-size:calc(17px * var(--app-font-scale,1));padding:13px 18px;line-height:1.72;border-radius:20px 20px 6px 20px;background:var(--host-soft);color:var(--ink)}
+.native-composer-host .user-bubble{max-width:88%;font-size:calc(17px * var(--app-font-scale,1));padding:13px 18px;line-height:1.72;border-radius:20px 20px 6px 20px;background:var(--action);color:var(--on-action)}
 .native-composer-host .turn-tools{gap:4px;margin-top:8px}
 .native-composer-host .turn-tools button{font-size:calc(12px * var(--app-font-scale,1));min-height:44px;color:var(--muted)}
 /* The native header owns aggregate progress. Remove only the two ambiguous

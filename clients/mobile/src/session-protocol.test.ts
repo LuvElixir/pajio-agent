@@ -29,7 +29,7 @@ test('invite entry carries only its fixed selector alongside PKCE; account login
  assert.throws(()=>authorizationURL(origin,challenge,state,'https://other.invalid/' as 'invite'));
 });
 test('receipt validates token, identity, expiry and HTTPS before exposing a session',()=>{
- for(const patch of [{token_type:'Basic'},{access_token:'bad'},{expires_at:'bad'},{expires_at:new Date(0).toISOString()},{expires_at:new Date(Date.now()+86400000).toISOString()},{user_id:'user_?'},{tenant_id:'a/b'}]) assert.throws(()=>sessionReceipt('https://pajio.example',{...receipt(),...patch},'d'.repeat(32)));
+ for(const patch of [{token_type:'Basic'},{access_token:'bad'},{expires_at:'bad'},{expires_at:new Date(0).toISOString()},{expires_at:new Date(Date.now()+31*86400000).toISOString()},{user_id:'user_?'},{tenant_id:'a/b'}]) assert.throws(()=>sessionReceipt('https://pajio.example',{...receipt(),...patch},'d'.repeat(32)));
  assert.throws(()=>sessionReceipt('http://127.0.0.1',receipt(),'d'.repeat(32)));
  assert.equal(connectionHeaders(connection()).Authorization,'Bearer '+token);
  assert.equal(connectionHeaders(connection())['X-Pajio-Expected-Tenant'],connection().session?.tenantId);
@@ -76,4 +76,9 @@ test('ambiguous exchange cannot blindly repeat a consumed authorization',async()
 test('previous cancellation cannot erase a newer pending authorization',async()=>{
  const vault=new Memory();let calls=0;const flow=new AuthorizationFlow(vault,async()=>{calls++;return connection();},async()=>{});
  await flow.begin({address:'https://pajio.example',verifier,state,createdAt:0});await flow.cancel('old'.repeat(16));await flow.complete(callback);assert.equal(calls,1);
+});
+
+test("30-day device session persists through storage and restores with its original expiry",async()=>{
+ const db=new Memory(),vault=new Memory();const con=sessionReceipt("https://pajio.example",{...receipt(),expires_at:new Date(Date.now()+30*86400000).toISOString()},"d".repeat(32));
+ await saveConnection(con,db,vault);assert.deepEqual(await loadConnection(db,vault),con);assert.ok(Date.parse(con.session!.expiresAt)>Date.now()+29*86400000);
 });

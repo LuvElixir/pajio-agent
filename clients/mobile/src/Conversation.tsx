@@ -42,8 +42,13 @@ function ConversationPage({url, active = true, visible = true, showComposer = tr
   useEffect(() => {
     const expiresAt=connection.session?.expiresAt || connection.development?.expiresAt;
     if (!expiresAt) return;
-    const delay = Math.max(0, Date.parse(expiresAt) - Date.now());
-    const timer = setTimeout(() => setExpired(true), delay + 1);
+    let timer: ReturnType<typeof setTimeout>;
+    const check = () => {
+      const remaining = Date.parse(expiresAt) - Date.now();
+      if (remaining <= 0) setExpired(true);
+      else timer = setTimeout(check, Math.min(remaining + 1, 60_000));
+    };
+    check();
     return () => clearTimeout(timer);
   }, [connection.development, connection.session]);
   const source = useMemo(() => {

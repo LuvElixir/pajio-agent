@@ -104,6 +104,24 @@ function turnMarkup(message){
   if(!turn.output&&["failed","stopped"].includes(turn.status))response+=researchMarkup(turn.research,turn.id);
   return `<section class="conversation-turn" id="${message.kind==="goal_step"?"goal-turn":"task-turn"}-${esc(id)}" tabindex="-1">${user+response}</section>`;
 }
+const turnHTML = new WeakMap();
+function reconcileConversation(messages) {
+  const container = $("messages"), previous = new Map([...container.children].map(el => [el.id, el]));
+  messages.forEach((message, index) => {
+    const id = `${message.kind === "goal_step" ? "goal-turn" : "task-turn"}-${message.turn.id}`;
+    const html = turnMarkup(message);
+    let node = previous.get(id);
+    if (!node || turnHTML.get(node) !== html) {
+      const template = document.createElement("template"); template.innerHTML = html;
+      const next = template.content.firstElementChild;
+      if (node) node.replaceWith(next);
+      node = next; turnHTML.set(node, html);
+    }
+    if (container.children[index] !== node) container.insertBefore(node, container.children[index] || null);
+    previous.delete(id);
+  });
+  previous.forEach(node => node.remove());
+}
 async function loadConversation(force=false,isCurrent=()=>true){
   const messages=await api("/api/conversation");if(!isCurrent())return;state.messages=messages;
   const signature=JSON.stringify([state.connected,messages]);
@@ -112,7 +130,7 @@ async function loadConversation(force=false,isCurrent=()=>true){
   const stick=nearBottom();state.signature=signature;
   $("welcome").hidden=messages.length>0;$("conversation").hidden=!messages.length;
   const opened=new Set([...$("messages").querySelectorAll("details[data-research-key][open]")].map(el=>el.dataset.researchKey));
-  $("messages").innerHTML=messages.map(turnMarkup).join("");
+  reconcileConversation(messages);
   $("messages").querySelectorAll("details[data-research-key]").forEach(el=>{el.open=opened.has(el.dataset.researchKey);});
   const focused=messages.find(m=>active.has(m.turn.status));
   $("composer-footnote").firstChild.textContent=focused?"继续说也可以，新消息会排队，开始前可以撤回。":"说一声，我来做。";
@@ -796,7 +814,7 @@ $("device-pair-form").addEventListener("submit",event=>{event.preventDefault();b
   $("device-pair-feedback").textContent="配对文件已生成。请点击下载，仅交给你选择的设备所在电脑。";$("device-pair-next").hidden=false;
 },$("device-pair-feedback"));});
 $("device-tools-refresh").addEventListener("click",()=>busy($("device-tools-refresh"),async()=>{const result=await api("/api/devices/refresh-tools",{method:"POST",body:"{}"});$("device-pair-feedback").textContent=result.message;},$("device-pair-feedback")));
-async function initialize(){try{const bootstrap=await api("/api/bootstrap");state.token=bootstrap.token;state.goalPolicy=bootstrap.goal_policy||state.goalPolicy;state.deployment=bootstrap.deployment||"local";bindScopedStorage(bootstrap);configureDevelopmentConnection(bootstrap);configureDeployment();window.WearingDeletion?.start();state.identities=bootstrap.identities;let remembered;try{remembered=sessionStorage.getItem("wearing-identity");}catch{}const requested=new URLSearchParams(location.search).get("identity");if(requested&&!state.identities.some(i=>i.id===requested))throw new Error("入口身份不存在");state.identityId=requested||(state.identities.some(i=>i.id===remembered)?remembered:bootstrap.default_identity_id);renderIdentityContext();window.WearingLife?.identityChanged();activateComposer(composerDrafts.last(state.identityId)||{identity:state.identityId},$("message-input").value);$("open-identities").disabled=false;await loadStatus();await loadConversation();await loadGoalUpdates();await window.WearingActivity?.load(true);await loadCharacter();loadComputer();await window.WearingLife?.openFromLink();const activityTask=new URLSearchParams(location.search).get("activity_task");if(activityTask)await window.WearingActivity?.openTask(activityTask);window.WearingOnboarding?.maybeOffer();}catch{notice("暂时没有连接上 Pajio。请检查入口和连接，再刷新页面。",true);}}
+async function initialize(){try{const bootstrap=await api("/api/bootstrap");state.token=bootstrap.token;state.goalPolicy=bootstrap.goal_policy||state.goalPolicy;state.deployment=bootstrap.deployment||"local";bindScopedStorage(bootstrap);configureDevelopmentConnection(bootstrap);configureDeployment();window.WearingDeletion?.start();state.identities=bootstrap.identities;let remembered;try{remembered=sessionStorage.getItem("wearing-identity");}catch{}const requested=new URLSearchParams(location.search).get("identity");if(requested&&!state.identities.some(i=>i.id===requested))throw new Error("入口身份不存在");state.identityId=requested||(state.identities.some(i=>i.id===remembered)?remembered:bootstrap.default_identity_id);renderIdentityContext();window.WearingLife?.identityChanged();activateComposer(composerDrafts.last(state.identityId)||{identity:state.identityId},$("message-input").value);$("open-identities").disabled=false;await loadConversation();void Promise.allSettled([loadStatus().then(()=>loadConversation()),loadGoalUpdates(),window.WearingActivity?.load(true),loadCharacter(),loadComputer()]);await window.WearingLife?.openFromLink();const activityTask=new URLSearchParams(location.search).get("activity_task");if(activityTask)await window.WearingActivity?.openTask(activityTask);window.WearingOnboarding?.maybeOffer();}catch{notice("暂时没有连接上 Pajio。请检查入口和连接，再刷新页面。",true);}}
 async function pollConversation(){
   if(window.WearingDeletion && window.WearingDeletion.workAllowed() === false) return; // 注销受理后停止本账户业务轮询
 

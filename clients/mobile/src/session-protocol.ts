@@ -23,7 +23,7 @@ export function sessionReceipt(address: string, data: unknown, credentialId: str
   if (receipt.token_type !== 'Bearer' || !['access_token','expires_at','user_id','tenant_id'].every(k => typeof receipt[k] === 'string')) throw new ApiError('服务没有返回完整的登录信息。', 422);
   const connection: Connection = {endpoint: endpoint(address), identity: 'daily', session: {accessToken: receipt.access_token as string, expiresAt: receipt.expires_at as string, userId: receipt.user_id as string, tenantId: receipt.tenant_id as string, credentialId}};
   connectionEndpoint(connection);
-  if (Date.parse(connection.session!.expiresAt) > Date.now() + 28860_000) throw new ApiError('登录有效期不正确，请重新登录。', 422);
+  if (Date.parse(connection.session!.expiresAt) > Date.now() + (30 * 86400 + 60) * 1000) throw new ApiError('登录有效期不正确，请重新登录。', 422);
   return connection;
 }
 /** Never put the bearer in SQLite, logs, route params, or WebView JavaScript. */

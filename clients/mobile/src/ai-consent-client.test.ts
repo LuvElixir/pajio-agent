@@ -95,7 +95,7 @@ test('bootstrap without the selected identity cannot dispatch a consent POST',as
 });
 
 test('401/403/409/503 and network errors expose fixed copy, never response secrets',async()=>{
-  for(const [status,code]of [[401,'expired'],[403,'unavailable'],[409,'changed'],[503,'unconfirmed']]as const){
+  for(const [status,code]of [[401,'expired'],[403,'unavailable'],[409,'changed'],[503,'network']]as const){
     const client=new AIConsentClient(connection(),async()=>new Response('synthetic-private-detail',{status}));
     await assert.rejects(client.read(signal()),e=>e instanceof AIConsentError&&e.code===code&&!e.message.includes('private-detail'));
   }

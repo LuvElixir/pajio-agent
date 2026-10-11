@@ -1,5 +1,6 @@
 """Cancel waits when the server no longer admits their authenticated session."""
 import asyncio
+import anyio
 
 
 class SessionRevoked(ValueError):
@@ -22,7 +23,8 @@ async def checked_wait(awaitable, valid, *, interval=0.25, cleanup=None):
     except BaseException:
         if cleanup is not None and task.done() and not task.cancelled() and task.exception() is None:
             try:
-                await cleanup(task.result())
+                with anyio.CancelScope(shield=True):
+                    await cleanup(task.result())
             except Exception:
                 pass  # Preserve the revocation, database or cancellation failure.
         raise

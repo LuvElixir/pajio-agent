@@ -1,5 +1,5 @@
 import {useState,type ReactNode} from 'react';
-import {Linking,StyleSheet,Text,View} from 'react-native';
+import {ActivityIndicator,Linking,StyleSheet,Text,View} from 'react-native';
 import {ShieldCheck} from 'lucide-react-native';
 import {useAppTheme,useThemedStyles,type AppColors} from './app-theme';
 import {PrimaryButton,TactilePressable} from './experience/primitives';
@@ -10,6 +10,7 @@ type Props={snapshot:AIConsentSnapshot|null;busy:boolean;error:string;onRefresh:
 export function AIConsentPanel({snapshot,busy,error,onRefresh,onChange,onBack,onData,onDelete,account}:Props){
   const {colors:c}=useAppTheme(),s=useThemedStyles(styles);const [showAccount,setShowAccount]=useState(false),[linkError,setLinkError]=useState('');
   const accepted=snapshot?.accepted===true;
+  if(!snapshot&&!error)return <View style={{minHeight:360,alignItems:'center',justifyContent:'center',gap:16}}><ActivityIndicator color={c.accent}/><Text style={s.note}>正在连接你的 Pajio…</Text></View>;
   return <View style={s.root}>
     {onBack?<TactilePressable onPress={onBack} style={s.textButton}><Text style={s.link}>返回</Text></TactilePressable>:null}
     <View style={s.symbol}><ShieldCheck size={26} color={c.accentInk}/></View>

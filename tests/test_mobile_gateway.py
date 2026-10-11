@@ -92,7 +92,7 @@ async def test_gateway_replaces_client_notification_lease_with_verified_session_
             assert response.status_code==200
             forwarded=workers.requests[-1].headers
             expiry=float(forwarded['x-pajio-session-expires'])
-            assert time.time()<expiry<=time.time()+28800
+            assert time.time()<expiry<=time.time()+30*86400
             assert forwarded['x-wearing-tenant']=='tenant_A'
             assert forwarded['authorization']!='Bearer '+data['access_token']
             assert '999999999999' not in response.text

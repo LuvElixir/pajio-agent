@@ -283,7 +283,7 @@ async def test_callback_failure_browser_html_preserves_validation_and_json_contr
                 assert detail not in response.text
                 nonce = re.search(r'<style nonce="([A-Za-z0-9_-]+)">', response.text)[1]
                 assert response.headers['content-security-policy'] == (
-                    f"default-src 'none'; style-src 'nonce-{nonce}'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'")
+                    f"default-src 'none'; img-src 'self'; style-src 'nonce-{nonce}'; form-action 'none'; frame-ancestors 'none'; base-uri 'none'")
                 assert response.headers['x-frame-options'] == 'DENY'
                 assert response.headers['x-content-type-options'] == 'nosniff'
             else:

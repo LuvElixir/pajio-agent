@@ -9,8 +9,8 @@ export type AIConsentSnapshot = {
 };
 export type AIConsentAction = 'accept' | 'revoke';
 export class AIConsentError extends ApiError {
-  constructor(public code: 'invalid' | 'expired' | 'changed' | 'unavailable' | 'unconfirmed', status = 0) {
-    super(({invalid:'AI 服务说明暂时无法确认，请刷新后再选择。',expired:'登录已过期，请重新登录。',changed:'授权状态已经变化，请刷新后重新核对。',unavailable:'当前账户的 AI 授权暂时不可用，请联系邀请人。',unconfirmed:'暂时无法确认结果。请刷新核对状态，不会自动重复提交。'} as const)[code], status);
+  constructor(public code: 'invalid' | 'expired' | 'changed' | 'unavailable' | 'unconfirmed' | 'network', status = 0) {
+    super(({invalid:'AI 服务说明暂时无法确认，请刷新后再选择。',expired:'登录已过期，请重新登录。',changed:'授权状态已经变化，请刷新后重新核对。',unavailable:'当前账户的 AI 授权暂时不可用，请联系邀请人。',network:'暂时连不上服务，你的授权不会因此撤回。请重试。',unconfirmed:'暂时无法确认这次更改的结果，请刷新核对。'} as const)[code], status);
   }
 }
 const object = (v: unknown): v is Record<string, unknown> => !!v && typeof v === 'object' && !Array.isArray(v);
@@ -39,15 +39,15 @@ export class AIConsentClient {
     if(signal.aborted)controller.abort();signal.addEventListener('abort',abort);
     const timer=setTimeout(abort,15000);
     try {
-      if(controller.signal.aborted)throw new AIConsentError('unconfirmed');
+      if(controller.signal.aborted)throw new AIConsentError(body===undefined?'network':'unconfirmed');
       const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)).toString(),{method:body===undefined?'GET':'POST',headers:{...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity,...(body===undefined?{}:{'Content-Type':'application/json','X-Wearing-Token':token||''})},body:body===undefined?undefined:JSON.stringify(body),credentials:'omit',redirect:'error',cache:'no-store',signal:controller.signal});
-      if(controller.signal.aborted)throw new AIConsentError('unconfirmed');
-      if(!response.ok)throw new AIConsentError(response.status===401?'expired':response.status===409?'changed':response.status===403?'unavailable':'unconfirmed',response.status);
+      if(controller.signal.aborted)throw new AIConsentError(body===undefined?'network':'unconfirmed');
+      if(!response.ok)throw new AIConsentError(response.status===401?'expired':response.status===409?'changed':response.status===403?'unavailable':body===undefined?'network':'unconfirmed',response.status);
       const raw=await response.text();
-      if(controller.signal.aborted)throw new AIConsentError('unconfirmed');
+      if(controller.signal.aborted)throw new AIConsentError(body===undefined?'network':'unconfirmed');
       if(raw.length>16384)throw new AIConsentError('invalid');
       return JSON.parse(raw);
-    } catch(error) {if(error instanceof AIConsentError)throw error;if(error instanceof ApiError&&error.status===401)throw new AIConsentError('expired',401);throw new AIConsentError('unconfirmed');}
+    } catch(error) {if(error instanceof AIConsentError)throw error;if(error instanceof ApiError&&error.status===401)throw new AIConsentError('expired',401);throw new AIConsentError(body===undefined?'network':'unconfirmed');}
     finally {clearTimeout(timer);signal.removeEventListener('abort',abort);}
   }
   async read(signal: AbortSignal) {return aiConsentSnapshot(await this.request('/api/ai-consent',signal));}

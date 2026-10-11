@@ -88,7 +88,7 @@ def gateway_body_limit(scope):
         return 8192
     if path == "/auth/mobile/exchange":
         return 2048
-    if path.startswith('/auth/mobile/enrollment/'):
+    if path == '/auth/mobile/login' or path.startswith('/auth/mobile/enrollment/'):
         return 4096
     if path == "/auth/tenant" or path.startswith("/auth/account-deletion/"):
         return 4096

@@ -1,5 +1,5 @@
 import {useEffect, useLayoutEffect, useRef, useState, type ReactNode} from 'react';
-import {AppState, StyleSheet, Text, View} from 'react-native';
+import {ActivityIndicator,AppState, StyleSheet, Text, View} from 'react-native';
 import {Check, Circle, Monitor, Server, Smartphone} from 'lucide-react-native';
 import {useAppTheme, useThemedStyles, type AppColors} from './app-theme';
 import {BrandWordmark} from './BrandWordmark';
@@ -46,6 +46,7 @@ export function NativeProvisioningPanel({connection,isCurrent,onReady,account}: 
     return()=>{live=false;poll.dispose();stop();subscription.remove();if(pollRef.current===poll)pollRef.current=null;};
   },[connection]);
   const review=snapshot?.state==='needs_review';
+  if(!snapshot&&!error)return <View style={{minHeight:400,alignItems:'center',justifyContent:'center',gap:20}}><BrandWordmark width={80} color={c.ink}/><ActivityIndicator color={c.accent}/><Text style={s.note}>正在连接你的空间…</Text></View>;
   return <View style={s.root}>
     <BrandWordmark width={56} color={c.ink}/>
     <Text accessibilityRole="header" style={s.title}>{expired?'重新确认登录':review?'准备需要核对':'正在准备你的 Pajio'}</Text>

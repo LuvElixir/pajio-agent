@@ -79,6 +79,19 @@ const authorization = new AuthorizationFlow(vault, async (pending, code) => {
 export const completeNativeSignIn = (url: string) => authorization.complete(url);
 let browserOpen = false;
 export async function signIn(entry: SignInEntry = 'account'): Promise<Connection | null> {return openSignIn(PUBLIC_PAJIO_ENDPOINT, undefined, entry);}
+export async function signInWithPassword(username: string, password: string, isCurrent: () => boolean = () => true): Promise<Connection> {
+  if (Platform.OS === 'web') throw new ApiError('请在 Pajio App 中登录。');
+  if (browserOpen) throw new ApiError('另一项身份验证正在进行，请稍后再试。');
+  const generation = ++authGeneration;
+  const response = await boundedFetch(new URL('/auth/mobile/login', PUBLIC_PAJIO_ENDPOINT).toString(), {
+    method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:username.trim().toLowerCase(),password}),
+  });
+  if (!response.ok) throw new ApiError(response.status===401?'账号或密码不正确，请核对后重试。':response.status===429?'尝试次数较多，请一分钟后重试。':response.status===403?'此账号暂时无法进入 Pajio，请联系邀请人。':'登录服务暂时无法连接，请稍后重试。',response.status);
+  const next = sessionReceipt(PUBLIC_PAJIO_ENDPOINT,await response.json(),Crypto.randomUUID().replace(/-/g,''));
+  if (!isCurrent() || generation!==authGeneration) throw new ApiError('账户状态已变化，请重新登录。');
+  await persistNativeConnection(next,()=>isCurrent() && generation===authGeneration);
+  return next;
+}
 export async function reauthenticateNativeForDeletion(connection: Connection): Promise<Connection | null> {
   if (!connection.session) throw new ApiError('请先登录云端账户。', 401);
   return openSignIn(connectionEndpoint(connection), connection);

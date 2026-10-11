@@ -14,6 +14,7 @@ from urllib.parse import urlparse
 from filelock import FileLock, Timeout
 from starlette.responses import JSONResponse
 
+from .session_policy import DEVICE_SESSION_SECONDS
 from .instance import InstanceError, checked_root, instance_status, load_instance, read_private
 from ..app import create_app
 from ..config import Settings
@@ -71,7 +72,7 @@ class TenantBoundary:
         if expiries:
             try:
                 expiry = float(expiries[0])
-                if len(expiries) != 1 or not math.isfinite(expiry) or not time.time() < expiry <= time.time() + 28860:
+                if len(expiries) != 1 or not math.isfinite(expiry) or not time.time() < expiry <= time.time() + DEVICE_SESSION_SECONDS + 60:
                     raise ValueError('Invalid session expiry')
             except (ValueError, TypeError):
                 if is_voice:

@@ -14,11 +14,11 @@ from datetime import datetime, timezone
 from authlib.integrations.base_client.errors import OAuthError
 from authlib.integrations.starlette_client import OAuth
 import httpx
+import anyio
 from pydantic import Field, SecretStr, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.applications import Starlette
-from starlette.background import BackgroundTask
 from starlette.datastructures import MutableHeaders
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
@@ -36,6 +36,8 @@ from .control import ControlError, ControlStore, OIDCStateCache, users
 from .deletion_gateway import ReceiptCodec, deletion_routes, fresh_auth, small_json, PREFIX
 from .session_guard import SessionRevoked, checked_wait
 from .request_body import RequestBodyBoundary, RequestBodyError, gateway_body_limit, rejected_body
+from .native_login import NativeLogin
+from .session_policy import DEVICE_SESSION_SECONDS
 from .mobile_auth import mobile_request, issue_handoff, exchange_handoff, session_storage_scope
 from .upstream_tls import upstream_tls_context
 from .instance import TenantInstance, checked_root, load_instance, read_private
@@ -65,6 +67,8 @@ class GatewayConfig(Record):
     issuer: str
     client_id: str = Field(min_length=1, max_length=256)
     client_secret: SecretStr = Field(default=SecretStr(""), max_length=4096)
+    native_client_id: str = Field(default='pajio-native', min_length=1, max_length=256)
+    native_client_secret: SecretStr = Field(default=SecretStr(''), max_length=4096)
     session_key: SecretStr = Field(min_length=32, max_length=256)
     database_url: SecretStr
     development: bool = False
@@ -116,7 +120,7 @@ def initialize_gateway(root, public_origin, issuer, client_id, *, client_secret=
     private_directory(root)
     private_directory(root / "credentials")
     data = config.model_dump(mode="json")
-    for name in ("client_secret", "session_key", "database_url"):
+    for name in ("client_secret", "native_client_secret", "session_key", "database_url"):
         data[name] = getattr(config, name).get_secret_value()
     write_private_json(root / "gateway.json", data)
     if config.database_url.get_secret_value().startswith("sqlite:///"):
@@ -163,6 +167,22 @@ def proxy_path(path):
             and (decoded == "/" or decoded.startswith(("/api/", "/assets/"))))
 
 
+class WorkerResponse(StreamingResponse):
+    """Own the upstream connection even if ASGI cancels before body iteration."""
+    def __init__(self, upstream_response, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.upstream_response = upstream_response
+
+    async def __call__(self, scope, receive, send):
+        try:
+            return await super().__call__(scope, receive, send)
+        finally:
+            # Mobile backgrounding/disconnect cancels the response's task group.
+            # Closing in that cancelled scope leaks HTTPX pool slots indefinitely.
+            with anyio.CancelScope(shield=True):
+                await self.upstream_response.aclose()
+
+
 async def forward_worker(wire, request, upstream, public_origin, tenant_id, key, session_expires=None, storage_scope=None, access_check=None, private_owner_scope=None):
     """Same fixed-origin, bounded, cookie-free forwarding for OIDC and private SSH entry."""
     headers = {"Authorization": "Bearer " + key, "X-Wearing-Tenant": tenant_id,
@@ -207,9 +227,9 @@ async def forward_worker(wire, request, upstream, public_origin, tenant_id, key,
                 except (StopAsyncIteration, SessionRevoked):
                     return
         finally:
-            await response.aclose()
-    return StreamingResponse(stream(), status_code=response.status_code, headers=response_headers,
-                             background=BackgroundTask(response.aclose))
+            with anyio.CancelScope(shield=True):
+                await response.aclose()
+    return WorkerResponse(response, stream(), status_code=response.status_code, headers=response_headers)
 
 
 
@@ -386,7 +406,7 @@ def create_gateway_app(root: Path, *, oidc_transport=None, worker_transport=None
                 enrollment.consume_handoff(proof['enrollment_operation'], body['code'])
             except EnrollmentError:
                 return JSONResponse({"detail": "登录关联已失效，请重新登录。"}, status_code=400)
-        sid = store.login(config.issuer, proof['subject'], auth_time=proof.get('auth_time'))
+        sid = store.login(config.issuer, proof['subject'], lifetime=DEVICE_SESSION_SECONDS, auth_time=proof.get('auth_time'))
         if proof.get('tenant_id'):
             store.switch(sid, proof['tenant_id'])
         current = store.session(sid)
@@ -456,6 +476,7 @@ def create_gateway_app(root: Path, *, oidc_transport=None, worker_transport=None
     registration = RegistrationClient(os.environ.get('PAJIO_REGISTRATION_SOCKET'), transport=registration_transport)
     join = JoinFlow(config, store, cache, login, join_finish, registration, session)
     enrollment = NativeEnrollment(config, store, cache, registration)
+    native_login = NativeLogin(config, store, transport=oidc_transport)
 
     async def account(request):
         current = session(request)
@@ -558,7 +579,7 @@ def create_gateway_app(root: Path, *, oidc_transport=None, worker_transport=None
     receipt_codec = ReceiptCodec(config.session_key.get_secret_value())
     voice = voice_endpoint(config.public_origin, store, credentials, ssl_context=upstream_tls,
                            **({"connector": voice_connector} if voice_connector else {}))
-    app = Starlette(routes=[*public_routes(), *join.routes(), *enrollment.routes(), *deletion_routes(deletion, receipt_codec, session, unsafe_allowed, reauth=deletion_reauth),
+    app = Starlette(routes=[*public_routes(), *join.routes(), *enrollment.routes(), *native_login.routes(), *deletion_routes(deletion, receipt_codec, session, unsafe_allowed, reauth=deletion_reauth),
                            Route(PREFIX + '/reauth/start', deletion_reauth_start), WebSocketRoute(VOICE_PATH, voice), Route("/auth/login", login), Route("/auth/callback", callback),
                            Route("/auth/mobile/start", mobile_start), Route("/auth/mobile/exchange", mobile_exchange, methods=["POST"]),
                            Route("/auth/session", account), Route("/auth/provisioning", provisioning),

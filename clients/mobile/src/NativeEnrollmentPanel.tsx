@@ -9,18 +9,18 @@ import {accountCredentials, EnrollmentError, enrollmentErrorText, enrollmentFiel
 import {IconButton, PrimaryButton, TactilePressable} from './experience/primitives';
 import {Segment} from './experience/selection';
 import {ReadOnlyPoll, type ReadPollState} from './read-only-poll';
-import {createNativeEnrollment} from './native-session';
+import {createNativeEnrollment, signInWithPassword} from './native-session';
 import {PublicInformationLinks} from './PublicInformationLinks';
 
 /* Flat, form-first admission: one clear step, with server-confirmed recovery kept intact. */
-export function NativeEnrollmentPanel({disabled, onExisting, onConnected}: {disabled?: boolean; onExisting: () => Promise<void>; onConnected: (connection: Connection) => Promise<void>}) {
+export function NativeEnrollmentPanel({disabled, initialEntry = 'invite', onConnected}: {disabled?: boolean; initialEntry?: 'invite'|'existing'; onConnected: (connection: Connection) => Promise<void>}) {
   const {colors: c} = useAppTheme(), s = useThemedStyles(makeStyles);
   const flowRef = useRef<EnrollmentFlow | null>(null);
   const [snapshot, setSnapshot] = useState<EnrollmentSnapshot>({recovery: null, result: null});
   const [code, setCode] = useState(''), [username, setUsername] = useState(''), [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false), [focus, setFocus] = useState<EnrollmentField | null>(null);
   const [now, setNow] = useState(Date.now);
-  const [entry, setEntry] = useState<'invite' | 'existing'>('invite');
+  const [entry, setEntry] = useState<'invite' | 'existing'>(initialEntry);
   const [busy, setBusy] = useState<'restore' | 'verify' | 'register' | 'status' | 'finish' | 'cancel' | 'login' | null>('restore');
   const [error, setError] = useState(''), [errorField, setErrorField] = useState<EnrollmentField>();
   const live = useRef(true), lock = useRef(false);
@@ -42,11 +42,13 @@ export function NativeEnrollmentPanel({disabled, onExisting, onConnected}: {disa
   const currentFlow = () => {const flow = flowRef.current; if (!flow) throw new EnrollmentError('enrollment_busy'); return flow;};
   const result = snapshot.result, pending = snapshot.recovery;
   const expired = !!pending && Date.parse(pending.expires_at) <= now;
-  const account = !expired && (result?.status === 'verified' || (result?.status === 'rejected' && ['username_invalid', 'username_unavailable', 'password_invalid'].includes(result.code || '')));
-  const recovery = !!pending && !account;
+  const existing = entry === 'existing';
+  const hasEnrollment = !!pending && !existing;
+  const account = !existing && !expired && (result?.status === 'verified' || (result?.status === 'rejected' && ['username_invalid', 'username_unavailable', 'password_invalid'].includes(result.code || '')));
+  const recovery = hasEnrollment && !account;
   const locked = !!disabled || !!busy;
   // Restored/unknown operations are only queried. No timer may call verify/register/exchange.
-  const pollable = !!pending && !expired && (result === null || result.status === 'pending') && !result?.cancel_requested;
+  const pollable = hasEnrollment && !expired && (result === null || result.status === 'pending') && !result?.cancel_requested;
   const pollRead = useRef<(signal: AbortSignal) => Promise<EnrollmentSnapshot>>(async () => {throw new EnrollmentError('enrollment_busy');});
   pollRead.current = async signal => {
     if (lock.current || disabled) throw new EnrollmentError('enrollment_busy');
@@ -73,7 +75,7 @@ export function NativeEnrollmentPanel({disabled, onExisting, onConnected}: {disa
     codeRef.current?.blur(); usernameRef.current?.blur(); passwordRef.current?.blur();
     setFocus(null);
   }
-  function switchEntry(next: typeof entry) {clearInputFocus(); setEntry(next); clearError();}
+  function switchEntry(next: typeof entry) {clearInputFocus(); setEntry(next); setPassword(''); setShowPassword(false); clearError();}
   const clearError = () => {setError(''); setErrorField(undefined);};
   function showError(cause: unknown) {
     if (!live.current) return;
@@ -97,6 +99,10 @@ export function NativeEnrollmentPanel({disabled, onExisting, onConnected}: {disa
   async function finish() {
     const next = await currentFlow().finish();
     if (live.current) {setPassword(''); setCode(''); await onConnected(next);}
+  }
+  async function login() {
+    if(!username.trim()||!password){setError('请输入账号和密码。');return;}
+    await run('login',async()=>{const next=await signInWithPassword(username,password,()=>live.current);setPassword('');if(live.current)await onConnected(next);});
   }
   function verify() {
     try {inviteCode(code);} catch (cause) {showError(cause); return;}
@@ -137,42 +143,42 @@ export function NativeEnrollmentPanel({disabled, onExisting, onConnected}: {disa
   return <View style={s.root}>
     <View style={s.wordmark}><BrandWordmark width={56} color={c.ink}/></View>
     <View style={s.form}>
-      {pending ? <TactilePressable style={s.back} accessibilityLabel="离开这次加入" disabled={locked} onPress={leave}><ArrowLeft size={18} color={c.muted}/><Text style={s.backLabel}>返回</Text></TactilePressable> : null}
-      <Text accessibilityRole="header" style={s.title}>{account ? '创建你的账号' : recovery ? completed ? '账号已准备好' : expired ? '这次加入已过期' : '确认一下进度' : '欢迎来到 Pajio'}</Text>
-      <Text style={s.lead}>{account ? '设好账号和密码，就可以开始了。' : recovery ? completed ? '你的注册已完成，登录后开始。' : expired ? '若刚才提交过注册，可以尝试已有账号登录。' : '注册进度会留在这里。先确认结果，不必重新填写。' : '日常交给我，时间留给你。'}</Text>
-      {!pending ? <View accessibilityRole="tablist" accessibilityLabel="加入或登录" style={s.tabs}>
+      {hasEnrollment ? <TactilePressable style={s.back} accessibilityLabel="离开这次加入" disabled={locked} onPress={leave}><ArrowLeft size={18} color={c.muted}/><Text style={s.backLabel}>返回</Text></TactilePressable> : null}
+      <Text accessibilityRole="header" style={s.title}>{existing ? '欢迎回来' : account ? '创建你的账号' : recovery ? completed ? '账号已准备好' : expired ? '这次加入已过期' : '确认一下进度' : '欢迎来到 Pajio'}</Text>
+      <Text style={s.lead}>{existing ? '登录后，继续你的日常。' : account ? '设好账号和密码，就可以开始了。' : recovery ? completed ? '你的注册已完成，登录后开始。' : expired ? '若刚才提交过注册，可以尝试已有账号登录。' : '注册进度会留在这里。先确认结果，不必重新填写。' : '日常交给我，时间留给你。'}</Text>
+      {!hasEnrollment ? <View accessibilityRole="tablist" accessibilityLabel="加入或登录" style={s.tabs}>
         <Segment label="邀请码加入" selected={entry === 'invite'} disabled={locked} onPress={() => switchEntry('invite')}/>
         <Segment label="已有账号" selected={entry === 'existing'} disabled={locked} onPress={() => switchEntry('existing')}/>
       </View> : null}
-      {!pending && entry === 'invite' ? <View style={s.fields}>
+      {!hasEnrollment && entry === 'invite' ? <View style={s.fields}>
         <Text style={s.label}>邀请码</Text>
         <TextInput selectionColor={c.focusRing} cursorColor={c.focusRing} underlineColorAndroid="transparent" ref={codeRef} accessibilityLabel="邀请码" placeholder="输入邀请码" placeholderTextColor={c.muted} value={code} onChangeText={value => {setCode(value); clearError();}} onFocus={() => setFocus('code')} onBlur={() => setFocus(null)} editable={!locked}
           autoCapitalize="none" autoCorrect={false} autoComplete="off" textContentType="none" returnKeyType="go" onSubmitEditing={verify} style={[s.input, focus === 'code' && s.focused, errorField === 'code' && s.invalid]}/>
         <Text style={s.hint}>验证后，创建你的 Pajio 账号。</Text>
-      </View> : account ? <View style={s.fields}>
+      </View> : account || existing ? <View style={s.fields}>
         <Text style={s.label}>账号</Text>
         <TextInput selectionColor={c.focusRing} cursorColor={c.focusRing} underlineColorAndroid="transparent" ref={usernameRef} accessibilityLabel="账号" value={username} placeholder="怎么称呼你的账号" placeholderTextColor={c.muted} onChangeText={value => {setUsername(value); clearError();}} onFocus={() => setFocus('username')} onBlur={() => setFocus(null)} editable={!locked}
-          autoCapitalize="none" autoCorrect={false} autoComplete="username-new" textContentType="username" returnKeyType="next" onSubmitEditing={() => passwordRef.current?.focus()} style={[s.input, focus === 'username' && s.focused, errorField === 'username' && s.invalid]}/>
-        <Text style={s.hint}>4–32 位，字母开头，可用数字、点、横线或下划线。</Text>
+          autoCapitalize="none" autoCorrect={false} autoComplete={existing?'username':'username-new'} textContentType="username" returnKeyType="next" onSubmitEditing={() => passwordRef.current?.focus()} style={[s.input, focus === 'username' && s.focused, errorField === 'username' && s.invalid]}/>
+        {!existing?<Text style={s.hint}>4–32 位，字母开头，可用数字、点、横线或下划线。</Text>:null}
         <Text style={[s.label, s.passwordLabel]}>密码</Text>
         <View style={[s.passwordField, focus === 'password' && s.focused, errorField === 'password' && s.invalid]}>
-          <TextInput selectionColor={c.focusRing} cursorColor={c.focusRing} underlineColorAndroid="transparent" ref={passwordRef} accessibilityLabel="密码" value={password} placeholder="至少 12 个字符" placeholderTextColor={c.muted} onChangeText={value => {setPassword(value); clearError();}} onFocus={() => setFocus('password')} onBlur={() => setFocus(null)} editable={!locked}
-            secureTextEntry={!showPassword} autoCapitalize="none" autoCorrect={false} autoComplete="new-password" textContentType="newPassword" returnKeyType="go" onSubmitEditing={register} style={s.passwordInput}/>
+          <TextInput selectionColor={c.focusRing} cursorColor={c.focusRing} underlineColorAndroid="transparent" ref={passwordRef} accessibilityLabel="密码" value={password} placeholder={existing?'输入密码':'至少 12 个字符'} placeholderTextColor={c.muted} onChangeText={value => {setPassword(value); clearError();}} onFocus={() => setFocus('password')} onBlur={() => setFocus(null)} editable={!locked}
+            secureTextEntry={!showPassword} autoCapitalize="none" autoCorrect={false} autoComplete={existing?'current-password':'new-password'} textContentType={existing?'password':'newPassword'} returnKeyType="go" onSubmitEditing={existing?()=>void login():register} style={s.passwordInput}/>
           <IconButton variant="plain" label={showPassword ? '隐藏密码' : '显示密码'} disabled={locked} onPress={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={20} color={c.muted}/> : <Eye size={20} color={c.muted}/>}</IconButton>
         </View>
-        <Text style={s.hint}>至少 12 个字符，请使用独立的登录密码。</Text>
+        {!existing?<Text style={s.hint}>至少 12 个字符，请使用独立的登录密码。</Text>:null}
       </View> : null}
       {error ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={s.error}>{error}</Text> : null}
       {recovery && !completed && (pollState.exhausted || pollState.stopped) && !error ? <Text style={s.hint}>自动核对已暂停。可以稍后查询，已提交的注册不会重新发送。</Text> : null}
       {result?.cancel_requested ? <Text style={s.hint}>已停止交付这次登录。注册仍可能完成，可稍后使用已有账号登录。</Text> : null}
       <View style={s.actions}>
-        {!pending && entry === 'invite' ? <PrimaryButton style={s.primary} label={busy === 'verify' ? '正在核对邀请码…' : '继续'} loading={busy === 'verify' || busy === 'restore'} disabled={locked} onPress={verify}/> : !pending && entry === 'existing' ? <PrimaryButton style={s.primary} label={busy === 'login' ? '正在打开登录…' : '登录 Pajio'} loading={busy === 'login'} disabled={locked} onPress={() => {void run('login', onExisting);}}/> : account ?
+        {!hasEnrollment && entry === 'invite' ? <PrimaryButton style={s.primary} label={busy === 'verify' ? '正在核对邀请码…' : '继续'} loading={busy === 'verify' || busy === 'restore'} disabled={locked} onPress={verify}/> : !hasEnrollment && entry === 'existing' ? <PrimaryButton style={s.primary} label={busy === 'login' ? '正在登录…' : '登录 Pajio'} loading={busy === 'login'} disabled={locked} onPress={()=>void login()}/> : account ?
           <PrimaryButton style={s.primary} label={busy === 'register' ? '正在准备账号…' : busy === 'finish' ? '正在登录…' : '创建账号，进入 Pajio'} loading={busy === 'register' || busy === 'finish'} disabled={locked} onPress={register}/> :
           completed && result.handoff ? <PrimaryButton style={s.primary} label="进入 Pajio" loading={busy === 'finish'} disabled={locked} onPress={() => {void run('finish', finish);}}/> :
           !expired && !completed ? <PrimaryButton style={s.primary} label={busy === 'status' ? '正在核对进度…' : '查询这次进度'} loading={busy === 'status'} disabled={locked} onPress={() => {if (pollable) statusPoll.current?.refresh(); else void run('status', async () => accept(await currentFlow().status()));}}/> : null}
-        {recovery ? <TactilePressable accessibilityLabel="已有账号，登录" disabled={locked} style={s.existing} onPress={() => {void run('login', onExisting);}}><Text style={s.existingLabel}>已有账号？<Text style={s.existingAction}>登录</Text></Text></TactilePressable> : null}
+        {recovery ? <TactilePressable accessibilityLabel="已有账号，登录" disabled={locked} style={s.existing} onPress={()=>switchEntry('existing')}><Text style={s.existingLabel}>已有账号？<Text style={s.existingAction}>登录</Text></Text></TactilePressable> : null}
       </View>
-      {(!pending && entry === 'existing') || recovery ? <Text style={s.loginNote}>将在系统安全窗口验证账号，完成后返回 App。</Text> : account ? <View style={s.privacy}><LockKeyhole size={13} color={c.muted}/><Text style={s.loginNote}>密码用于登录，不会交给 Agent</Text></View> : null}
+      {(!hasEnrollment && entry === 'existing') || recovery ? <Text style={s.loginNote}>登录会保留在这台设备上。密码不会交给 Agent。</Text> : account ? <View style={s.privacy}><LockKeyhole size={13} color={c.muted}/><Text style={s.loginNote}>密码用于登录，不会交给 Agent</Text></View> : null}
       <PublicInformationLinks/>
     </View>
   </View>;

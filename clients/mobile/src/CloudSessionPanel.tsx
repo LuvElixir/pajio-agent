@@ -1,15 +1,15 @@
 import {useEffect, useRef, useState} from 'react';
 import {Platform, Text, View} from 'react-native';
 import {Connection, scopeOf} from './core';
-import {signIn, signOut} from './native-session';
+import {signOut} from './native-session';
 import {useAppTheme} from './app-theme';
-import {PrimaryButton} from './experience/primitives';
+import {PrimaryButton,TactilePressable} from './experience/primitives';
 import {NativeEnrollmentPanel} from './NativeEnrollmentPanel';
 
 type Props = {connection: Connection | null; disabled?: boolean; onConnected: (connection: Connection, notice?:string) => Promise<void>};
 export default function CloudSessionPanel(props: Props) {return <AccountSession key={props.connection ? scopeOf(props.connection) : 'signed-out'} {...props}/>;}
 function AccountSession({connection,disabled,onConnected}: Props) {
-  const {colors:c}=useAppTheme(), [busy,setBusy]=useState(false), [error,setError]=useState(''), [now,setNow]=useState(Date.now);
+  const {colors:c}=useAppTheme(), [busy,setBusy]=useState(false), [error,setError]=useState(''), [loginForm,setLoginForm]=useState(false), [now,setNow]=useState(Date.now);
   const live=useRef(true), lock=useRef(false);
   useEffect(()=>{live.current=true;const timer=setInterval(()=>setNow(Date.now()),1000);return()=>{live.current=false;clearInterval(timer);};},[]);
   async function act(entry: 'account' | 'logout') {
@@ -17,17 +17,14 @@ function AccountSession({connection,disabled,onConnected}: Props) {
     lock.current=true;setBusy(true);setError('');
     try {
       if(entry==='logout'&&connection){const result=await signOut(connection);if(live.current)await onConnected(result.connection,result.notificationsUnconfirmed?'已退出账户。停止通知的回执尚未确认，可在手机设置中关闭 Pajio 通知。':undefined);}
-      else {const result=await signIn('account');if(result&&live.current)await onConnected(result);}
+      else setLoginForm(true);
     }
     catch(error){if(live.current)setError(error instanceof Error?error.message:'这次登录没有完成，请重试。');}
     finally{lock.current=false;if(live.current)setBusy(false);}
   }
   if(Platform.OS==='web')return null;
   const session=connection?.session, signedIn=!!session?.accessToken&&Date.parse(session.expiresAt)>now;
-  if (!signedIn) return <NativeEnrollmentPanel disabled={disabled || busy} onConnected={onConnected} onExisting={async () => {
-    const result = await signIn('account');
-    if (result && live.current) await onConnected(result);
-  }}/>;
+  if (!signedIn || loginForm) return <View>{signedIn?<TactilePressable onPress={()=>setLoginForm(false)} style={{minHeight:44,justifyContent:'center'}}><Text style={{color:c.muted}}>返回账户</Text></TactilePressable>:null}<NativeEnrollmentPanel disabled={disabled || busy} initialEntry={session||loginForm?'existing':'invite'} onConnected={onConnected}/></View>;
   return <View style={{gap:14}}>
     <Text style={{color:c.ink,fontSize:18,fontWeight:'600'}}>你的账户</Text>
     <Text style={{color:c.muted,fontSize:14,lineHeight:23}}>任务和结果保存在你的私人空间。退出后本机草稿仍会保留。</Text>
