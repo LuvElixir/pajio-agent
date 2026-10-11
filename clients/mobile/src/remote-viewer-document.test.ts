@@ -172,3 +172,16 @@ test('actual viewer preserves old Android limits using trusted native configurat
     }
   }
 });
+
+test('native scroll controls require live control and scroll capability, clamp deltas and stop after freeze', async () => {
+  const h = await harness(true); h.ready('unicode', {scroll: true}); h.frame();
+  await h.native({type: 'scroll', delta_y: 320}); assert.equal(h.inputs().length, 0);
+  await h.native({type: 'control', enabled: true});
+  for (const delta_y of [NaN, Infinity, '320', null]) await h.native({type: 'scroll', delta_y});
+  assert.equal(h.inputs().length, 0);
+  await h.native({type: 'scroll', delta_y: 3000});
+  assert.equal(h.inputs()[0].action, 'scroll'); assert.equal(h.inputs()[0].delta_y, 1000);
+  await h.native({type: 'freeze'}); await h.native({type: 'scroll', delta_y: -320}); assert.equal(h.inputs().length, 1);
+  const denied = await harness(true); denied.ready('unicode', {scroll: false}); denied.frame();
+  await denied.native({type: 'control', enabled: true}); await denied.native({type: 'scroll', delta_y: 320}); assert.equal(denied.inputs().length, 0);
+});

@@ -11,7 +11,7 @@
     ],
     "ios": {
       "bundleIdentifier": "io.luckyloading.wearing.mobile",
-      "buildNumber": "3",
+      "buildNumber": "6",
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,

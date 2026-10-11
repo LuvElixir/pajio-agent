@@ -102,6 +102,9 @@ export function remoteViewerDocument(transport: RemoteTransport, kind: 'computer
       try{await pc.setRemoteDescription({type:'answer',sdp:message.sdp});}catch{stop('negotiation_failed');}return;
     }
     if(message.type==='key'&&typeof message.key==='string'&&message.key.length<=32){input('key',{key:message.key,phase:'down'});input('key',{key:message.key,phase:'up'});return;}
+    if(message.type==='scroll'&&capabilities.scroll===true&&typeof message.delta_y==='number'&&Number.isFinite(message.delta_y)){
+      input('scroll',{delta_x:0,delta_y:Math.max(-1000,Math.min(1000,Math.round(message.delta_y)))});return;
+    }
     if(message.type==='text'&&typeof message.text==='string'){
       const issue=textIssue(message.text);if(issue){post({type:'notice',code:issue});return;}
       input('text',{text:message.text});
