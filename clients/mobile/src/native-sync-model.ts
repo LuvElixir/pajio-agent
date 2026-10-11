@@ -10,6 +10,7 @@ export type SyncState = SyncSettings & {records: {record_id: string; source_kind
 export type SyncReceipt = {request_id: string; revision: number; observed_at: string; record_ids: string[]; created: number; updated: number; unchanged: number; conflicts: number; unseen: number; truncated: number};
 export type SyncBatch = {request_id: string; revision: number; observed_at: string; snapshots: SyncSnapshot[]};
 export type SyncLocal = {version: 1; installation: string; choice: string; desired: {enabled: boolean; sources: SyncSource[]};
+  allKinds?: SyncSource['kind'][];
   configured: string | null; settings: SyncSettings; pendingConfig: (SyncSettings & {request_id: string}) | null; pending: SyncBatch | null; receipt: SyncReceipt | null; error: string};
 export const syncKey = (scope: string) => 'native-sync:v1:' + scope;
 export const sourceKey = (s: SyncSource) => JSON.stringify([s.kind, s.id]);
@@ -26,6 +27,14 @@ const zoneOf = (value: string | undefined, fallback: string) => {
   try {if (value) {new Intl.DateTimeFormat('en', {timeZone: value}); return value;}} catch { /* Use the device's verified current zone. */ }
   return fallback;
 };
+export const nextCalendarDay = (day:string) => new Date(Date.parse(day+'T00:00:00Z')+86400000).toISOString().slice(0,10);
+// Some subscribed calendars end all-day events at 23:59:59, not exclusive midnight.
+// Store date-only intervals with an exclusive end, including across DST changes.
+function allDayEnd(finish:string, zone:string) {
+  const parts=new Intl.DateTimeFormat('en-GB',{timeZone:zone,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).formatToParts(new Date(finish));
+  const midnight=parts.filter(p=>['hour','minute','second'].includes(p.type)).every(p=>Number(p.value)===0)&&new Date(finish).getUTCMilliseconds()===0;
+  const day=localDay(finish,zone);return midnight?day:nextCalendarDay(day);
+}
 export function syncWindow(stamp = new Date()) {return {start: new Date(stamp.getTime() - 7 * 86400000), end: new Date(stamp.getTime() + 30 * 86400000)};}
 export function eventSnapshot(source: SyncSource, rows: Event[], start: Date, end: Date, timezone: string): SyncSnapshot {
   const own = rows.filter(row => row.calendarId === source.id && row.status !== 'canceled');
@@ -42,7 +51,7 @@ export function eventSnapshot(source: SyncSource, rows: Event[], start: Date, en
     if (keys.has(key)) throw new Error('系统返回了重复的日程实例，这个来源暂未更新。');
     keys.add(key);
     return {external_id: row.id, occurrence_id: occurrence, record: {kind: 'event' as const, title: (row.title?.trim() || '未命名日程').slice(0, 200), content: (row.notes || '').slice(0, 3000), timezone: zone,
-      all_day: row.allDay, start_at: row.allDay ? localDay(begin, zone) : begin, end_at: row.allDay ? localDay(finish, zone) : finish}};
+      all_day: row.allDay, start_at: row.allDay ? localDay(begin, zone) : begin, end_at: row.allDay ? allDayEnd(finish, zone) : finish}};
   });
   return {source, items, complete: own.length <= 500, window_start: start.toISOString(), window_end: end.toISOString()};
 }

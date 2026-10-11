@@ -1,0 +1,46 @@
+{
+  "retrieved": "2026-10-11",
+  "purpose": "Identify third-party apps; trademarks belong to their respective owners.",
+  "icons": [
+    {
+      "id": "wechat",
+      "app_store_id": 414478124,
+      "source": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/61/70/2e/61702e05-0531-165f-5cd3-012c8b5b3b20/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-0-85-220.png/100x100bb.jpg"
+    },
+    {
+      "id": "douyin",
+      "app_store_id": 1142110895,
+      "source": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/b9/10/a6/b910a676-a3ee-42b6-3c82-e824bd391aca/AppIcon-0-0-1x_U007emarketing-0-0-0-7-0-0-85-220.png/100x100bb.jpg"
+    },
+    {
+      "id": "xiaohongshu",
+      "app_store_id": 741292507,
+      "source": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/19/62/b2/1962b20d-5dfa-b136-3b05-eb1a51a17e82/AppIcon-0-0-1x_U007epad-0-11-0-85-220.png/100x100bb.jpg"
+    },
+    {
+      "id": "bilibili",
+      "app_store_id": 736536022,
+      "source": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/ac/a1/08/aca108c2-581b-208e-2de6-22ea29fad5f5/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-85-220.png/100x100bb.jpg"
+    },
+    {
+      "id": "feishu",
+      "app_store_id": 1401729613,
+      "source": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/94/f8/ca/94f8cad1-6fe1-9258-adc2-d01d31ad92fa/AppIcon-0-0-1x_U007epad-0-0-0-1-0-0-85-220.png/100x100bb.jpg"
+    },
+    {
+      "id": "wecom",
+      "app_store_id": 1087897068,
+      "source": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/37/82/4b/37824b8d-b335-c13b-fe78-84496ea917b5/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-85-220.png/100x100bb.jpg"
+    },
+    {
+      "id": "dingtalk",
+      "app_store_id": 930368978,
+      "source": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/01/70/18/017018c5-7aec-5a4d-4c1a-8ccb51a84bd0/AppIcon-0-0-1x_U007epad-0-1-0-sRGB-85-220.png/100x100bb.jpg"
+    },
+    {
+      "id": "github",
+      "app_store_id": 1477376905,
+      "source": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/af/0d/51/af0d5132-b2f3-e591-53b3-65a8ea8835b3/AppIcon-0-0-1x_U007epad-0-1-P3-85-220.png/100x100bb.jpg"
+    }
+  ]
+}

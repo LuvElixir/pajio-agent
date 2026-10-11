@@ -209,3 +209,19 @@ def test_old_database_mapping_upgrades_without_overwriting_existing_source_recor
     updated.configure('daily',OWNER,PHONE,0,True,[SOURCE],'enable')
     assert upload(updated)['created'] == 1
     assert updated.index('daily',OWNER)['records'][0]['title'] == SOURCE['title']
+
+@pytest.mark.parametrize('native,expected', [('GMT+8','Etc/GMT-8'),('GMT-05:00','Etc/GMT+5'),('UTC+00','UTC')])
+def test_eventkit_fixed_hour_timezone_preserves_instants_and_idempotency(book, native, expected):
+    data=snapshot();data['items'][0]['record']['timezone']=native
+    first=upload(book,[data]);record=LifeBook(book.store).get('daily',first['record_ids'][0])
+    assert record['timezone']==expected
+    assert record['start_at']=='2026-10-08T01:00:00+00:00'
+    assert upload(book,[data])==first
+
+
+def test_native_timezone_never_relaxes_other_record_validation():
+    from wearing.native_sync import SyncItem
+    item=snapshot()['items'][0]
+    for zone in ['GMT+99','GMT+8/../../bad','Not/AZone']:
+        item['record']['timezone']=zone
+        with pytest.raises(ValidationError):SyncItem.model_validate(item)

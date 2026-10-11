@@ -1,15 +1,20 @@
 import {Choice} from './experience/selection';
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {ActivityIndicator, Linking, StyleSheet, Text, TextInput, View} from 'react-native';
-import {ArrowLeft, CalendarDays, Check, ChevronRight, Cloud, FileText, Folder, RefreshCw} from 'lucide-react-native';
+import {ArrowLeft, CalendarDays, Check, ChevronRight, Cloud, MessageCircle, FileText, Folder, RefreshCw} from 'lucide-react-native';
 import {ApiError, Connection} from './core';
 import {AppColors, useAppTheme, useThemedStyles} from './app-theme';
 import {PrimaryButton, TactilePressable} from './experience/primitives';
-import {CloudAppsApi, CloudCalendar, CloudDocument, CloudEvent, CloudFeature, CloudFile, CloudPage, CloudState, officialFeishuUrl, upcomingCalendarRange} from './cloud-apps-model';
+import {CloudAppsApi, CloudChat, CloudMessage, CloudCalendar, CloudDocument, CloudEvent, CloudFeature, CloudFile, CloudPage, CloudState, officialFeishuUrl, recentChatRange, upcomingCalendarRange} from './cloud-apps-model';
 
 const labels = {not_configured: '连接飞书', configured: '待授权', authorizing: '等待你在飞书授权', authorization_expired: '这次授权已到期', connected: '已连接', expired: '需要重新授权'};
-type Browser = {kind: 'files'; title: string; folders: {token: string; title: string}[]; page: CloudPage<CloudFile>} | {kind: 'calendars'; page: CloudPage<CloudCalendar>} | {kind: 'events'; title: string; calendar: string; start: number; end: number; page: CloudPage<CloudEvent>} | {kind: 'document'; title: string; token: string; documentKind: string; page: CloudDocument};
+type Browser = {kind: 'chats'; title: string; page: CloudPage<CloudChat>} | {kind: 'messages'; title: string; chat: string; start: number; end: number; page: CloudPage<CloudMessage>} | {kind: 'files'; title: string; folders: {token: string; title: string}[]; page: CloudPage<CloudFile>} | {kind: 'calendars'; page: CloudPage<CloudCalendar>} | {kind: 'events'; title: string; calendar: string; start: number; end: number; page: CloudPage<CloudEvent>} | {kind: 'document'; title: string; token: string; documentKind: string; page: CloudDocument};
 function eventTime(event: CloudEvent) {const start = event.start_time; if (start?.date) return start.date + ' · 全天'; const ms = Number(start?.timestamp) * 1000; return Number.isFinite(ms) && ms > 0 ? new Date(ms).toLocaleString('zh-CN', {month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'}) : '时间以飞书日历为准';}
+function messageText(item: CloudMessage) {
+  if (item.deleted) return '这条消息已撤回';
+  try {const body = JSON.parse(item.body?.content || '{}'); if (typeof body.text === 'string') return body.text;} catch {}
+  return item.body?.content || '这类消息请在飞书中查看';
+}
 function CloudAppsContent({connection, fetcher}: {connection: Connection; fetcher?: typeof fetch}) {
   const {colors: c} = useAppTheme(), s = useThemedStyles(styles);
   const api = useMemo(() => new CloudAppsApi(connection, fetcher), [connection, fetcher]);
@@ -38,6 +43,8 @@ function CloudAppsContent({connection, fetcher}: {connection: Connection; fetche
   }, [api, authorization]);
   async function open(url: string) {if (!officialFeishuUrl(url)) {setError('这个链接不是有效的飞书页面。'); return;} try {await Linking.openURL(url);} catch {if (active.current) setError('没有打开飞书页面，请重试。');}}
   function browseFiles(folders: {token: string; title: string}[] = []) {const current = folders[folders.length - 1]; void run('正在读取文件…', () => api.files(current?.token), page => setBrowser({kind: 'files', title: current?.title || '我的云空间', folders, page}));}
+  function browseChats() {void run('正在读取可见会话…', () => api.chats(), page => setBrowser({kind: 'chats', title: '飞书会话', page}));}
+  function browseMessages(chat: CloudChat) {const {start, end} = recentChatRange(); void run('正在读取近 7 天消息…', () => api.messages(chat.chat_id, start, end), page => setBrowser({kind: 'messages', title: chat.name || '飞书会话', chat: chat.chat_id, start, end, page}));}
   function browseCalendars() {void run('正在读取日历…', () => api.calendars(), page => setBrowser({kind: 'calendars', page}));}
   function readDocument(token: string, title: string, kind = 'docx') {void run('正在读取正文…', () => api.document(token, kind), page => setBrowser({kind: 'document', title: page.title || title, token, documentKind: kind, page}));}
   function browseEvents(calendar: CloudCalendar) {const {start, end} = upcomingCalendarRange(); void run('正在读取未来 7 天日程…', () => api.events(calendar.calendar_id, start, end), page => setBrowser({kind: 'events', title: calendar.summary_alias || calendar.summary || '飞书日历', calendar: calendar.calendar_id, start, end, page}));}
@@ -46,16 +53,20 @@ function CloudAppsContent({connection, fetcher}: {connection: Connection; fetche
     if (browser.kind === 'document') {const selected = browser; if (selected.page.next_offset === null) return; void run('正在读取下一段…', () => api.document(selected.token, selected.documentKind, selected.page.next_offset!), page => setBrowser({...selected, page})); return;}
     const next = browser.page.next_page_token;
     if (!next) return;
+    if (browser.kind === 'chats') {const selected = browser; void run('正在读取更多会话…', () => api.chats(next), page => setBrowser({...selected, page: {...page, items: [...selected.page.items, ...page.items]}}));}
+    if (browser.kind === 'messages') {const selected = browser; void run('正在读取更多消息…', () => api.messages(selected.chat, selected.start, selected.end, next), page => setBrowser({...selected, page: {...page, items: [...selected.page.items, ...page.items]}}));}
     if (browser.kind === 'files') {const selected = browser; void run('正在读取更多文件…', () => api.files(selected.folders.at(-1)?.token, next), page => setBrowser({...selected, page: {...page, items: [...selected.page.items, ...page.items]}}));}
     if (browser.kind === 'calendars') {const selected = browser; void run('正在读取更多日历…', () => api.calendars(next), page => setBrowser({...selected, page: {...page, items: [...selected.page.items, ...page.items]}}));}
     if (browser.kind === 'events') {const selected = browser; void run('正在读取更多日程…', () => api.events(selected.calendar, selected.start, selected.end, next), page => setBrowser({...selected, page: {...page, items: [...selected.page.items, ...page.items]}}));}
   }
-  function back() {setError(''); if (browser?.kind === 'files' && browser.folders.length) browseFiles(browser.folders.slice(0, -1)); else if (browser?.kind === 'events') browseCalendars(); else setBrowser(null);}
+  function back() {setError(''); if (browser?.kind === 'files' && browser.folders.length) browseFiles(browser.folders.slice(0, -1)); else if (browser?.kind === 'events') browseCalendars(); else if (browser?.kind === 'messages') browseChats(); else setBrowser(null);}
   return <View style={s.panel}>
     <View style={s.heading}>{browser ? <TactilePressable accessibilityLabel="返回云端应用" disabled={!!busy} onPress={back} style={s.round}><ArrowLeft size={20} color={c.ink}/></TactilePressable> : <Cloud size={28} color={c.accent}/>}<View style={s.words}><Text style={s.title}>{browser ? browser.kind === 'calendars' ? '飞书日历' : browser.title : '云端应用'}</Text><Text style={s.copy}>{browser ? '来自当前身份授权的飞书账号' : '把文档与日程接给 Pajio，省去反复说明。'}</Text></View>{!browser ? <TactilePressable accessibilityLabel="刷新云端应用连接" disabled={!!busy} onPress={() => {void refresh();}} style={s.round}><RefreshCw size={20} color={c.ink}/></TactilePressable> : null}</View>
     {busy ? <View style={s.heading}><ActivityIndicator color={c.accent}/><Text style={s.copy}>{busy}</Text></View> : null}
     {error ? <Text style={s.error} accessibilityLiveRegion="polite">{error}</Text> : null}
     {browser ? <>
+      {browser.kind === 'chats' ? <View style={s.card}><Text style={s.copy}>飞书返回的可见群聊。部分会话可能需要先将机器人加入群，具体以飞书权限为准。</Text>{browser.page.items.length ? browser.page.items.map(chat => <TactilePressable key={chat.chat_id} disabled={!!busy} style={s.row} onPress={() => browseMessages(chat)}><MessageCircle size={22} color={c.accent}/><View style={s.words}><Text style={s.name}>{chat.name || '未命名会话'}</Text></View><ChevronRight size={18} color={c.muted}/></TactilePressable>) : <Text style={s.copy}>飞书当前未返回可见会话。</Text>}</View> : null}
+      {browser.kind === 'messages' ? <View style={s.card}><Text style={s.copy}>近 7 天 · 按时间倒序</Text>{browser.page.items.length ? browser.page.items.map(message => <View key={message.message_id} style={s.event}><Text selectable style={s.body}>{messageText(message)}</Text></View>) : <Text style={s.copy}>这个时间范围内没有可见消息。</Text>}</View> : null}
       {browser.kind === 'files' ? <View style={s.card}>{browser.page.items.length ? browser.page.items.map((file, index) => <TactilePressable key={`${file.token}-${index}`} disabled={!!busy} style={s.row} onPress={() => {
         if (file.type === 'folder') browseFiles([...browser.folders, {token: file.token, title: file.name}]);
         else if (file.type === 'docx' || file.type === 'wiki') readDocument(file.token, file.name, file.type);
@@ -70,11 +81,11 @@ function CloudAppsContent({connection, fetcher}: {connection: Connection; fetche
     </> : data ? <>
       <View style={s.card}><Text style={s.name}>飞书 · {data.revocation_pending ? '已停用，等待撤销' : labels[data.state]}</Text>{data.account_name ? <Text style={s.copy}>{data.account_name}</Text> : null}
         {data.error ? <Text style={s.error}>{data.error}</Text> : null}
-        <Text style={s.copy}>授权后，Pajio 可以查看你允许访问的文档和日程。聊天机器人渠道单独管理。</Text>
+        <Text style={s.copy}>授权后，Pajio 可以读取你允许访问的资料、日程与聊天。可用范围以飞书权限为准。</Text>
         {data.capabilities.filter(item => item.requested).map(item => <View key={item.id} style={s.row}><View style={s.words}><Text style={s.label}>{item.label}</Text><Text style={s.copy}>{item.authorized ? '已授权查看' : '等待用户授权或应用权限开通'}</Text></View>{item.authorized ? <Check size={20} color={c.accent}/> : null}</View>)}
         {authorization ? <View style={s.authorize}><Text style={s.name}>请在飞书中完成授权</Text><Text style={s.copy}>如果飞书要求输入确认码，请使用：</Text><Text selectable style={s.code}>{authorization.user_code}</Text><Text style={s.copy}>完成后回到这里，连接状态会自动更新。</Text><PrimaryButton label="打开飞书授权页" disabled={!!busy} onPress={() => {void open(authorization.url);}}/></View> : null}
         {data.configured && !data.revocation_pending && !authorization ? <PrimaryButton label={data.state === 'connected' ? '重新授权' : '前往飞书授权'} disabled={!!busy} onPress={() => {if (data.revision) void run('正在准备授权…', () => api.authorize(data.revision!), result => {setData(result); if (result.authorization) void open(result.authorization.url);});}}/> : null}
-        {data.state === 'connected' && !data.revocation_pending ? <><PrimaryButton label="检查连接" tone="quiet" disabled={!!busy} onPress={() => {void run('正在检查飞书连接…', () => api.check(), setData);}}/>{data.capabilities.some(item => item.id === 'documents' && item.authorized) ? <PrimaryButton label="浏览我的云空间" tone="quiet" disabled={!!busy} onPress={() => browseFiles()}/> : null}{data.capabilities.some(item => item.id === 'calendar' && item.authorized) ? <PrimaryButton label="查看我的飞书日历" tone="quiet" disabled={!!busy} onPress={browseCalendars}/> : null}</> : null}
+        {data.state === 'connected' && !data.revocation_pending ? <>{data.capabilities.some(item => item.id === 'chat' && item.authorized) ? <PrimaryButton label="查看飞书会话" tone="quiet" disabled={!!busy} onPress={browseChats}/> : null}<PrimaryButton label="检查连接" tone="quiet" disabled={!!busy} onPress={() => {void run('正在检查飞书连接…', () => api.check(), setData);}}/>{data.capabilities.some(item => item.id === 'documents' && item.authorized) ? <PrimaryButton label="浏览我的云空间" tone="quiet" disabled={!!busy} onPress={() => browseFiles()}/> : null}{data.capabilities.some(item => item.id === 'calendar' && item.authorized) ? <PrimaryButton label="查看我的飞书日历" tone="quiet" disabled={!!busy} onPress={browseCalendars}/> : null}</> : null}
         {data.configured ? data.revocation_pending || removing ? <View style={s.actions}><Text style={s.copy}>停止 Pajio 访问，并向飞书撤销当前授权。App 中已有的对话和结果会保留。</Text><PrimaryButton label={data.revocation_pending ? '重试撤销' : '断开并撤销授权'} disabled={!!busy} onPress={() => {if (data.revision) void run('正在撤销授权…', () => api.disconnect(data.revision!), result => {setData(result); setRemoving(false); setSecret('');});}}/>{!data.revocation_pending ? <PrimaryButton label="保留连接" tone="quiet" disabled={!!busy} onPress={() => setRemoving(false)}/> : null}</View> : <PrimaryButton label="断开连接" tone="quiet" disabled={!!busy} onPress={() => setRemoving(true)}/> : null}
       </View>
       {!data.configured ? <View style={s.card}><Text style={s.name}>配置飞书应用</Text><Text style={s.copy}>使用已发布的企业自建应用，在开放平台开通下列用户权限，再填写 App ID 与 App Secret。凭据只保存到你的 Pajio 服务。</Text><PrimaryButton label="打开飞书开放平台" tone="quiet" disabled={!!busy} onPress={() => {void open('https://open.feishu.cn/app');}}/>

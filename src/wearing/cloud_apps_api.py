@@ -10,7 +10,7 @@ class CloudConfiguration(BaseModel):
     model_config = ConfigDict(extra="forbid")
     app_id: str = Field(pattern=r"^cli_[A-Za-z0-9]{6,80}$")
     secret: SecretStr = Field(min_length=12, max_length=160)
-    features: list[Literal["documents", "calendar"]] = Field(min_length=1, max_length=2)
+    features: list[Literal["documents", "calendar", "chat"]] = Field(min_length=1, max_length=3)
 
 
 class CloudRevision(BaseModel):
@@ -40,6 +40,11 @@ def install_cloud_app_routes(app, service):
     async def poll(request: Request, body: CloudPoll):
         return await service.poll(request.state.identity_id, body.authorization_id)
 
+    @app.post("/api/cloud-apps/feishu/context")
+    async def context(request: Request):
+        from .cloud_context import collect_context
+        return await collect_context(service, request.state.identity_id)
+
     @app.post("/api/cloud-apps/feishu/check")
     async def check(request: Request):
         return await service.check(request.state.identity_id)
@@ -63,3 +68,11 @@ def install_cloud_app_routes(app, service):
     @app.get("/api/cloud-apps/feishu/events")
     async def events(request: Request, calendar_id: str, start_time: int, end_time: int, page_token: str | None = None):
         return await read_resource(service, request.state.identity_id, "cloud_feishu_events", {"calendar_id": calendar_id, "start_time": start_time, "end_time": end_time, "page_token": page_token})
+
+    @app.get("/api/cloud-apps/feishu/chats")
+    async def chats(request: Request, page_token: str | None = None):
+        return await read_resource(service, request.state.identity_id, "cloud_feishu_chats", {"page_token": page_token})
+
+    @app.get("/api/cloud-apps/feishu/messages")
+    async def messages(request: Request, chat_id: str, start_time: int, end_time: int, page_token: str | None = None):
+        return await read_resource(service, request.state.identity_id, "cloud_feishu_messages", {"chat_id": chat_id, "start_time": start_time, "end_time": end_time, "page_token": page_token})

@@ -15,6 +15,7 @@ READ_ONLY = frozenset(PREFIX + name for name in (
     "life_records", "goal_list", "schedule_list", "artifact_list", "artifact_read",
     "artifact_design_guide", "cloud_connections", "cloud_feishu_files",
     "cloud_feishu_document", "cloud_feishu_calendars", "cloud_feishu_events",
+    "cloud_feishu_chats", "cloud_feishu_messages",
 )) | frozenset({"web_search", "web_extract", "mcp__wearing_devices__wearing_list_devices",
                "mcp__wearing_phone__mobile_list_devices"}) | frozenset(
     "mcp__" + server + "__" + name

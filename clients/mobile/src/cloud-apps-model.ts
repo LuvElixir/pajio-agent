@@ -1,12 +1,16 @@
 import {ApiError, Connection, connectionEndpoint, connectionHeaders, WearingApi} from './core';
 
-export type CloudFeature = 'documents' | 'calendar';
-export type CloudState = {provider: 'feishu'; state: 'not_configured' | 'configured' | 'authorizing' | 'authorization_expired' | 'connected' | 'expired'; configured: boolean; revision: string | null; app_id: string | null; account_name: string | null; account_id: string | null; checked_at: number | null; error: string | null; revocation_pending: boolean; capabilities: {id: CloudFeature; label: string; requested: boolean; authorized: boolean; scopes: string[]}[]; authorization: {id: string; url: string; user_code: string; expires_at: number; interval: number} | null};
+export type CloudFeature = 'documents' | 'calendar' | 'chat';
+export type CloudState = {provider: 'feishu'; state: 'not_configured' | 'configured' | 'authorizing' | 'authorization_expired' | 'connected' | 'expired'; configured: boolean; revision: string | null; app_id: string | null; account_name: string | null; account_id: string | null; checked_at: number | null; error: string | null; revocation_pending: boolean; context_read_at?: number | null; capabilities: {id: CloudFeature; label: string; requested: boolean; authorized: boolean; scopes: string[]}[]; authorization: {id: string; url: string; user_code: string; expires_at: number; interval: number} | null};
 export type CloudFile = {name: string; token: string; type: string; url?: string};
+export type CloudContextReceipt = {read_at: number; sampled: true; sections: {feature: CloudFeature; status: 'read' | 'partial' | 'error'; items: {name?: string; summary?: string}[]; error?: string; document_sample?: {title?: string}; events?: CloudEvent[]}[]};
+export type CloudChat = {chat_id: string; name?: string; description?: string};
+export type CloudMessage = {message_id: string; msg_type?: string; create_time?: string | number; deleted?: boolean; body?: {content: string}};
 export type CloudCalendar = {calendar_id: string; summary?: string; summary_alias?: string; role?: string};
 export type CloudEvent = {event_id: string; summary?: string; description?: string; status?: string; start_time?: {date?: string; timestamp?: string; timezone?: string}; end_time?: {date?: string; timestamp?: string; timezone?: string}; location?: {name?: string}};
 export type CloudPage<T> = {items: T[]; has_more: boolean; next_page_token: string | null};
 export type CloudDocument = {content: string; document_id: string; title: string | null; offset: number; next_offset: number | null; total_characters: number};
+export function recentChatRange(now = Date.now()) {const end = Math.floor(now / 1000); return {start: end - 7 * 86400, end};}
 export function upcomingCalendarRange(now = Date.now()) {const start = Math.floor(now / 1000); return {start, end: start + 7 * 86400};}
 const object = (value: unknown): Record<string, unknown> | null => value !== null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 const invalid = () => new ApiError('飞书返回内容不完整，请刷新后重试。', 422);
@@ -15,11 +19,11 @@ export function officialFeishuUrl(value: string): boolean {
 }
 export function cloudState(value: unknown): CloudState {
   const data = object(value);
-  if (!data || data.provider !== 'feishu' || !['not_configured', 'configured', 'authorizing', 'authorization_expired', 'connected', 'expired'].includes(String(data.state)) || typeof data.configured !== 'boolean' || typeof data.revocation_pending !== 'boolean' || !(data.revision === null || typeof data.revision === 'string') || !Array.isArray(data.capabilities) || data.capabilities.length !== 2) throw invalid();
+  if (!data || data.provider !== 'feishu' || !['not_configured', 'configured', 'authorizing', 'authorization_expired', 'connected', 'expired'].includes(String(data.state)) || typeof data.configured !== 'boolean' || typeof data.revocation_pending !== 'boolean' || !(data.revision === null || typeof data.revision === 'string') || !Array.isArray(data.capabilities) || ![2, 3].includes(data.capabilities.length)) throw invalid();
   for (const key of ['app_id', 'account_name', 'account_id', 'error']) if (!(data[key] === null || typeof data[key] === 'string')) throw invalid();
   if (!(data.checked_at === null || (typeof data.checked_at === 'number' && Number.isFinite(data.checked_at)))) throw invalid();
   const seen = new Set();
-  for (const item of data.capabilities) {const capability = object(item); if (!capability || !['documents', 'calendar'].includes(String(capability.id)) || seen.has(capability.id) || typeof capability.label !== 'string' || typeof capability.requested !== 'boolean' || typeof capability.authorized !== 'boolean' || !Array.isArray(capability.scopes) || !capability.scopes.every(scope => typeof scope === 'string')) throw invalid(); seen.add(capability.id);}
+  for (const item of data.capabilities) {const capability = object(item); if (!capability || !['documents', 'calendar', 'chat'].includes(String(capability.id)) || seen.has(capability.id) || typeof capability.label !== 'string' || typeof capability.requested !== 'boolean' || typeof capability.authorized !== 'boolean' || !Array.isArray(capability.scopes) || !capability.scopes.every(scope => typeof scope === 'string')) throw invalid(); seen.add(capability.id);}
   if (data.authorization !== null) {const auth = object(data.authorization); if (!auth || typeof auth.id !== 'string' || !/^[a-f0-9]{32}$/.test(auth.id) || typeof auth.url !== 'string' || !officialFeishuUrl(auth.url) || typeof auth.user_code !== 'string' || typeof auth.expires_at !== 'number' || !Number.isFinite(auth.expires_at) || typeof auth.interval !== 'number' || auth.interval < 1 || auth.interval > 120) throw invalid();}
   return data as CloudState;
 }
@@ -33,6 +37,25 @@ function page<T>(value: unknown, id: string, name?: string): CloudPage<T> {
   }
   if (data.has_more && !data.next_page_token) throw invalid();
   return {items: data.items as T[], has_more: data.has_more, next_page_token: typeof data.next_page_token === 'string' ? data.next_page_token : null};
+}
+export function cloudContextReceipt(value: unknown): CloudContextReceipt {
+  const data = object(value);
+  if (!data || typeof data.read_at !== 'number' || !Number.isFinite(data.read_at) || data.sampled !== true || !Array.isArray(data.sections)) throw invalid();
+  for (const raw of data.sections) {
+    const part = object(raw);
+    if (!part || !['documents', 'calendar', 'chat'].includes(String(part.feature)) || !['read', 'partial', 'error'].includes(String(part.status)) || !Array.isArray(part.items) || !part.items.every(item => !!object(item))) throw invalid();
+    if (part.error !== undefined && typeof part.error !== 'string') throw invalid();
+  }
+  return data as CloudContextReceipt;
+}
+export function cloudMessages(value: unknown): CloudPage<CloudMessage> {
+  const result = page<CloudMessage>(value, 'message_id');
+  for (const item of result.items) {
+    if (item.body !== undefined && (!object(item.body) || typeof item.body.content !== 'string')) throw invalid();
+    if (item.deleted !== undefined && typeof item.deleted !== 'boolean') throw invalid();
+    if (item.create_time !== undefined && typeof item.create_time !== 'string' && typeof item.create_time !== 'number') throw invalid();
+  }
+  return result;
 }
 export function cloudDocument(value: unknown): CloudDocument {
   const data = object(value);
@@ -58,10 +81,13 @@ export class CloudAppsApi {
   async configure(app_id: string, secret: string, features: CloudFeature[]) {const error = cloudConfigurationError(app_id, secret, features); if (error) throw new ApiError(error, 422); return cloudState(await this.request('', 'PUT', {app_id, secret, features}));}
   async authorize(revision: string) {return cloudState(await this.request('/authorize', 'POST', {revision}));}
   async poll(authorization_id: string) {return cloudState(await this.request('/poll', 'POST', {authorization_id}));}
+  async readContext() {return cloudContextReceipt(await this.request('/context', 'POST'));}
   async check() {return cloudState(await this.request('/check', 'POST'));}
   async disconnect(revision: string) {return cloudState(await this.request('', 'DELETE', {revision}));}
   async files(folder?: string, next?: string) {return page<CloudFile>(await this.request('/files?' + new URLSearchParams({...folder ? {folder_token: folder} : {}, ...next ? {page_token: next} : {}})), 'token', 'name');}
   async document(document: string, kind = 'docx', offset = 0) {return cloudDocument(await this.request('/document?' + new URLSearchParams({document, kind, offset: String(offset)})));}
+  async chats(next?: string) {return page<CloudChat>(await this.request('/chats?' + new URLSearchParams(next ? {page_token: next} : {})), 'chat_id');}
+  async messages(chat_id: string, start: number, end: number, next?: string) {return cloudMessages(await this.request('/messages?' + new URLSearchParams({chat_id, start_time: String(start), end_time: String(end), ...next ? {page_token: next} : {}})));}
   async calendars(next?: string) {return page<CloudCalendar>(await this.request('/calendars?' + new URLSearchParams(next ? {page_token: next} : {})), 'calendar_id');}
   async events(calendar_id: string, start: number, end: number, next?: string) {return page<CloudEvent>(await this.request('/events?' + new URLSearchParams({calendar_id, start_time: String(start), end_time: String(end), ...next ? {page_token: next} : {}})), 'event_id');}
 }

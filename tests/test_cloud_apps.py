@@ -104,7 +104,7 @@ async def test_actual_user_grant_not_configuration_is_connected_and_no_secrets_r
     due(cloud)
     connected = await cloud.poll("daily", pending["authorization"]["id"])
     assert connected["state"] == "connected"
-    assert all(item["authorized"] for item in connected["capabilities"])
+    assert all(item["authorized"] for item in connected["capabilities"] if item["requested"])
     assert connected["account_name"] == "测试用户"
     assert connected["authorization"] is None
     serialized = json.dumps(connected)
@@ -249,7 +249,7 @@ async def test_network_matches_official_device_flow_and_revocation_contracts():
         requests.append(request)
         if request.url.path.endswith("device_authorization"):
             return httpx.Response(200, json={"verification_uri": "https://accounts.feishu.cn/device", "device_code": "device", "user_code": "code", "expires_in": 600})
-        if request.url.path.endswith("oauth/token"):
+        if request.url.path == "/oauth/v3/token":
             return httpx.Response(400, json={"error": "authorization_pending"})
         if request.url.path.endswith("/revoke"):
             return httpx.Response(200, content=b"")
@@ -261,8 +261,13 @@ async def test_network_matches_official_device_flow_and_revocation_contracts():
         pending = await network.exchange("cli_testapp", SECRET, grant_type="urn:ietf:params:oauth:grant-type:device_code", device_code="device")
         await network.revoke("cli_testapp", SECRET, "revoke-token", "refresh_token")
     assert pending == {"error": "authorization_pending"}
-    assert requests[1].url == "https://open.feishu.cn/open-apis/authen/v2/oauth/device_authorization"
-    assert json.loads(requests[1].content) == {"client_id": "cli_testapp", "scope": "offline_access"}
+    from urllib.parse import parse_qs
+    import base64
+    assert requests[1].url == "https://accounts.feishu.cn/oauth/v1/device_authorization"
+    assert parse_qs(requests[1].content.decode()) == {"client_id": ["cli_testapp"], "scope": ["offline_access"]}
+    assert base64.b64decode(requests[1].headers["authorization"].split()[1]).decode() == "cli_testapp:" + SECRET
+    assert requests[2].url == "https://accounts.feishu.cn/oauth/v3/token"
+    assert parse_qs(requests[2].content.decode())["device_code"] == ["device"]
     assert requests[-1].url == "https://accounts.feishu.cn/oauth/v1/revoke"
     assert requests[-1].headers["content-type"].startswith("application/x-www-form-urlencoded")
     assert b"token_type_hint=refresh_token" in requests[-1].content
@@ -298,3 +303,107 @@ async def test_native_routes_use_request_identity_and_return_actual_resource_dat
         assert "private-" not in json.dumps(snapshot)
         conflict = await client.request("DELETE", "/api/cloud-apps/feishu", json={"revision": "f" * 32})
         assert conflict.status_code == 409
+
+
+async def test_operator_configuration_never_shares_user_tokens(cloud, tmp_path, monkeypatch):
+    config = tmp_path / 'operator.json'
+    config.write_text(json.dumps({'app_id': 'cli_testapp', 'secret': SECRET, 'features': ['documents', 'calendar', 'chat']}))
+    config.chmod(0o600)
+    monkeypatch.setenv('WEARING_FEISHU_CONFIG_FILE', str(config))
+    owner = cloud.snapshot('daily')
+    other = cloud.store.save_identity('Other')['id']
+    assert owner['configured'] and cloud.snapshot(other)['state'] == 'configured'
+    assert SECRET not in json.dumps(owner)
+    pending = await cloud.authorize('daily', owner['revision'])
+    due(cloud)
+    await cloud.poll('daily', pending['authorization']['id'])
+    assert cloud.snapshot('daily')['state'] == 'connected'
+    assert cloud.snapshot(other)['state'] == 'configured'
+    with pytest.raises(CloudAppError):
+        await cloud.read(other, '/open-apis/im/v1/chats', feature='chat')
+    await cloud.disconnect('daily', owner['revision'])
+    assert cloud.snapshot('daily')['state'] == 'configured'
+    assert not any(c['authorized'] for c in cloud.snapshot('daily')['capabilities'])
+    config.chmod(0o644)
+    with pytest.raises(CloudAppError) as error:
+        cloud.snapshot('daily')
+    assert error.value.status_code == 503 and SECRET not in error.value.detail
+
+
+async def test_chat_reads_are_bounded_identity_scoped_and_read_only(cloud):
+    config = await cloud.configure('daily', 'cli_testapp', SECRET, ['chat'])
+    pending = await cloud.authorize('daily', config['revision'])
+    due(cloud)
+    await cloud.poll('daily', pending['authorization']['id'])
+    original = cloud.network.request
+    async def messages(method, path, **kwargs):
+        if path not in {'/open-apis/im/v1/chats', '/open-apis/im/v1/messages'}:
+            return await original(method, path, **kwargs)
+        cloud.network.calls.append((method, path, kwargs))
+        assert method == 'GET' and kwargs['token'].startswith('private-user-token-')
+        if path.endswith('/chats'):
+            return {'data': {'items': [{'chat_id': 'oc_test', 'name': 'Example', 'tenant_key': 'hidden'}], 'has_more': True, 'page_token': 'second'}}
+        return {'data': {'items': [{'message_id': 'om_live', 'msg_type': 'text', 'body': {'content': '{"text":"test"}'}, 'sender': {'id': 'ou_1', 'tenant_key': 'hidden'}}, {'message_id': 'om_deleted', 'deleted': True, 'body': {'content': 'must not return'}}], 'has_more': False}}
+    cloud.network.request = messages
+    chats = await read_resource(cloud, 'daily', 'cloud_feishu_chats', {})
+    assert chats['next_page_token'] == 'second' and 'tenant_key' not in json.dumps(chats)
+    result = await read_resource(cloud, 'daily', 'cloud_feishu_messages', {'chat_id': 'oc_test', 'start_time': 100, 'end_time': 200, 'page_token': 'cursor'})
+    assert result['content_is_untrusted']
+    assert result['items'][0]['body']['content'] == '{"text":"test"}'
+    assert 'body' not in result['items'][1] and 'tenant_key' not in json.dumps(result)
+    assert cloud.network.calls[-1][2]['params']['page_token'] == 'cursor'
+    for args in [{'chat_id': '../other', 'start_time': 100, 'end_time': 200}, {'chat_id': 'oc_test', 'start_time': 0, 'end_time': 8*86400}]:
+        with pytest.raises(CloudAppError):
+            await read_resource(cloud, 'daily', 'cloud_feishu_messages', args)
+    other = cloud.store.save_identity('Other')['id']
+    with pytest.raises(CloudAppError):
+        await read_resource(cloud, other, 'cloud_feishu_chats', {})
+    # Extra provider scopes alone do not override the configured feature set.
+    row = cloud._read('daily'); row['features'] = ['documents']; cloud._write('daily', row)
+    with pytest.raises(CloudAppError) as denied:
+        await read_resource(cloud, 'daily', 'cloud_feishu_chats', {})
+    assert denied.value.status_code == 403
+
+
+async def test_context_receipt_is_real_partial_and_bound_to_stored_task_identity(cloud):
+    from wearing.cloud_context import collect_context
+    await connect(cloud)
+    receipt = await collect_context(cloud, 'daily')
+    assert receipt['sampled'] and receipt['content_is_untrusted']
+    assert {p['feature'] for p in receipt['sections']} == {'documents', 'calendar'}
+    assert all(p['status'] == 'read' for p in receipt['sections'])
+    calendar = next(p for p in receipt['sections'] if p['feature'] == 'calendar')
+    assert calendar['events'][0]['summary'] == '测试会议'
+    task = cloud.store.create('summarize', 'chat', identity_id='daily')
+    assert '测试会议' in cloud.context(task)
+    other = cloud.store.save_identity('Other')['id']
+    other_task = cloud.store.create('summarize', 'chat', identity_id=other)
+    assert cloud.context({**other_task, 'identity_id': 'daily'}) == ''
+    assert cloud.context({'id': 'missing', 'identity_id': 'daily'}) == ''
+    cloud.network.read_error = CloudAppError('权限不足', 403, 'permission')
+    partial = await collect_context(cloud, 'daily')
+    assert all(p['status'] == 'error' and p['error'] == '权限不足' for p in partial['sections'])
+    assert '测试会议' not in cloud.context(task)
+    cloud.network.read_error = None
+    await cloud.disconnect('daily', cloud.snapshot('daily')['revision'])
+    assert cloud.context(task) == ''
+
+
+async def test_new_grant_and_changed_refresh_scopes_clear_previous_context(cloud):
+    state = await connect(cloud)
+    row = cloud._read("daily")
+    row["context_preview"] = {"read_at": 1, "sections": [{"private": "old account"}]}
+    cloud._write("daily", row)
+    pending = await cloud.authorize("daily", state["revision"])
+    due(cloud)
+    await cloud.poll("daily", pending["authorization"]["id"])
+    assert "context_preview" not in cloud._read("daily")
+    row = cloud._read("daily")
+    row["context_preview"] = {"read_at": 2, "sections": []}
+    row["oauth"]["expires_at"] = 0
+    cloud._write("daily", row)
+    cloud.network.scope = "offline_access"
+    with pytest.raises(CloudAppError) as error:
+        await cloud.read("daily", "/open-apis/drive/v1/files", feature="documents")
+    assert error.value.status_code == 403
+    assert "context_preview" not in cloud._read("daily")

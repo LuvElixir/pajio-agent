@@ -155,7 +155,7 @@ def create_app(settings: Settings | None = None, hermes: HermesClient | None = N
     onboarding = OnboardingBook(store)
     from .chat_imports import ChatImports
     chat_imports = ChatImports(store)
-    service.context_provider = lambda task: goals.context(task) + life.context(task) + schedules.context(task) + onboarding.context(task)
+    service.context_provider = lambda task: goals.context(task) + life.context(task) + schedules.context(task) + onboarding.context(task) + cloud_apps.context(task)
     from .usage import UsageBook, UsageError
     from .usage_api import install_usage_routes
     usage = UsageBook(settings.data_dir)

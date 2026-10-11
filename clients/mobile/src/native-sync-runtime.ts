@@ -6,7 +6,7 @@ import {type Connection, scopeOf} from './core';
 import {storage} from './storage';
 import {serviceFetch} from './transport';
 import {boundedNativeRead} from './nativeConnectionsModel';
-import {chooseNativeSync, runNativeSync, SyncPermissionLost} from './native-sync-engine';
+import {chooseNativeSync, readNativeSyncLocal, runNativeSync, SyncPermissionLost} from './native-sync-engine';
 import {eventSnapshot, reminderSnapshot, syncWindow, type SyncSource} from './native-sync-model';
 import {NativeSyncClient} from './native-sync-client';
 
@@ -34,15 +34,15 @@ async function permitted(api:typeof Calendar,kind:SyncSource['kind'], ask:boolea
   if (!permission.granted && ask && permission.canAskAgain) permission = await request();
   if (!permission.granted) throw new SyncPermissionLost('系统权限已关闭，同步已停止。重新允许后，请再次选择并启用同步。');
 }
-export async function discoverNativeSyncSources(kind:SyncSource['kind']):Promise<SyncSource[]> {
+export async function discoverNativeSyncSources(kind:SyncSource['kind'],ask=true):Promise<SyncSource[]> {
   const api = calendarApi();
   if (!api) throw new Error('当前安装版没有系统日历能力。');
-  await permitted(api,kind,true);
+  await permitted(api,kind,ask);
   const rows = await boundedNativeRead(api.getCalendarsAsync(kind),'来源列表读取超时。');
   await permitted(api,kind,false);
-  return rows.map(row=>({kind,id:row.id,title:(row.title || '未命名列表').slice(0,200)}));
+  return rows.map(row=>({kind,id:row.id,title:(row.title?.trim() || '未命名列表').slice(0,200)})).sort((a,b)=>a.id.localeCompare(b.id));
 }
-export async function saveNativeSyncChoice(connection:Connection,desired:{enabled:boolean;sources:SyncSource[]}) {
+export async function saveNativeSyncChoice(connection:Connection,desired:{enabled:boolean;sources:SyncSource[];allKinds?:SyncSource['kind'][]}) {
   const scope = scopeOf(connection);
   changing.add(scope);
   requestNativeSync(scope,false); // Invalidate late OS and HTTP responses before awaiting local storage.
@@ -56,6 +56,20 @@ export async function performNativeSync(connection:Connection,active:()=>boolean
   if (!api) return;
   const scope = scopeOf(connection), version = nativeSyncVersion(scope);
   const current = () => active() && !signal.aborted && !changing.has(scope) && nativeSyncVersion(scope) === version;
+  const local=await readNativeSyncLocal(storage,scope);
+  if(!current())return;
+  if(local?.desired.enabled&&local.allKinds?.length){
+    try{
+      const sources:SyncSource[]=[];
+      for(const kind of local.allKinds){sources.push(...await discoverNativeSyncSources(kind,false));if(!current())return;}
+      if(JSON.stringify(sources)!==JSON.stringify(local.desired.sources)){
+        await saveNativeSyncChoice(connection,{enabled:sources.length>0,sources,allKinds:local.allKinds});return;
+      }
+    }catch(error){
+      if(current()&&error instanceof SyncPermissionLost)await saveNativeSyncChoice(connection,{...local.desired,enabled:false});
+      throw error;
+    }
+  }
   const allowed = async (sources:SyncSource[]) => {
     for (const kind of ['event','reminder'] as const) {
       const selected = sources.filter(s=>s.kind===kind);

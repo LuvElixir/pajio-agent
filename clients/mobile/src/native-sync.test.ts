@@ -109,3 +109,33 @@ test('native sync settings and queued notes are fenced and cleaned only for thei
   assert.equal(fencedWrite(other,{pending:'other notes'},[fenceFor(connection)]),false);
   assert.deepEqual(accountCleanupPlan(connection,[{key:own,value:{installation:'a'.repeat(32)}},{key:other,value:{installation:'b'.repeat(32)}}]).remove,[own]);
 });
+
+test('subscribed all-day events with inclusive last-second ends become exclusive dates',()=>{
+  const row=event({allDay:true,startDate:'2026-10-07T16:00:00Z',endDate:'2026-10-08T15:59:59Z'});
+  const s=eventSnapshot(source,[row],start,end,'Asia/Shanghai');
+  assert.equal(s.items[0].record.start_at,'2026-10-08');assert.equal(s.items[0].record.end_at,'2026-10-09');
+  const multi=eventSnapshot(source,[{...row,endDate:'2026-10-10T15:59:59Z'}],start,end,'Asia/Shanghai');
+  assert.equal(multi.items[0].record.end_at,'2026-10-11');
+});
+test('known zero-day journal is recovered by reading originals, never replaying invented dates',async()=>{
+  const {readNativeSyncLocal}=await import('./native-sync-engine');
+  const e=env();await e.choose();e.remote.upload=async()=>{throw new Error('offline');};await assert.rejects(e.run);
+  const v=(await e.state())!;v.pending!.snapshots[0].items[0].record={...v.pending!.snapshots[0].items[0].record,all_day:true,start_at:'2026-10-08',end_at:'2026-10-08'};
+  await e.store.put(syncKey('synthetic'),v);
+  const recovered=await readNativeSyncLocal(e.store,'synthetic');
+  assert.equal(recovered?.pending,null);assert.equal(recovered?.installation,v.installation);assert.deepEqual(recovered?.desired,v.desired);
+  let uploaded=0;e.remote.upload=async b=>{uploaded++;assert.equal(b.snapshots[0].items[0].record.all_day,false);return receipt(b);};
+  await e.run();assert.equal(uploaded,1);
+});
+test('zero-day recovery still rejects an unauthorized source in the same batch',async()=>{
+  const {readNativeSyncLocal}=await import('./native-sync-engine');
+  const e=env();await e.choose();e.remote.upload=async()=>{throw new Error('offline');};await assert.rejects(e.run);
+  const v=(await e.state())!;const s=v.pending!.snapshots[0];s.items[0].record={...s.items[0].record,all_day:true,start_at:'2026-10-08',end_at:'2026-10-08'};s.source.id='foreign';
+  await e.store.put(syncKey('synthetic'),v);await assert.rejects(()=>readNativeSyncLocal(e.store,'synthetic'));
+  assert.deepEqual((await e.state())?.pending,v.pending);
+});
+test('malformed native data is never persisted as a poisoned pending queue',async()=>{
+ const e=env();await e.choose();const broken=snapshot();broken.items[0].record.title='';
+ await assert.rejects(()=>runNativeSync({store:e.store,scope:'synthetic',nonce:e.nonce,active:()=>true,remote:()=>e.remote,allowed:async()=>{},read:async()=>broken,changed:()=>{}}));
+ assert.equal((await e.state())?.pending,null);assert.equal(e.counts().writes,0);assert.ok((await e.state())?.error);
+});

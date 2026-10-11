@@ -1,11 +1,12 @@
 """Opt-in, one-way phone sources -> personal records. No absence-based deletion."""
 import hashlib
 import json
+import re
 import uuid
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator, field_validator
 
 from .life import LifeBook, LifeDraft
 from .store import now
@@ -39,6 +40,19 @@ class SyncItem(Strict):
     external_id: str = Field(min_length=1, max_length=512)
     occurrence_id: str = Field(default='', max_length=512)
     record: LifeDraft
+
+    @field_validator('record', mode='before')
+    @classmethod
+    def native_timezone(cls, value):
+        # EventKit may return GMT+8 rather than an IANA zone. Etc/GMT uses
+        # the opposite sign; preserve the fixed offset and original timestamps.
+        if isinstance(value, dict) and isinstance(value.get('timezone'), str):
+            match = re.fullmatch(r'(?:GMT|UTC)([+-])(\d{1,2})(?::?00)?', value['timezone'])
+            if match and int(match[2]) <= 14:
+                hours = int(match[2])
+                zone = 'UTC' if not hours else 'Etc/GMT' + ('-' if match[1] == '+' else '+') + str(hours)
+                return {**value, 'timezone': zone}
+        return value
 
 
 class SyncSnapshot(Strict):
