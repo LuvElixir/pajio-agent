@@ -37,7 +37,8 @@ def host(tmp_path, monkeypatch, capsys):
             if path == '/nodes/pve01/status':
                 value = {'cpuinfo': {'cores': 16, 'sockets': 1}, 'memory': {'total': 65536 << 20, 'available': 60000 << 20}}
             elif path == '/cluster/resources':
-                value = [{'vmid': vmid, 'node': 'pve01', 'type': 'qemu', 'status': states[vmid]} for vmid in configs]
+                value = [{'vmid': vmid, 'node': 'pve01', 'type': 'qemu',
+                          'status': execute.cluster_states.get(vmid, states[vmid])} for vmid in configs]
             elif path == '/nodes/pve01/storage/local-lvm/status':
                 value = {'type': 'lvmthin', 'active': 1, 'enabled': 1, 'total': 1048576 << 20, 'avail': 900000 << 20}
             elif path == '/storage/local-lvm':
@@ -94,6 +95,7 @@ def host(tmp_path, monkeypatch, capsys):
                 for fd in fds:
                     os.close(fd)
         return json.loads(capsys.readouterr().out)
+    execute.cluster_states = {}
     return execute, configs, states, mutations, item, owner, digest
 
 
@@ -145,6 +147,25 @@ def test_remote_inventory_does_not_disclose_template_keys_or_vm_config(host):
     assert 'fixture-public-key' not in json.dumps(result)
     assert result['vms'][0]['config_sha256']
     assert result['committed_storage_mib'] == 32768
+    assert mutations == []
+
+
+@pytest.mark.parametrize(('actual', 'cached'), [('running', 'stopped'), ('stopped', 'running')])
+def test_remote_inventory_uses_node_state_when_cluster_index_is_stale(host, actual, cached):
+    execute, configs, states, mutations, *_ = host
+    execute('clone_stopped')
+    states[1200] = actual
+    execute.cluster_states[1200] = cached
+    result = execute('inventory')
+    assert next(v for v in result['vms'] if v['vmid'] == 1200)['state'] == actual
+    assert [command[1] for command in mutations] == ['clone']
+
+
+def test_remote_inventory_rejects_unrecognized_live_state(host):
+    execute, _, states, mutations, *_ = host
+    states[9000] = 'unknown'
+    execute.cluster_states[9000] = 'stopped'
+    assert execute('inventory')['error'] == 'vm_state_unconfirmed'
     assert mutations == []
 
 

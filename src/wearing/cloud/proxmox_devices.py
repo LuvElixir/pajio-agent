@@ -43,10 +43,16 @@ def owner(c):
     except (ValueError,AttributeError):return None
 def vm(row):
     c=config(row['vmid']);o=owner(c)
-    try:retained=retained_archive_sha(row['vmid'],c,row['status'],p['node'])
+    # Cluster resources is an asynchronously refreshed index. Immediately after
+    # a successful start it may still say stopped; use the node's live state for
+    # readiness, capacity and retained-archive checks.
+    current=call('pvesh','get',f'/nodes/{p["node"]}/qemu/{row["vmid"]}/status/current','--output-format','json')
+    state=current.get('status')
+    if state not in ('running','stopped','paused'):fail('vm_state_unconfirmed')
+    try:retained=retained_archive_sha(row['vmid'],c,state,p['node'])
     except (ValueError,TypeError,KeyError,OSError):fail('retained_archive_evidence_invalid')
     # Do not output descriptions, bootstrap keys, IPs or arbitrary config data.
-    return {'vmid':row['vmid'],'state':row['status'],'vcpus':int(c.get('cores',1))*int(c.get('sockets',1)),
+    return {'vmid':row['vmid'],'state':state,'vcpus':int(c.get('cores',1))*int(c.get('sockets',1)),
             'memory_mib':int(c.get('memory',512)),'disk_mib':mb_disk(c),'template':bool(c.get('template',False)),
             'locked':bool(c.get('lock')),'owner':o,'config_sha256':digest(c),'retirement_sha256':retained,
             'prepared':int(c.get('onboot',0))==0 and int(c.get('balloon',0))==0 and not any(re.fullmatch(r'(?:net|ipconfig)\d+',k) or k in ('sshkeys','cicustom','cipassword','ciuser','nameserver','searchdomain') for k in c)}

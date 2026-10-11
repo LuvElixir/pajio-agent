@@ -18,6 +18,8 @@ from ...config import write_private_json
 from ...cloud.instance import read_private
 from ...device_gateway import DeviceGateway, GatewayScope, GatewayError
 
+RETURN_LOCK_WAIT_SECONDS = 3
+
 
 class NativeAdapter:
     def __init__(self,data, *, private_gateway=None, private_media=None):
@@ -73,7 +75,19 @@ class NativeAdapter:
             if current['state'] != 'agent_ready':
                 if control.get('safe_screen_confirmed') is not True or control.get('scope_confirmed') is not True:
                     raise GatewayError('human_return_confirmation_required')
-                current = self.gateway.prepare_return(scope, session, current['epoch'])
+                # A live Android stream also holds the native lock while
+                # refreshing a static frame. Wait briefly for that operation;
+                # a transient collision must not abort an explicit hand-back.
+                # Keep the original epoch so a close/revocation wins the race.
+                deadline = asyncio.get_running_loop().time() + RETURN_LOCK_WAIT_SECONDS
+                while True:
+                    try:
+                        current = self.gateway.prepare_return(scope, session, current['epoch'])
+                        break
+                    except GatewayError as error:
+                        if error.code != 'device_action_inflight' or asyncio.get_running_loop().time() >= deadline:
+                            raise
+                        await asyncio.sleep(.05)
                 try:
                     cleared = self.private_media.clear(scope, session)
                     if inspect.isawaitable(cleared):

@@ -1,5 +1,9 @@
 # First owner activation and recovery — 2026-10-10
 
+Subsequent result: [October 11 physical-device retest](pajio-owner-native-retest-20261011.md)
+records the completed owner bundle, successful Linux/Android hand-back and real
+chat, build 3 TestFlight processing, and remaining external-release gates.
+
 The owner completed native invitation registration on the physical iPhone. The
 control database confirmed the intended member, ownership, bundle and activation.
 This is an actual account, not a QA account or fabricated onboarding completion.

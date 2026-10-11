@@ -176,6 +176,60 @@ async def test_host_auth_and_resource_scope(gate):
 
 
 @pytest.mark.asyncio
+async def test_explicit_return_waits_for_inflight_native_frame(gate,tmp_path):
+    lock = gate.native_lock(SCOPE.resource_id)
+    lock.__enter__()
+    cleared = []
+    async def clear(scope,session):
+        assert gate.snapshot(scope.resource_id)['state']=='awaiting_scope'
+        with pytest.raises(GatewayError):gate.permit_agent(scope.resource_id)
+        cleared.append(session)
+        return True
+    adapter=NativeAdapter(tmp_path/'data',private_gateway=gate,private_media=SimpleNamespace(clear=clear))
+    pending=asyncio.create_task(adapter.apply_human_control({'session_id':'session_test','epoch':3,'revision':2,
+        'action':'return','safe_screen_confirmed':True,'scope_confirmed':True},SCOPE))
+    try:
+        await asyncio.sleep(.08)
+        assert not pending.done()
+        assert not cleared
+        assert gate.snapshot(SCOPE.resource_id)['state']=='human_private'
+    finally:
+        lock.__exit__(None,None,None)
+    result=await pending
+    assert result['state']=='agent_ready' and result['gateway_epoch']==2
+    assert cleared==['session_test']
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('revoked',[False,True])
+async def test_return_lock_wait_cannot_override_timeout_or_revocation(gate,tmp_path,monkeypatch,revoked):
+    from wearing.connectors.remote import adapter as module
+    monkeypatch.setattr(module,'RETURN_LOCK_WAIT_SECONDS',.1)
+    cleared=[]
+    async def clear(scope,session):
+        cleared.append(session)
+        return True
+    adapter=NativeAdapter(tmp_path/'data',private_gateway=gate,private_media=SimpleNamespace(clear=clear))
+    lock=gate.native_lock(SCOPE.resource_id)
+    lock.__enter__()
+    pending=asyncio.create_task(adapter.apply_human_control({'session_id':'session_test','epoch':3,'revision':2,
+        'action':'return','safe_screen_confirmed':True,'scope_confirmed':True},SCOPE))
+    try:
+        await asyncio.sleep(.02)
+        if revoked:
+            gate.pause(SCOPE,'session_test',1)
+    finally:
+        if revoked:lock.__exit__(None,None,None)
+    try:
+        with pytest.raises(GatewayError,match='device_epoch_changed' if revoked else 'device_action_inflight'):
+            await pending
+    finally:
+        if not revoked:lock.__exit__(None,None,None)
+    assert not cleared
+    with pytest.raises(GatewayError):gate.permit_agent(SCOPE.resource_id)
+
+
+@pytest.mark.asyncio
 async def test_prepare_return_blocks_racing_media_until_awaited_clear(gate,tmp_path):
     async def clear(scope,session):
         assert gate.snapshot(scope.resource_id)['state']=='awaiting_scope'
