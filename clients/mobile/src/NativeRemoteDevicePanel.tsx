@@ -3,7 +3,7 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {ActivityIndicator, AppState, Platform, StyleSheet, Text, TextInput, View} from 'react-native';
 import {WebView, type WebViewMessageEvent} from 'react-native-webview';
 import * as Crypto from 'expo-crypto';
-import {ArrowLeft, ArrowRight, ChevronRight, Eye, Hand, Keyboard, Monitor, Power, RotateCw, Settings2, Smartphone} from 'lucide-react-native';
+import {ArrowLeft, ArrowRight, ChevronRight, Eye, Hand, Keyboard, Monitor, Power, RotateCw, Settings2, Smartphone, ZoomIn, ZoomOut, Maximize} from 'lucide-react-native';
 import {useAppTheme, useThemedStyles, type AppColors} from './app-theme';
 import {palettes} from './appearance';
 import {type Connection, connectionEndpoint} from './core';
@@ -44,7 +44,8 @@ export function NativeRemoteDevicePanel({connection, resource, name, kind, onBac
   const attempt = useRef(0), read = useRef(0), deadline = useRef(0), offerPending = useRef(false);
   const [access, setAccess] = useState<RemoteAccess | null>(null), [viewer, setViewer] = useState<Viewer | null>(null);
   const [busy, setBusy] = useState(false), [live, setLive] = useState(false), [controlling, setControlling] = useState(false);
-  const [isReturning, setIsReturning] = useState(false);
+  const [isReturning, setIsReturning] = useState(false), [recovering, setRecovering] = useState(false);
+  const [zoom, setZoom] = useState(100), [inputMode, setInputMode] = useState<'trackpad' | 'direct'>(kind === 'computer' ? 'trackpad' : 'direct');
   const [error, setError] = useState(''), [notice, setNotice] = useState(''), [rtt, setRtt] = useState<number | null>(null);
   const [capabilities, setCapabilities] = useState<Capabilities>({}), [text, setText] = useState('');
   const [panel, setPanel] = useState<'session' | 'keys' | 'keyboard' | null>(null);
@@ -54,8 +55,8 @@ export function NativeRemoteDevicePanel({connection, resource, name, kind, onBac
 
   const clearViewer = useCallback(() => {
     send({type: 'stop'}); viewing.current = null; opening.current = false; offerPending.current = false;
-    if (alive.current) {setViewer(null); setLive(false); setControlling(false); setIsReturning(false); setPanel(null); setText(''); setRtt(null); setCapabilities({}); setConfirmReturn(false); setSafeScreen(false); setScopeConfirmed(false);}
-  }, [send]);
+    if (alive.current) {setViewer(null); setRecovering(false); setZoom(100); setInputMode(kind === 'computer' ? 'trackpad' : 'direct'); setLive(false); setControlling(false); setIsReturning(false); setPanel(null); setText(''); setRtt(null); setCapabilities({}); setConfirmReturn(false); setSafeScreen(false); setScopeConfirmed(false);}
+  }, [send, kind]);
   const stop = useCallback((reason: string, close = true) => {
     const previous = current.current, generation = ++attempt.current;
     read.current++; desired.current = false; returning.current = false; deadline.current = 0;
@@ -181,9 +182,15 @@ export function NativeRemoteDevicePanel({connection, resource, name, kind, onBac
         const answer = await api.offer(frame.access, value.sdp);
         if (alive.current && foreground.current && desired.current && frame.attempt === attempt.current) send(answer);
       } catch (cause) {if (alive.current && frame.attempt === attempt.current) {stop('connection_lost'); setError(messageOf(cause));}}
+    } else if (value.type === 'buffering') {
+      setRecovering(true); setLive(false); setControlling(false); setBusy(true); setPanel(null); setText('');
+      setNotice('正在恢复画面。恢复后仅查看，请确认画面再切换到操作。');
     } else if (value.type === 'live') {
-      deadline.current = 0; setLive(true); setBusy(false); setNotice('画面已连接。点“开始操作”后，可直接触控设备。');
+      deadline.current = 0; setRecovering(false); setLive(true); setBusy(false); setNotice('画面已连接，切换到“操作”即可接管。');
       if (value.capabilities && typeof value.capabilities === 'object') setCapabilities(value.capabilities as Capabilities);
+    } else if (value.type === 'viewport') {
+      if (typeof value.zoom === 'number' && value.zoom >= 100 && value.zoom <= 400) setZoom(Math.round(value.zoom));
+      if (value.input_mode === 'trackpad' || value.input_mode === 'direct') setInputMode(value.input_mode);
     } else if (value.type === 'control') {setControlling(value.enabled === true); setNotice(value.enabled === true ? '你可以直接触控设备。结束后明确交还，Pajio 才会继续。' : '当前只查看画面。点“开始操作”后，可直接触控设备。');}
     else if (value.type === 'quality' && typeof value.rtt_ms === 'number' && Number.isFinite(value.rtt_ms)) setRtt(Math.max(0, Math.round(value.rtt_ms)));
     else if (value.type === 'notice') setError(remoteTextNotice(String(value.code), capabilities, kind) || noticeCopy[String(value.code)] || '设备拒绝了这次操作，操作不会自动重试。请检查画面后再操作。');
@@ -232,14 +239,21 @@ export function NativeRemoteDevicePanel({connection, resource, name, kind, onBac
         mixedContentMode="never" allowsInlineMediaPlayback mediaPlaybackRequiresUserAction={false} allowsBackForwardNavigationGestures={false}
         bounces={false} scrollEnabled={false} setSupportMultipleWindows={false} onOpenWindow={() => stop('unexpected_navigation')}
         webviewDebuggingEnabled={false}/>}
+      {connected && <View style={styles.zoomBar}>
+        <IconButton variant="plain" label="缩小远程画面" disabled={zoom <= 100} onPress={() => send({type: 'viewport', zoom: Math.max(1, zoom / 100 - .5)})}><ZoomOut size={19} color={palettes.night.ink}/></IconButton>
+        <TactilePressable accessibilityLabel="恢复画面大小" onPress={() => send({type: 'viewport', reset: true})} style={styles.zoomLabel}><Text style={styles.zoomText}>{zoom === 100 ? '适应' : `${zoom}%`}</Text></TactilePressable>
+        <IconButton variant="plain" label="放大远程画面" disabled={zoom >= 400} onPress={() => send({type: 'viewport', zoom: Math.min(4, zoom / 100 + .5)})}><ZoomIn size={19} color={palettes.night.ink}/></IconButton>
+      </View>}
       {!connected && <View style={styles.cover}>
         <View style={styles.deviceBadge}>{busy ? <ActivityIndicator color={palettes.night.ink}/> : kind === 'android' ? <Smartphone size={32} strokeWidth={1.5} color={palettes.night.muted}/> : <Monitor size={36} strokeWidth={1.5} color={palettes.night.muted}/>}</View>
-        <Text style={styles.coverTitle}>{busy ? isReturning ? '正在交还设备' : '正在连接设备' : access?.state === 'paused' ? '设备已暂停' : '你的'+deviceLabel}</Text>
+        <Text style={styles.coverTitle}>{busy ? isReturning ? '正在交还设备' : recovering ? '正在恢复画面' : '正在连接设备' : access?.state === 'paused' ? '设备已暂停' : '你的'+deviceLabel}</Text>
         <Text style={styles.coverText}>{Platform.OS === 'web' ? '请在 iPhone 或 Android App 中接管设备。' : notice || '连接后先查看画面，准备好再开始操作。'}</Text>
       </View>}
     </View>
     {!!error && <View style={styles.errorBar}><Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text></View>}
-    {connected ? <View style={styles.dockWrap}><View style={styles.dock}>
+    {connected ? <View style={styles.dockWrap}>
+      <Text style={styles.gestureHint}>{controlling ? kind === 'computer' ? inputMode === 'trackpad' ? '滑动移动光标 · 轻点点击 · 长按后拖动' : '轻点点击 · 单指拖动 · 长按右键' : '轻点或滑动操作手机' : '双指缩放与平移 · 放大后可单指移动画面'}</Text>
+      <View style={styles.dock}>
       <View style={styles.modes} accessibilityRole="tablist">
         {[{enabled: false, label: '查看', Icon: Eye}, {enabled: true, label: '操作', Icon: Hand}].map(({enabled, label, Icon}) => <TactilePressable key={label} accessibilityRole="tab" accessibilityLabel={enabled ? '开始操作远程设备' : '仅查看远程画面'} accessibilityState={{selected: controlling === enabled}} onPress={() => changeMode(enabled)} style={[styles.mode, controlling === enabled && styles.modeSelected]}>
           <Icon size={18} color={controlling === enabled ? colors.selectionInk : colors.muted}/><Text style={[styles.modeText, controlling === enabled && styles.modeTextSelected]}>{label}</Text>
@@ -253,7 +267,7 @@ export function NativeRemoteDevicePanel({connection, resource, name, kind, onBac
     </View>}
     <Sheet visible={connected && panel !== null} onDismiss={closePanel}
       title={panel === 'session' ? confirmReturn ? '交还 Pajio' : '完成这次接管' : panel === 'keyboard' ? '远程键盘' : kind === 'android' ? '手机操作' : '电脑操作'}
-      subtitle={panel === 'session' ? confirmReturn ? '确认后，Pajio 会恢复查看和操作设备。' : '选择接下来由谁操作这台设备。' : panel === 'keyboard' ? '先在远程画面中点选输入框。' : kind === 'android' ? '直接轻点或滑动远程画面。' : '轻点点击，按住拖动。滚动页面可用下方按钮。'}>
+      subtitle={panel === 'session' ? confirmReturn ? '确认后，Pajio 会恢复查看和操作设备。' : '选择接下来由谁操作这台设备。' : panel === 'keyboard' ? '先在远程画面中点选输入框。' : kind === 'android' ? '单指操作手机；双指缩放或移动画面。' : '双指缩放或移动画面；电脑也可以横屏查看。'}>
       {panel === 'session' ? confirmReturn ? <View style={styles.sheetStack}>
         <View style={styles.confirmRow}><Text style={styles.flexText}>已离开密码、验证码等私密页面</Text><StateSwitch accessibilityLabel="已离开私密页面" value={safeScreen} onValueChange={setSafeScreen}/></View>
         <View style={styles.confirmRow}><Text style={styles.flexText}>允许 Pajio 继续操作这台设备</Text><StateSwitch accessibilityLabel="允许 Pajio 继续操作" value={scopeConfirmed} onValueChange={setScopeConfirmed}/></View>
@@ -276,6 +290,9 @@ export function NativeRemoteDevicePanel({connection, resource, name, kind, onBac
           <View style={styles.keyRow}>{[['Backspace', '删除'], ['Enter', '回车']].map(([key, label]) => <TactilePressable key={key} accessibilityLabel={`远程${label}`} style={styles.key} onPress={() => sendKey(key)}><Text style={styles.keyText}>{label}</Text></TactilePressable>)}</View>
         </>}
       </View> : <View style={styles.sheetStack}>
+        {kind === 'computer' && <View style={styles.modes} accessibilityRole="tablist">{[{mode: 'trackpad' as const, label: '触控板'}, {mode: 'direct' as const, label: '直接触控'}].map(item => <TactilePressable key={item.mode} accessibilityRole="tab" accessibilityState={{selected: inputMode === item.mode}} style={[styles.mode, styles.method, inputMode === item.mode && styles.modeSelected]} onPress={() => send({type: 'viewport', mode: item.mode})}><Text style={[styles.modeText, inputMode === item.mode && styles.modeTextSelected]}>{item.label}</Text></TactilePressable>)}</View>}
+        <TactilePressable style={styles.row} accessibilityLabel="画面恢复适应大小" onPress={() => send({type: 'viewport', reset: true})}><Maximize size={18} color={colors.ink}/><Text style={styles.flexText}>适应画面</Text><Text style={styles.caption}>{zoom}%</Text></TactilePressable>
+        {kind === 'computer' && inputMode === 'trackpad' && <View style={styles.keyRow}>{[[0, '左键'], [2, '右键']].map(([button, label]) => <TactilePressable key={label} disabled={!controlling || capabilities.pointer !== true} style={styles.key} onPress={() => send({type: 'click', button})}><Text style={styles.keyText}>{label}</Text></TactilePressable>)}</View>}
         {!controlling && <Text style={styles.caption}>切换到操作模式后可使用快捷键。</Text>}
         <View style={styles.keyRow}>{keys.map(([key, label]) => <TactilePressable key={key} disabled={!inputReady} accessibilityLabel={`远程${label}`} style={styles.key} onPress={() => sendKey(key)}><Text style={styles.keyText}>{label}</Text></TactilePressable>)}</View>
         {kind === 'computer' && <View style={styles.keyRow}>{[[-320, '向上滚动'], [320, '向下滚动']].map(([delta, label]) => <TactilePressable key={label} disabled={!controlling || capabilities.scroll !== true} accessibilityLabel={String(label)} style={styles.key} onPress={() => sendScroll(Number(delta))}><Text style={styles.keyText}>{label}</Text></TactilePressable>)}</View>}
@@ -296,6 +313,9 @@ const makeStyles = (c: AppColors) => StyleSheet.create({
   cover: {position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 32, backgroundColor: palettes.night.canvas},
   deviceBadge: {width: 76, height: 76, borderRadius: 24, backgroundColor: palettes.night.surface, alignItems: 'center', justifyContent: 'center', marginBottom: 8},
   coverTitle: {fontSize: 20, fontWeight: '600', color: palettes.night.ink}, coverText: {maxWidth: 280, fontSize: 14, lineHeight: 23, color: palettes.night.muted, textAlign: 'center'},
+  zoomBar: {position: 'absolute', right: 12, top: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: palettes.night.surface, borderRadius: 14},
+  zoomLabel: {minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center'}, zoomText: {color: palettes.night.ink, fontSize: 12, fontWeight: '600'},
+  gestureHint: {fontSize: 11, color: c.muted, textAlign: 'center', marginBottom: 8}, method: {backgroundColor: c.soft},
   dockWrap: {paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8},
   dock: {flexDirection: 'row', alignItems: 'center', gap: 6, padding: 6, borderRadius: 22, backgroundColor: c.surface, borderWidth: StyleSheet.hairlineWidth, borderColor: c.line, maxWidth: 430, width: '100%', alignSelf: 'center'},
   modes: {flex: 1, flexDirection: 'row', gap: 2}, mode: {flex: 1, minHeight: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: 'transparent', borderRadius: 16},

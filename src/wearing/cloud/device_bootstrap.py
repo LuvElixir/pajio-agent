@@ -48,7 +48,7 @@ class BootstrapSpec(Record):
         return self
 
 
-LINUX_PACKAGES = ('xvfb','xfce4-session','xfwm4','xfce4-panel','xfdesktop4','dbus-x11','imagemagick',
+LINUX_PACKAGES = ('xvfb','xfce4-session','xfwm4','xfce4-panel','xfdesktop4','xfce4-terminal','thunar','mousepad','dbus-x11','imagemagick',
     'xauth','xdotool','x11-utils','python3-gi','python3-pyatspi','gir1.2-gtk-3.0',
     'at-spi2-core','fonts-noto-cjk','locales','python3-venv','qemu-guest-agent','nginx','curl','ca-certificates','gnupg')
 ANDROID_PACKAGES = ('docker.io','adb','python3-venv','libatomic1',

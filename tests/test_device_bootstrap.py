@@ -50,6 +50,7 @@ def test_fresh_guests_include_real_native_runtime_dependencies():
     from wearing.mobile import resource_id
     linux=json.loads(render(spec(),owner(),settings())['files']['user-data'].split('\n',1)[1])
     assert 'imagemagick' in linux['packages'] # Agent capture uses import, independently of mss/WebRTC.
+    assert {'thunar', 'xfce4-terminal', 'mousepad'} <= set(linux['packages']) # Desktop launchers must open real applications.
     phone=spec(kind='android',resource_id=resource_id('127.0.0.1:21200'))
     android=json.loads(render(phone,owner(phone),settings())['files']['user-data'].split('\n',1)[1])
     assert 'libatomic1' in android['packages'] # Required by the pinned Node 26 binary.
