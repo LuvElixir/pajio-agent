@@ -100,7 +100,8 @@ export function IntentComposer(props: Props) {
   const {fontScale} = useWindowDimensions();
   // Text follows Dynamic Type; its native container grows with it rather than
   // clipping two input lines inside a fixed 44 pt viewport.
-  const inputHeight = Math.max(44, Math.ceil(44 * fontScale));
+  const [contentHeight, setContentHeight] = useState(44);
+  const inputHeight = props.keyboard ? Math.min(Math.ceil(132 * fontScale), Math.max(Math.ceil(44 * fontScale), props.text ? contentHeight : 44)) : Math.ceil(44 * fontScale);
   const intentHeight = inputHeight + 2, barHeight = inputHeight + 14;
   useLayoutEffect(() => {latest.current = props;});
   const realVoice = !!props.voice;
@@ -214,18 +215,19 @@ export function IntentComposer(props: Props) {
   const focus = useTransition(focused ? 1 : 0, reduced, motion.release);
   const activeSurface = useTransition(holding && !cancelling && (!props.voice || props.voice.phase === 'recording') ? 1 : 0, reduced);
   const cancelSurface = useTransition(cancelling ? 1 : 0, reduced);
-  const pendingSurface = useTransition(pending ? 1 : 0, reduced);
+  const showProcessing = pending && !(props.keyboard && props.sending);
+  const pendingSurface = useTransition(showProcessing ? 1 : 0, reduced);
   useLayoutEffect(() => {
     // A restored draft or returning tab may show text without summoning the
     // keyboard. Only the explicit mode button requests programmatic focus.
-    if (!props.active || !props.keyboard || pending) {
+    if (!props.active || !props.keyboard || realProcessing) {
       focusRequested.current = false;
       input.current?.blur();
     } else if (focusRequested.current) {
       focusRequested.current = false;
       input.current?.focus();
     }
-  }, [props.keyboard, props.active, pending]);
+  }, [props.keyboard, props.active, realProcessing]);
   const keyHandlers = Platform.OS === 'web' ? {
     onKeyDown: (e: {key: string; repeat: boolean; preventDefault: () => void}) => {
       if (e.key === 'Escape') {e.preventDefault(); gesture.cancel();}
@@ -254,7 +256,7 @@ export function IntentComposer(props: Props) {
       {props.mediaActions !== false && <IconButton label="拍一张" variant="plain" onPress={props.onCamera} disabled={busy}><Camera size={22} strokeWidth={1.65} color={c.muted}/></IconButton>}
       <View style={[s.intent, {height: intentHeight}]}>
        <Animated.View
-        aria-hidden={pending} accessibilityElementsHidden={pending} importantForAccessibility={pending ? 'no-hide-descendants' : 'auto'}
+        aria-hidden={showProcessing} accessibilityElementsHidden={showProcessing} importantForAccessibility={showProcessing ? 'no-hide-descendants' : 'auto'}
         style={[s.modeLayer, {opacity: pendingSurface.interpolate({inputRange: [0, 1], outputRange: [1, 0]})}]}>
        <Animated.View pointerEvents={props.keyboard ? 'none' : 'auto'}
         aria-hidden={props.keyboard} accessibilityElementsHidden={props.keyboard} importantForAccessibility={props.keyboard ? 'no-hide-descendants' : 'auto'}
@@ -273,13 +275,17 @@ export function IntentComposer(props: Props) {
         aria-hidden={!props.keyboard} accessibilityElementsHidden={!props.keyboard} importantForAccessibility={props.keyboard ? 'auto' : 'no-hide-descendants'}
         style={[s.modeLayer, {opacity: mode}]}>
         <Text aria-hidden pointerEvents="none" accessible={false} accessibilityElementsHidden importantForAccessibility="no-hide-descendants"
-          onLayout={event => setWrappedText(event.nativeEvent.layout.height > 25)} style={s.measureText}>{props.text || ' '}</Text>
+          onLayout={event => {
+            if (Platform.OS === 'web') setWrappedText(event.nativeEvent.layout.height > 25);
+            else setContentHeight(Math.ceil(event.nativeEvent.layout.height) + 20);
+          }} style={[s.measureText, Platform.OS !== 'web' && {maxHeight: undefined, overflow: 'visible'}]}>{(props.text || '') + ' '}</Text>
         <TextInput ref={input} testID="intent-text" accessibilityLabel="对 Pajio 说的话" placeholder="说一声，我来做…" placeholderTextColor={c.muted}
-          {...(Platform.OS === 'web' ? {rows: 1, tabIndex: props.keyboard ? 0 : -1} : {numberOfLines: 2})}
-          multiline scrollEnabled editable={props.keyboard && props.active && !pending} value={props.text} onChangeText={props.onText}
+          {...(Platform.OS === 'web' ? {rows: 1, tabIndex: props.keyboard ? 0 : -1} : {})}
+          multiline scrollEnabled={contentHeight > inputHeight} editable={props.keyboard && props.active && !realProcessing} value={props.text} onChangeText={props.onText}
+          onContentSizeChange={Platform.OS === 'web' ? event => setContentHeight(Math.ceil(event.nativeEvent.contentSize.height)) : undefined}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           selectionColor={c.accent} underlineColorAndroid="transparent"
-          style={[s.input, {height: inputHeight, maxHeight: inputHeight, paddingVertical: wrappedText ? 0 : 11}, inputReset]}/>
+          style={[s.input, {height: inputHeight, maxHeight: inputHeight, paddingVertical: Platform.OS === 'web' ? (wrappedText ? 0 : 11) : 10}, inputReset]}/>
        </Animated.View>
        </Animated.View>
        <Animated.View pointerEvents="none" testID="voice-processing" aria-hidden={!pending}

@@ -127,10 +127,13 @@ class ConfirmationBook:
             db.execute("UPDATE confirmation_cards SET state=?,choice=?,answered_at=? WHERE task_id=? AND request_id=? AND state='sending'",
                        (state, choice, now() if state == "answered" else None, task_id, request_id))
 
-    def for_identity(self, identity):
+    def for_identity(self, identity, task_ids=None):
+        if task_ids is not None and not task_ids:
+            return {}
+        extra = ' AND c.task_id IN (' + ','.join('?' for _ in task_ids) + ')' if task_ids is not None else ''
         with self.store.connection() as db:
             rows = db.execute("""SELECT c.* FROM confirmation_cards c JOIN tasks t ON t.id=c.task_id
-                WHERE t.identity_id=? ORDER BY c.created_at,c.request_id""", (identity,)).fetchall()
+                WHERE t.identity_id=?""" + extra + " ORDER BY c.created_at,c.request_id", [identity, *(task_ids or [])]).fetchall()
         result = {}
         for row in rows:
             item = dict(row)

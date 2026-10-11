@@ -19,7 +19,7 @@ type Props = {connection: Connection; active: boolean; offline?: boolean; snapsh
   onAdd?: () => void; onSend?: () => void; inputScope?: string};
 
 /** Real recorder + the same native input surface as the design preview.
- * Only a persisted WebView draft receipt consumes a transcript. Sending remains
+ * Only a persisted conversation draft receipt consumes a transcript. Sending remains
  * an explicit gesture handled by the existing conversation/queue implementation.
  */
 export default function VoiceComposer({connection, active, offline = false, snapshot, command, onCapture, onAdd, onSend, inputScope = ''}: Props) {
@@ -95,11 +95,13 @@ export default function VoiceComposer({connection, active, offline = false, snap
     if (changed) {context.current = pageContext; pending.current = 0; sendSeq.current = 0; setSending(false);}
     if (snapshot.ackSeq >= pending.current || changed) {
       textRef.current = snapshot.text; setText(snapshot.text);
-      // This effect consumes an external WebView draft receipt.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (snapshot.text) setKeyboard(true);
+      // A restored draft or transcript opens text entry; ordinary typing receipts
+      // must not override an explicit switch back to voice.
+      if (snapshot.text && (changed || snapshot.ackVoiceId || snapshot.ackSeq === 0)) setKeyboard(true);
       if (snapshot.ackSeq >= sendSeq.current) setSending(snapshot.sending);
     }
+    // Reconcile the external draft controller's failed submission receipt.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (snapshot.error && !snapshot.sending) setSending(false);
     if (snapshot.ackVoiceId) {
       void voiceAck.current(snapshot.ackVoiceId);

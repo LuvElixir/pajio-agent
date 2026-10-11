@@ -17,5 +17,6 @@ export type ConversationProps = {
   onAdd?: () => void;
   onSend?: () => void;
   onOpenChat?: () => void;
+  onTask?: (id: string) => void;
   onArtifact?: (id: string) => void;
 };

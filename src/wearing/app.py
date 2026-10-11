@@ -946,12 +946,17 @@ def create_app(settings: Settings | None = None, hermes: HermesClient | None = N
             return await runtime.stop()
 
     @app.get("/api/conversation")
-    async def conversation(request: Request):
+    async def conversation(request: Request, limit: int | None = None, before: str | None = None, after: str | None = None, watch: str = ""):
         owner = request_owner(request, local_devices=local_devices)
         with store.connection() as db:
             visible = visible_task_ids(db, request.state.identity_id, owner)
+        page = None
+        if limit is not None:
+            from .conversation_page import select_page
+            page = select_page(store, request.state.identity_id, owner, limit, before, after, watch)
+            visible &= page['ids']
         messages = [{**message, "turn": task_view(service.require(message["task_id"]))}
-                    for message in store.conversation(request.state.identity_id) if message['task_id'] in visible]
+                    for message in store.conversation(request.state.identity_id, task_ids=visible if page else None) if message['task_id'] in visible]
         from .task_presentation import present_messages
         messages = present_messages(store, messages)
         for message in messages:
@@ -975,17 +980,20 @@ def create_app(settings: Settings | None = None, hermes: HermesClient | None = N
                     task["output"] = ""  # Never flash partial report JSON in the conversation.
                 messages.append({"id": "goal-" + step["task_id"], "task_id": step["task_id"], "kind": "goal_step",
                                  "goal_id": goal["id"], "content": goal["objective"], "created_at": step["created_at"], "turn": task})
-        for message in schedules.conversation(request.state.identity_id):
+        for message in schedules.conversation(request.state.identity_id, task_ids=visible if page else None):
             if message['task_id'] not in visible:
                 continue
             message["turn"] = task_view(message["turn"])
             messages.append(message)
-        results_by_task = artifacts.for_conversation(request.state.identity_id, owner_scope=owner)
-        decisions_by_task = service.confirmations.for_identity(request.state.identity_id)
+        results_by_task = artifacts.for_conversation(request.state.identity_id, owner_scope=owner, task_ids=visible if page else None)
+        decisions_by_task = service.confirmations.for_identity(request.state.identity_id, task_ids=visible if page else None)
         for message in messages:
             message["turn"]["artifacts"] = results_by_task.get(message["task_id"], [])
             message["turn"]["confirmations"] = decisions_by_task.get(message["task_id"], [])
-        return sorted(messages, key=lambda m: (m["created_at"], str(m["id"])))
+        ordered = sorted(messages, key=lambda m: (m["created_at"], str(m["id"])))
+        if page is not None:
+            return {key: value for key, value in page.items() if key != 'ids'} | {'items': ordered, 'identity': request.state.identity_id}
+        return ordered
 
     @app.post("/api/conversation", status_code=201)
     async def send_message(body: NewMessage, request: Request):

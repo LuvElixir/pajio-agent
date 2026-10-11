@@ -104,13 +104,20 @@ class ArtifactBook:
                   {'identity': identity, 'task_owner': owner_scope}).fetchall()
         return [self.metadata(row) for row in rows]
 
-    def for_conversation(self, identity, *, owner_scope='local'):
+    def for_conversation(self, identity, *, owner_scope='local', task_ids=None):
         """One metadata-only query per poll; HTML blobs never enter the chat feed."""
         self.store.identity(identity)
+        if task_ids is not None and not task_ids:
+            return {}
+        params = {'identity': identity, 'task_owner': owner_scope}
+        extra = ''
+        if task_ids is not None:
+            params.update({f'task_{i}': task for i, task in enumerate(task_ids)})
+            extra = ' AND a.task_id IN (' + ','.join(f':task_{i}' for i in range(len(task_ids))) + ')'
         with self.store.connection() as db:
             rows = db.execute(f"""SELECT a.task_id,a.metadata FROM artifacts a JOIN tasks t ON t.id=a.task_id AND t.identity_id=a.identity_id
-              WHERE a.identity_id=:identity AND {predicate('t.id')} ORDER BY a.created_at,a.id""",
-              {'identity': identity, 'task_owner': owner_scope}).fetchall()
+              WHERE a.identity_id=:identity AND {predicate('t.id')}{extra} ORDER BY a.created_at,a.id""",
+              params).fetchall()
         grouped = {}
         for row in rows:
             grouped.setdefault(row["task_id"], []).append(self.metadata(row))

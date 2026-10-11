@@ -213,7 +213,7 @@ function Mobile() {
   const [activityOpen, setActivityOpen] = useState(false);
   function prepareMessage(text:string){setReviewRequest({id:Date.now(),target:'draft',text});setScreen('conversation');}
   function openFiles(query = ''){setScreen('memory');router.setParams({memorySection:'files',memoryQuery:query});}
-  function openReviewTool(target:'files'|'goals'|'schedules'){setMenu(false);if(target==='files'){openFiles();return;}setReviewRequest({id:Date.now(),target});setScreen('conversation');}
+  function openReviewTool(target:'files'|'goals'|'schedules'){setMenu(false);if(target==='files'){openFiles();return;}setTaskTab(target);setScreen('tasks');}
   function openTaskConversation(taskId: string) {setActivityOpen(false); setChatRecord(null); setReviewRequest({id:Date.now(),target:'activity',taskId});setScreen('conversation');}
   function openActivityTask(taskId: string) {if(screen!=='task-detail')taskReturn.current=screen;setActivityOpen(false);setOpenedTask(taskId);setScreen('task-detail');}
   const screenRef = useRef(screen);
@@ -709,7 +709,7 @@ function Mobile() {
     {connection && !deletionFrozen && aiAllowed && screen !== 'share-intake' ? <ShareInboxNotice key={scopeOf(connection)} connection={connection} onOpen={() => setScreen('share-intake')}/> : null}
     <View style={s.body}>
       {connection && !deletionFrozen && aiContentVisible ? <RetainedConversation key={scopeOf(connection)} active={foreground&&aiAllowed&&!activityOpen&&!menu&&!adding&&screen!=='capture'&&screen!=='account-deletion'} visible={screen==='conversation'} inputScope={screen} showComposer={!['settings','companion','native','connection','capture','trash','detail','search','share-intake','chat-import','account-deletion','task-detail','calendar-series','bookmarks','conversation-sources'].includes(screen)} compactComposer={screen!=='conversation'} connection={connection} record={chatRecord} reviewRequest={reviewRequest}
-        onSend={()=>setScreen('conversation')} onOpenChat={()=>setScreen('conversation')} onArtifact={openArtifact}
+        onSend={()=>setScreen('conversation')} onOpenChat={()=>setScreen('conversation')} onArtifact={openArtifact} onTask={openActivityTask}
         onCapture={()=>{setScreen('capture');void photo(true);}} onAdd={()=>setAdding(true)}
         navigation={<BottomNavigation outfit={wardrobe.state.outfit} selected={selectedTab} onSelect={selectTab}/>}
         content={<View key={screen} style={{flex:1}}>{content}</View>}/>

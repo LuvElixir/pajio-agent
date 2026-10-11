@@ -336,12 +336,14 @@ class ScheduleBook:
                     reason = reason or ("本轮未正常完成，已暂停后续安排。请查看本轮记录。" if state == "paused" else "")
                     db.execute("UPDATE personal_schedules SET status=?,next_run=CASE WHEN ?='active' THEN next_run ELSE NULL END,reason=?,updated_at=? WHERE id=?", (state, state, reason, now(), row["schedule_id"]))
 
-    def conversation(self, identity):
+    def conversation(self, identity, task_ids=None):
         with self.store.connection() as db:
             rows = db.execute("""SELECT o.* FROM schedule_occurrences o JOIN personal_schedules s ON s.id=o.schedule_id
                 WHERE s.identity_id=? AND o.task_id IS NOT NULL ORDER BY o.id""", (identity,)).fetchall()
         messages = []
         for row in rows:
+            if task_ids is not None and row["task_id"] not in task_ids:
+                continue
             if json.loads(row["spec"]).get("goal_id"):
                 continue  # Delivered once by the goal's normal progress path.
             task = self.store.get(row["task_id"])

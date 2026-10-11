@@ -243,9 +243,12 @@ class Store:
             row = db.execute("SELECT value FROM settings WHERE key=?", (key,)).fetchone()
             return json.loads(row[0]) if row else default
 
-    def conversation(self, identity_id=DEFAULT_IDENTITY):
+    def conversation(self, identity_id=DEFAULT_IDENTITY, task_ids=None):
+        if task_ids is not None and not task_ids:
+            return []
         with self.connection() as db:
-            return [dict(row) for row in db.execute("SELECT m.* FROM messages m JOIN tasks t ON t.id=m.task_id WHERE t.identity_id=? ORDER BY m.id", (identity_id,))]
+            extra = ' AND m.task_id IN (' + ','.join('?' for _ in task_ids) + ')' if task_ids is not None else ''
+            return [dict(row) for row in db.execute("SELECT m.* FROM messages m JOIN tasks t ON t.id=m.task_id WHERE t.identity_id=?" + extra + " ORDER BY m.id", [identity_id, *(task_ids or [])])]
 
     def create_message(self, content, identity_id=DEFAULT_IDENTITY):
         self.identity(identity_id)
