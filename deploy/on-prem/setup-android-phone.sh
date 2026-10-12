@@ -80,11 +80,16 @@ if [ -L /var/lib/pajio-phone/data ]; then echo 'Unsafe Android data directory' >
 if [ ! -d /var/lib/pajio-phone/data ]; then mkdir -m 700 /var/lib/pajio-phone/data; fi
 printf 'binder_linux\n' > /etc/modules-load.d/pajio-phone.conf
 printf 'options binder_linux devices=binder,hwbinder,vndbinder\n' > /etc/modprobe.d/pajio-phone.conf
-# Cloud images may run an older kernel than linux-modules-extra-generic.
-# Install the module package for the running kernel; never silently reboot or
-# replace a tenant's active kernel while preparing the native transport.
+# binder_linux ships in linux-modules-extra. Install it for the running kernel,
+# and the linux-image-extra-virtual meta package so every later kernel from
+# unattended-upgrades carries it too. A kernel without binder leaves Android's
+# servicemanager crash-looping until Android init panics the whole VM.
+# Never silently reboot or replace a tenant's active kernel here.
 if ! modinfo binder_linux >/dev/null 2>&1; then
   DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends "linux-modules-extra-$(uname -r)"
+fi
+if ! dpkg -s linux-image-extra-virtual >/dev/null 2>&1; then
+  DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends linux-image-extra-virtual
 fi
 modprobe binder_linux devices=binder,hwbinder,vndbinder
 systemctl enable --now docker

@@ -55,6 +55,7 @@ def test_fresh_guests_include_real_native_runtime_dependencies():
     android=json.loads(render(phone,owner(phone),settings())['files']['user-data'].split('\n',1)[1])
     assert 'libatomic1' in android['packages'] # Required by the pinned Node 26 binary.
     assert 'linux-modules-extra-generic' not in android['packages'] # Not a valid Noble package.
+    assert 'linux-image-extra-virtual' in android['packages'] # Later kernels keep binder_linux.
 
 
 @pytest.mark.parametrize('value',['-----BEGIN PRIVATE KEY-----','ssh-ed25519 AAAA','command="oops" '+KEY,KEY+'\n'+KEY])

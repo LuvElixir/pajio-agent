@@ -51,7 +51,9 @@ class BootstrapSpec(Record):
 LINUX_PACKAGES = ('xvfb','xfce4-session','xfwm4','xfce4-panel','xfdesktop4','xfce4-terminal','thunar','mousepad','dbus-x11','imagemagick',
     'xauth','xdotool','x11-utils','python3-gi','python3-pyatspi','gir1.2-gtk-3.0',
     'at-spi2-core','fonts-noto-cjk','locales','python3-venv','qemu-guest-agent','nginx','curl','ca-certificates','gnupg')
-ANDROID_PACKAGES = ('docker.io','adb','python3-venv','libatomic1',
+# linux-image-extra-virtual keeps binder_linux (linux-modules-extra) paired with
+# every kernel unattended-upgrades installs; linux-virtual alone omits it.
+ANDROID_PACKAGES = ('docker.io','adb','python3-venv','libatomic1','linux-image-extra-virtual',
     'qemu-guest-agent','nginx','curl','ca-certificates','gnupg')
 
 

@@ -127,3 +127,20 @@ if ($pajioParseErrors.Count -gt 0) {
 ## 核心服务部署进度（2026-10-09 晚）
 
 真实 OIDC、PostgreSQL、HTTPS 和两个租户 Agent Core 已部署；真实模型与文件任务、跨账号拒绝、服务重启和应用备份恢复已通过，详见[业务服务验收](../evidence/pajio-public-readiness-20261009/core-service-deployment.md)。公开注册尚未开放；这不替代 App 分发、物理设备接入、通知及长期运营验收。
+
+## 当前配置与运维要点（2026-10-12）
+
+这台主机（pve01，i7-12700F / 20 线程 / 31GB）只用于功能验证，正式服务不部署在这里，因此资源按"每个用户体验足够好"分配，不追求密度。
+
+| VM | 用途 | 配置 |
+| --- | --- | --- |
+| 1100 | 控制面 | 1 vCPU / 3GB |
+| 1401 | 个人核心实例 `pajio_personal_primary` | 2 vCPU / 4GB（10-12 从 1 vCPU / 2GB 调整） |
+| 1411 | Linux 云电脑 | 2 vCPU / 4GB |
+| 1412 | Android 云手机 | 2 vCPU / 4GB |
+| 9000 | Ubuntu 24.04 模板 | 不运行 |
+
+- **局域网直连**：`ssh -o ProxyJump=none -o HostName=192.168.1.110 pajio-server`，不必经 `lucky` 跳板。
+- **开机顺序**：`pve-guests` 要求 `pajio-lab-network` 先成功，网络隔离没就位时不启动任何 VM。`pajio-lab-network` 必须排在 `pve-cluster` 之后，见 `deploy/on-prem/pajio-lab-network.service`。
+- **KSM**：由 Proxmox 自带的 `ksmtuned` 按需启用，宿主机可用内存低于 35% 时开始合并（`/etc/ksmtuned.conf` 中 `KSM_THRES_COEF=35`）。KSM 会跨 VM 合并内存页，存在不同租户之间的侧信道风险。验证环境可以接受；**正式环境中不同租户的 VM 不得共享 KSM 合并**（可对 VM 关闭内存合并，或按租户分主机）。
+- **云手机内核**：Android 依赖 `linux-modules-extra` 里的 binder 驱动。设备 VM 必须安装 `linux-image-extra-virtual` 元包，否则自动更新换内核后，Android 的 `servicemanager` 会反复崩溃，最终由容器内的 Android init 触发整台 VM 内核崩溃。详见 [10-12 恢复记录](../evidence/on-prem-recovery-2026-10-12.md)。
