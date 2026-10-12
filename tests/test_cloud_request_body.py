@@ -9,12 +9,12 @@ from starlette.applications import Starlette
 from starlette.responses import JSONResponse, StreamingResponse
 from starlette.routing import Route
 
-from wearing.cloud import request_body
-from wearing.cloud.control import ControlStore
-from wearing.cloud.gateway import create_gateway_app, initialize_gateway, load_gateway, register_route
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.relay import create_relay_app, PairRequest, RelayStore
-from wearing.cloud.request_body import RequestBodyBoundary, RequestBodyError, rejected_body
+from pajio.cloud import request_body
+from pajio.cloud.control import ControlStore
+from pajio.cloud.gateway import create_gateway_app, initialize_gateway, load_gateway, register_route
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.relay import create_relay_app, PairRequest, RelayStore
+from pajio.cloud.request_body import RequestBodyBoundary, RequestBodyError, rejected_body
 
 
 ORIGIN = 'https://entry.example'

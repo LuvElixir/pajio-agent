@@ -15,9 +15,9 @@ from types import SimpleNamespace
 
 import uvicorn
 from fastapi.responses import FileResponse
-from wearing.chat_imports import ChatImports
-from wearing.chat_imports_api import install_chat_import_routes
-from wearing.device_access_api import install_device_access_routes
+from pajio.chat_imports import ChatImports
+from pajio.chat_imports_api import install_chat_import_routes
+from pajio.device_access_api import install_device_access_routes
 
 HERE = Path(__file__).resolve().parent
 BASE = HERE.parent / 'pajio-core-20261007'

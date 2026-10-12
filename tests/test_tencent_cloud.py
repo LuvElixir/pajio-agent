@@ -6,7 +6,7 @@ import sys
 
 import pytest
 
-from wearing.cloud.tencent import TencentCLI, TencentError, TencentQuoteRequest, quote
+from pajio.cloud.tencent import TencentCLI, TencentError, TencentQuoteRequest, quote
 
 
 def request():
@@ -132,15 +132,15 @@ def test_unvalidated_account_environment_and_zone_mismatch_rejected():
 
 
 def test_cli_client_will_not_dispatch_purchase_or_other_mutations(monkeypatch):
-    monkeypatch.setattr("wearing.cloud.tencent.shutil.which", lambda _: "/some/tccli")
-    monkeypatch.setattr("wearing.cloud.tencent.subprocess.run", lambda *a, **k: pytest.fail("must not dispatch"))
+    monkeypatch.setattr("pajio.cloud.tencent.shutil.which", lambda _: "/some/tccli")
+    monkeypatch.setattr("pajio.cloud.tencent.subprocess.run", lambda *a, **k: pytest.fail("must not dispatch"))
     client = TencentCLI()
     for action in ("RunInstances", "StopInstances", "TerminateInstances", "CreateDisks"):
         with pytest.raises(TencentError): client.call("cvm", action, {"DryRun": True})
 
 
 def test_cli_invocation_uses_private_file_and_no_shell_and_does_not_leak_errors(monkeypatch):
-    monkeypatch.setattr("wearing.cloud.tencent.shutil.which", lambda _: "/some/tccli")
+    monkeypatch.setattr("pajio.cloud.tencent.shutil.which", lambda _: "/some/tccli")
     def run(command, **kwargs):
         assert kwargs.get("shell") is not True
         assert not any(flag in command for flag in ("--secretId", "--secretKey", "--token", "--warning"))
@@ -150,7 +150,7 @@ def test_cli_invocation_uses_private_file_and_no_shell_and_does_not_leak_errors(
         assert json.loads(path.read_text()) == {}
         return subprocess.CompletedProcess(command, 1, json.dumps({"Error": {
             "Code": "AuthFailure.SignatureFailure", "Message": "secret-do-not-log"}}), "secret-do-not-log")
-    monkeypatch.setattr("wearing.cloud.tencent.subprocess.run", run)
+    monkeypatch.setattr("pajio.cloud.tencent.subprocess.run", run)
     with pytest.raises(TencentError) as failure:
         TencentCLI().call("sts", "GetCallerIdentity")
     assert "SignatureFailure" in str(failure.value)
@@ -160,14 +160,14 @@ def test_cli_invocation_uses_private_file_and_no_shell_and_does_not_leak_errors(
 def test_invalid_request_cli_does_not_echo_secret_or_load_tccli(tmp_path):
     path = tmp_path / "request.json"
     path.write_text(json.dumps({**request().model_dump(), "secretKey": "test-secret-do-not-log"}))
-    result = subprocess.run([sys.executable, "-m", "wearing.cli", "cloud", "tencent", "quote", "--request", str(path)],
+    result = subprocess.run([sys.executable, "-m", "pajio.cli", "cloud", "tencent", "quote", "--request", str(path)],
                             capture_output=True, text=True)
     assert result.returncode != 0 and "test-secret-do-not-log" not in result.stdout + result.stderr
 
 
 def test_official_tccli_sdk_error_on_stderr_reports_only_code(monkeypatch):
-    monkeypatch.setattr("wearing.cloud.tencent.shutil.which", lambda _: "/some/tccli")
-    monkeypatch.setattr("wearing.cloud.tencent.subprocess.run", lambda command, **kwargs:
+    monkeypatch.setattr("pajio.cloud.tencent.shutil.which", lambda _: "/some/tccli")
+    monkeypatch.setattr("pajio.cloud.tencent.subprocess.run", lambda command, **kwargs:
         subprocess.CompletedProcess(command, 255, "", "[TencentCloudSDKException] code:InvalidParameterValue.Port "
                                     "message:test-secret-do-not-log requestId:request-one"))
     with pytest.raises(TencentError) as failure:

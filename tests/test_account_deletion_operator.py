@@ -6,11 +6,11 @@ import json
 import pytest
 from sqlalchemy import select, update
 
-from wearing.account_deletion import DeletionError, DeletionJobs, Operation, digest
-from wearing.account_deletion_operator import OperatorRegistry, ProductionDeletionAdapter, checked_asset
-from wearing.cloud.account_deletion_control import AccountDeletionControl
-from wearing.cloud.control import ControlStore, members
-from wearing.cloud.deletion_tencent import DeletionTencentCLI, TencentDeletionProvider
+from pajio.account_deletion import DeletionError, DeletionJobs, Operation, digest
+from pajio.account_deletion_operator import OperatorRegistry, ProductionDeletionAdapter, checked_asset
+from pajio.cloud.account_deletion_control import AccountDeletionControl
+from pajio.cloud.control import ControlStore, members
+from pajio.cloud.deletion_tencent import DeletionTencentCLI, TencentDeletionProvider
 
 
 def asset(user='user_a', **changes):
@@ -194,12 +194,12 @@ def test_separate_cli_denies_unlisted_actions_without_executing(monkeypatch):
     monkeypatch.setattr('shutil.which',lambda name:'/synthetic/tccli')
     client=DeletionTencentCLI('fixture','ap-hongkong')
     with pytest.raises(DeletionError):client.call('cvm','RunInstances',{})
-    from wearing.cloud.tencent import READ_ACTIONS
+    from pajio.cloud.tencent import READ_ACTIONS
     assert 'TerminateInstances' not in READ_ACTIONS['cvm']
 
 
 def test_no_production_cli_execution_without_explicit_operator_flag(tmp_path):
-    from wearing.account_deletion_cli import run
+    from pajio.account_deletion_cli import run
     root=tmp_path/'journal';DeletionJobs(root,initialize=True)
     with pytest.raises(DeletionError,match='explicit_operator_execution_required'):
         run(['--journal',str(root),'operator-resume','--gateway-root','/does-not-exist',
@@ -208,8 +208,8 @@ def test_no_production_cli_execution_without_explicit_operator_flag(tmp_path):
 
 def test_tenant_http_client_requires_exact_independent_readback(tmp_path):
     import httpx
-    from wearing.account_deletion_operator import TenantDeletionClient
-    from wearing.profile import write_private_text
+    from pajio.account_deletion_operator import TenantDeletionClient
+    from pajio.profile import write_private_text
     write_private_text(tmp_path/'tenant_a.key','x'*64)
     request={'job_id':'a'*32,'plan_revision':'b'*64,'operation_id':'c'*64,'tenant_id':'tenant_a',
              'instance_id':'instance_a','phase':'freeze_tenant','owner_scope':'d'*64}

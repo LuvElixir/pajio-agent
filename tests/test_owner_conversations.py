@@ -1,9 +1,9 @@
 """Engine histories are private by trusted owner, independently of read filters."""
 import httpx
-from wearing.config import Settings
-from wearing.hermes import HermesClient
-from wearing.service import TaskService, ACTIVE
-from wearing.store import Store
+from pajio.config import Settings
+from pajio.hermes import HermesClient
+from pajio.service import TaskService, ACTIVE
+from pajio.store import Store
 from test_goals import GoalWire
 
 A, B = 'a' * 64, 'b' * 64
@@ -75,7 +75,7 @@ def test_legacy_sync_does_not_update_owned_drafts(tmp_path):
 
 def test_confirmation_recovery_inherits_original_owner_and_denies_foreign_replay(tmp_path):
     import pytest
-    from wearing.durable_confirmations import DurableConfirmations, ConfirmationError
+    from pajio.durable_confirmations import DurableConfirmations, ConfirmationError
     from test_durable_confirmations import CARD
     store = Store(tmp_path / 'test.sqlite3')
     source = accept(store, A, 'approval-source')

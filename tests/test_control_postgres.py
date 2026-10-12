@@ -13,18 +13,18 @@ from sqlalchemy import create_engine, insert, select, text, update
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.engine import make_url
 
-from wearing.cloud.control import (ControlError, ControlStore, OIDCStateCache, digest, members,
+from pajio.cloud.control import (ControlError, ControlStore, OIDCStateCache, digest, members,
                                    routes, sessions, states, tenants, users)
-from wearing.cloud.gateway import (GatewayConfig, GatewayError, create_gateway_app,
+from pajio.cloud.gateway import (GatewayConfig, GatewayError, create_gateway_app,
                                    initialize_gateway, operator_store, register_route)
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.postgres import DatabaseBoundaryError, REVISION, TABLES, migrate_database, validate_database_url
-from wearing.cloud.worker import create_tenant_app
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.postgres import DatabaseBoundaryError, REVISION, TABLES, migrate_database, validate_database_url
+from pajio.cloud.worker import create_tenant_app
 
 
 @pytest.fixture
 def pg():
-    path = os.environ.get("WEARING_POSTGRES_TEST_CONFIG")
+    path = os.environ.get("PAJIO_POSTGRES_TEST_CONFIG")
     if not path:
         pytest.skip("requires an explicitly provisioned disposable PostgreSQL QA cluster")
     config = json.loads(Path(path).read_text())
@@ -63,7 +63,7 @@ def test_migrations_are_repeatable_and_web_cannot_initialize(pg):
 def test_initial_migration_is_transactional_and_refuses_unversioned_tables(pg):
     admin = pg["admin_engine"]
     for adopted in (False, True):
-        name = "wearing_migrationtest_" + uuid.uuid4().hex
+        name = "pajio_migrationtest_" + uuid.uuid4().hex
         owner = make_url(pg["migration"]).username
         quote = admin.dialect.identifier_preparer.quote
         with admin.connect().execution_options(isolation_level="AUTOCOMMIT") as db:
@@ -73,14 +73,14 @@ def test_initial_migration_is_transactional_and_refuses_unversioned_tables(pg):
         try:
             if adopted:
                 with target.begin() as db:
-                    db.execute(text("CREATE SCHEMA wearing_control"))
-                    db.execute(text("CREATE TABLE wearing_control.wearing_users (original text)"))
-                    db.execute(text("INSERT INTO wearing_control.wearing_users VALUES ('preserve')"))
+                    db.execute(text("CREATE SCHEMA pajio_control"))
+                    db.execute(text("CREATE TABLE pajio_control.pajio_users (original text)"))
+                    db.execute(text("INSERT INTO pajio_control.pajio_users VALUES ('preserve')"))
                 with pytest.raises(RuntimeError, match="unversioned"):
                     migrate_database(url)
                 with target.connect() as db:
-                    assert db.scalar(text("SELECT original FROM wearing_control.wearing_users")) == "preserve"
-                    assert db.scalar(text("SELECT to_regclass('wearing_control.alembic_version')")) is None
+                    assert db.scalar(text("SELECT original FROM pajio_control.pajio_users")) == "preserve"
+                    assert db.scalar(text("SELECT to_regclass('pajio_control.alembic_version')")) is None
             else:
                 migrate_database(url)
                 web = ControlStore(make_url(pg["app"]).set(database=name))
@@ -134,8 +134,8 @@ def test_pool_reuse_resets_all_context_even_after_session_set_and_rollback(pg):
     a = web.login(pg["issuer"], "alice")
     b = web.login(pg["issuer"], "bob")
     with web.engine.begin() as db:
-        db.execute(text("SELECT set_config('wearing.user_id', :v, false)"), {"v": web.session(a).user_id})
-        db.execute(text("SELECT set_config('wearing.session_hash', :v, false)"), {"v": digest(a)})
+        db.execute(text("SELECT set_config('pajio.user_id', :v, false)"), {"v": web.session(a).user_id})
+        db.execute(text("SELECT set_config('pajio.session_hash', :v, false)"), {"v": digest(a)})
     for _ in range(4):
         assert web.session(b).tenant_id == pg["b"]
         assert web.session(secrets.token_urlsafe(48)) is None
@@ -149,13 +149,13 @@ def test_pool_reuse_resets_all_context_even_after_session_set_and_rollback(pg):
 
 
 @pytest.mark.parametrize("statement", [
-    "UPDATE wearing_control.wearing_memberships SET active = false",
-    "UPDATE wearing_control.wearing_routes SET upstream = 'https://foreign.example'",
-    "UPDATE wearing_control.wearing_sessions SET expires = 2147483647",
-    "UPDATE wearing_control.wearing_sessions SET user_id = 'foreign'",
-    "UPDATE wearing_control.wearing_oidc_states SET value = 'foreign'",
-    "TRUNCATE wearing_control.wearing_sessions",
-    "CREATE TABLE wearing_control.forbidden (id text)",
+    "UPDATE pajio_control.pajio_memberships SET active = false",
+    "UPDATE pajio_control.pajio_routes SET upstream = 'https://foreign.example'",
+    "UPDATE pajio_control.pajio_sessions SET expires = 2147483647",
+    "UPDATE pajio_control.pajio_sessions SET user_id = 'foreign'",
+    "UPDATE pajio_control.pajio_oidc_states SET value = 'foreign'",
+    "TRUNCATE pajio_control.pajio_sessions",
+    "CREATE TABLE pajio_control.forbidden (id text)",
 ])
 def test_runtime_cannot_administer_members_routes_sessions_or_schema(pg, statement):
     with pytest.raises(DBAPIError):
@@ -186,21 +186,21 @@ def test_startup_rejects_super_owner_operator_and_extra_column_privilege(pg):
     admin = pg["admin_engine"]
     try:
         with admin.begin() as db:
-            db.execute(text("GRANT UPDATE(expires) ON wearing_control.wearing_sessions TO wearing_web"))
+            db.execute(text("GRANT UPDATE(expires) ON pajio_control.pajio_sessions TO pajio_web"))
         with pytest.raises(DatabaseBoundaryError):
             ControlStore(pg["app"])
     finally:
         with admin.begin() as db:
-            db.execute(text("REVOKE UPDATE(expires) ON wearing_control.wearing_sessions FROM wearing_web"))
+            db.execute(text("REVOKE UPDATE(expires) ON pajio_control.pajio_sessions FROM pajio_web"))
     good = ControlStore(pg["app"])
     good.close()
 
 
 def test_startup_rejects_missing_force_rls_policy_and_revision(pg):
     mutations = [
-        ("ALTER TABLE wearing_control.wearing_routes NO FORCE ROW LEVEL SECURITY", "ALTER TABLE wearing_control.wearing_routes FORCE ROW LEVEL SECURITY"),
-        ("CREATE POLICY unsafe_extra ON wearing_control.wearing_routes TO wearing_web USING (true)", "DROP POLICY unsafe_extra ON wearing_control.wearing_routes"),
-        ("UPDATE wearing_control.alembic_version SET version_num = 'wrong'", f"UPDATE wearing_control.alembic_version SET version_num = '{REVISION}'"),
+        ("ALTER TABLE pajio_control.pajio_routes NO FORCE ROW LEVEL SECURITY", "ALTER TABLE pajio_control.pajio_routes FORCE ROW LEVEL SECURITY"),
+        ("CREATE POLICY unsafe_extra ON pajio_control.pajio_routes TO pajio_web USING (true)", "DROP POLICY unsafe_extra ON pajio_control.pajio_routes"),
+        ("UPDATE pajio_control.alembic_version SET version_num = 'wrong'", f"UPDATE pajio_control.alembic_version SET version_num = '{REVISION}'"),
     ]
     for change, repair in mutations:
         try:
@@ -233,9 +233,9 @@ def test_oidc_state_is_atomic_one_use_scoped_and_survives_new_store(pg):
 
 
 def test_operator_credential_is_separate_and_target_bound(pg, tmp_path, monkeypatch):
-    config = initialize_gateway(tmp_path / "entry", "https://wearing.example", pg["issuer"], "test",
+    config = initialize_gateway(tmp_path / "entry", "https://pajio.example", pg["issuer"], "test",
                                 database_url=pg["app"], development=True)
-    monkeypatch.delenv("WEARING_CONTROL_OPERATOR_DATABASE_URL", raising=False)
+    monkeypatch.delenv("PAJIO_CONTROL_OPERATOR_DATABASE_URL", raising=False)
     with pytest.raises(GatewayError):
         operator_store(config)
     with pytest.raises(DatabaseBoundaryError):
@@ -254,7 +254,7 @@ async def test_gateway_uses_real_pg_through_oidc_and_private_workers(pg, tmp_pat
     monkeypatch.setenv("PAJIO_TRIAL_LIMITS", "1")
     from test_gateway import ORIGIN, ISSUER, Provider, Workers, login
     root, a, b = tmp_path / "entry", tmp_path / "A", tmp_path / "B"
-    initialize_gateway(root, ORIGIN, ISSUER, "wearing-test", development=True, database_url=pg["app"])
+    initialize_gateway(root, ORIGIN, ISSUER, "pajio-test", development=True, database_url=pg["app"])
     initialize_instance(a, pg["a"] + "_gateway", ORIGIN)
     initialize_instance(b, pg["b"] + "_gateway", ORIGIN)
     # Different OIDC subjects are local to this fixture, with provider signing checks reused.
@@ -263,7 +263,7 @@ async def test_gateway_uses_real_pg_through_oidc_and_private_workers(pg, tmp_pat
     ops = pg["operator_store"]
     ops.grant(ISSUER, alice_subject, pg["a"] + "_gateway")
     ops.grant(ISSUER, bob_subject, pg["b"] + "_gateway")
-    monkeypatch.setenv("WEARING_CONTROL_OPERATOR_DATABASE_URL", pg["operator"])
+    monkeypatch.setenv("PAJIO_CONTROL_OPERATOR_DATABASE_URL", pg["operator"])
     register_route(root, a, "http://127.0.0.1:39001")
     register_route(root, b, "http://127.0.0.1:39002")
     wa, wb = create_tenant_app(a, engine_autostart=False), create_tenant_app(b, engine_autostart=False)
@@ -274,7 +274,7 @@ async def test_gateway_uses_real_pg_through_oidc_and_private_workers(pg, tmp_pat
             assert (await login(alice, provider, alice_subject)).status_code == 303
             assert (await login(bob, provider, bob_subject)).status_code == 303
             token = (await alice.get("/api/bootstrap")).json()["token"]
-            assert (await alice.post("/api/conversation", headers={"Origin": ORIGIN, "X-Wearing-Token": token}, json={"content": "PG Alice private idea"})).status_code == 201
+            assert (await alice.post("/api/conversation", headers={"Origin": ORIGIN, "X-Pajio-Token": token}, json={"content": "PG Alice private idea"})).status_code == 201
             assert "PG Alice private idea" not in (await bob.get("/api/conversation")).text
             restarted = create_gateway_app(root, oidc_transport=httpx.MockTransport(provider.handle), worker_transport=workers)
             async with restarted.router.lifespan_context(restarted):
@@ -302,7 +302,7 @@ def test_pg_connection_boundary_requires_local_lab_or_verified_tls(value, develo
 
 def test_production_config_requires_https_and_verified_postgres():
     with pytest.raises(ValueError):
-        GatewayConfig(public_origin="https://wearing.example", issuer="https://id.example", client_id="test",
+        GatewayConfig(public_origin="https://pajio.example", issuer="https://id.example", client_id="test",
                       session_key="x" * 32, database_url="postgresql+psycopg://app@db.example/db")
-    GatewayConfig(public_origin="https://wearing.example", issuer="https://id.example", client_id="test",
+    GatewayConfig(public_origin="https://pajio.example", issuer="https://id.example", client_id="test",
                   session_key="x" * 32, database_url="postgresql+psycopg://app@db.example/db?sslmode=verify-full")

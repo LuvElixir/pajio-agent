@@ -4,12 +4,12 @@ from concurrent.futures import ThreadPoolExecutor
 import httpx
 import pytest
 
-from wearing.app import create_app
-from wearing.cloud.worker import TenantBoundary
-from wearing.config import Settings
-from wearing.durable_confirmations import DurableConfirmations
-from wearing.service import ACTIVE, TaskService
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.cloud.worker import TenantBoundary
+from pajio.config import Settings
+from pajio.durable_confirmations import DurableConfirmations
+from pajio.service import ACTIVE, TaskService
+from pajio.store import Store
 
 A, B = 'a' * 64, 'b' * 64
 CARD = {'title': '合成确认', 'action': '核对隔离记录', 'impact': '无外部资源'}
@@ -34,9 +34,9 @@ async def test_cancelled_recovery_http_projection_and_explicit_successor(tmp_pat
     store = app.state.store
     book = app.state.service.confirmations.durable
     source, recovery = prepare(store, book)
-    headers = {'Authorization': 'Bearer fixture-key', 'X-Wearing-Tenant': 'fixture', 'X-Pajio-Storage-Scope': A}
+    headers = {'Authorization': 'Bearer fixture-key', 'X-Pajio-Tenant': 'fixture', 'X-Pajio-Storage-Scope': A}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers=headers) as client:
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         client.headers['X-Pajio-Storage-Scope'] = B
         assert (await client.post(f'/api/tasks/{recovery}/cancel-message')).status_code == 404
         assert book.get('daily', source['id'])['state'] == 'recovering'
@@ -78,7 +78,7 @@ async def test_cancelled_recovery_http_projection_and_explicit_successor(tmp_pat
 
 @pytest.mark.parametrize('surface', ['get', 'list', 'startup'])
 def test_restart_repairs_legacy_cancelled_recovery_without_auto_dispatch(tmp_path, surface):
-    store = Store(tmp_path / 'wearing.sqlite3'); book = DurableConfirmations(store)
+    store = Store(tmp_path / 'pajio.sqlite3'); book = DurableConfirmations(store)
     source, recovery = prepare(store, book)
     with store.connection() as db:
         db.execute("UPDATE tasks SET status='stopped' WHERE id=?", (recovery,))
@@ -96,7 +96,7 @@ def test_restart_repairs_legacy_cancelled_recovery_without_auto_dispatch(tmp_pat
 
 
 def test_stop_request_waits_for_terminal_proof_before_offering_new_recheck(tmp_path):
-    store = Store(tmp_path / 'wearing.sqlite3'); book = DurableConfirmations(store)
+    store = Store(tmp_path / 'pajio.sqlite3'); book = DurableConfirmations(store)
     source, recovery = prepare(store, book)
     task = store.update(recovery, status='running', run_id='recovery')
     book.observe_task(task, stopped=True)
@@ -107,7 +107,7 @@ def test_stop_request_waits_for_terminal_proof_before_offering_new_recheck(tmp_p
 
 
 def test_successful_read_only_recheck_and_consumed_attempt_never_make_retry_card(tmp_path):
-    store = Store(tmp_path / 'wearing.sqlite3'); book = DurableConfirmations(store)
+    store = Store(tmp_path / 'pajio.sqlite3'); book = DurableConfirmations(store)
     source, recovery = prepare(store, book)
     with store.connection() as db:
         db.execute("UPDATE confirmation_recovery_tasks SET consumed_at='synthetic',result_state='unknown' WHERE task_id=?", (recovery,))
@@ -122,7 +122,7 @@ def test_successful_read_only_recheck_and_consumed_attempt_never_make_retry_card
 
 
 async def test_queue_and_recovery_reconciliation_commit_together(tmp_path, monkeypatch):
-    store = Store(tmp_path / 'wearing.sqlite3'); book = DurableConfirmations(store)
+    store = Store(tmp_path / 'pajio.sqlite3'); book = DurableConfirmations(store)
     source, recovery = prepare(store, book)
     service = TaskService(store, None)
     def fail(*args): raise RuntimeError('Synthetic storage failure')

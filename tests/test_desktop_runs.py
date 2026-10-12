@@ -5,25 +5,25 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.relay import instance_relay,PairRequest,ConnectionRequest,PollRequest,ClaimRequest,ResultRequest,RelayError
-from wearing.cloud.desktop_approval import InputProposal,InputDecision,propose,list_proposals,decide
-from wearing.cloud.desktop_runs import bind,request_and_wait,MARKER,answer
-from wearing.cloud.desktop_tasks import auto_answer
-from wearing.hermes import HermesClient
-from wearing.config import Settings
-from wearing.service import TaskService,TaskError
-from wearing.store import Store
-from wearing.goals import GoalBook
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.relay import instance_relay,PairRequest,ConnectionRequest,PollRequest,ClaimRequest,ResultRequest,RelayError
+from pajio.cloud.desktop_approval import InputProposal,InputDecision,propose,list_proposals,decide
+from pajio.cloud.desktop_runs import bind,request_and_wait,MARKER,answer
+from pajio.cloud.desktop_tasks import auto_answer
+from pajio.hermes import HermesClient
+from pajio.config import Settings
+from pajio.service import TaskService,TaskError
+from pajio.store import Store
+from pajio.goals import GoalBook
 
 TOKEN='a'*64
-ACTION={'app':'WearingProbe','frame_id':'b'*32,'action':'set_value','element':3,'element_label':'Test input','value':'test'}
+ACTION={'app':'PajioProbe','frame_id':'b'*32,'action':'set_value','element':3,'element_label':'Test input','value':'test'}
 
 
 @pytest.fixture
 async def rig(tmp_path):
-    root=tmp_path/'instance';initialize_instance(root,'tenant_test','https://wearing.example')
-    store=Store(root/'data/wearing.sqlite3');book=GoalBook(store);relay=instance_relay(root)
+    root=tmp_path/'instance';initialize_instance(root,'tenant_test','https://pajio.example')
+    store=Store(root/'data/pajio.sqlite3');book=GoalBook(store);relay=instance_relay(root)
     spec={'resource_id':'computer_test','name':'Test computer','kind':'computer','methods':['computer.observe','computer.input']}
     b=relay.pair_code('daily',[spec],[]);relay.pair(PairRequest(code=b['code'],token=TOKEN))
     conn=relay.connect(TOKEN,ConnectionRequest())['connection_id'];relay.poll(TOKEN,PollRequest(connection_id=conn,availability={'computer_test':True}))
@@ -31,7 +31,7 @@ async def rig(tmp_path):
     engine={'status':'running','approval':None,'choice':None}
     async def wire(req):
         calls.append((req.method,req.url.path))
-        if req.url.path=='/v1/capabilities':return httpx.Response(200,json={'wearing':{}})
+        if req.url.path=='/v1/capabilities':return httpx.Response(200,json={'pajio':{}})
         if req.url.path=='/v1/runs':return httpx.Response(202,json={'run_id':'run_test'})
         if req.url.path.endswith('/approval'):
             engine['choice']=json.loads(req.content)['choice'];engine['status']='running';gate.set()
@@ -156,7 +156,7 @@ async def test_task_delegation_never_crosses_boundary(rig,change):
     if change=='app':action={**ACTION,'app':'AnotherApp'}
     if change=='commitment':checkpoint='commitment'
     if change=='sensitive_label':action={**ACTION,'element_label':'立即付款'}
-    if change=='key':action={'app':'WearingProbe','frame_id':'b'*32,'action':'key','keys':'ENTER'}
+    if change=='key':action={'app':'PajioProbe','frame_id':'b'*32,'action':'key','keys':'ENTER'}
     p=propose(r.relay,'daily',InputProposal(resource_id='computer_test',action=action,reason='Continue',checkpoint=checkpoint),for_run=True)
     if change in ('expiry','budget','policy'):
         with r.relay.tx() as db:
@@ -169,7 +169,7 @@ async def test_task_delegation_never_crosses_boundary(rig,change):
     elif change=='stop':await r.service.stop(r.task['id'])
     elif change=='reconnect':r.relay.connect(TOKEN,ConnectionRequest(previous_connection_id=r.conn))
     elif change=='pause':
-        from wearing.cloud.relay import ResourceControl
+        from pajio.cloud.relay import ResourceControl
         r.relay.control('daily',ResourceControl(resource_id='computer_test',paused=True,expected_generation=0))
     assert not auto_answer(r.relay,'daily',p,grant)
     with r.relay.tx() as db:assert db.execute('SELECT COUNT(*) FROM commands').fetchone()[0]==1

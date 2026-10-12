@@ -2,7 +2,7 @@
 
 核查日期：2026-09-30。本文件保留早期候选资源和部署调查，文中的设备偏好属于当时研究设想。当前产品以多种资源连接器与完整接入流程为主线，见[整合落地总方案](implementation-blueprint.md)。尚未安装、开通、付费或实测。服务资格、库存和价格需要在实际办理时重新核实。
 
-产品依据：[Wearing 产品定义](product-definition.md)。本文件保留前期选型与资源核查；当前工程决策、开发顺序和验收以[落地总方案](implementation-blueprint.md)为准。
+产品依据：[Pajio 产品定义](product-definition.md)。本文件保留前期选型与资源核查；当前工程决策、开发顺序和验收以[落地总方案](implementation-blueprint.md)为准。
 
 ## 已有需求与实现设想
 

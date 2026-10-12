@@ -14,7 +14,7 @@ export class NativeSyncClient {
     if (this.signal?.aborted) cancel();
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method: body ? 'POST' : 'GET', signal: controller.signal, redirect: 'error',
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity':this.connection.identity, ...(body ? {'Content-Type':'application/json','X-Wearing-Token':this.token} : {})}, ...(body ? {body:JSON.stringify(body)} : {})});
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity':this.connection.identity, ...(body ? {'Content-Type':'application/json','X-Pajio-Token':this.token} : {})}, ...(body ? {body:JSON.stringify(body)} : {})});
       if (!this.active()) throw new Error('同步已停止。');
       if (response.status === 403 && body && retry) {await this.bootstrap(); return this.request(path, body, false);}
       const data = await response.json();

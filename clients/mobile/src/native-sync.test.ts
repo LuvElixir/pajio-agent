@@ -89,8 +89,8 @@ test('cloud client pins trusted account tenant and identity on bootstrap and upl
   const fetcher=(async(url,init)=>{calls.push({url:String(url),init:init!});return new Response(JSON.stringify(String(url).endsWith('/api/bootstrap')?{token:'csrf',identities:[{id:'daily'}]}:receipt(batch)),{status:200});}) as typeof fetch;
   const client=new NativeSyncClient(connection,'f'.repeat(32),fetcher,()=>true);
   await client.upload(batch);assert.equal(calls.length,2);
-  for(const call of calls){const headers=call.init.headers as Record<string,string>;assert.equal(headers.Authorization,'Bearer '+'a'.repeat(64));assert.equal(headers['X-Pajio-Expected-Tenant'],'synthetic');assert.equal(headers['X-Wearing-Identity'],'daily');assert.equal(call.init.redirect,'error');}
-  assert.equal((calls[1].init.headers as Record<string,string>)['X-Wearing-Token'],'csrf');assert.equal(JSON.parse(calls[1].init.body as string).installation,'f'.repeat(32));
+  for(const call of calls){const headers=call.init.headers as Record<string,string>;assert.equal(headers.Authorization,'Bearer '+'a'.repeat(64));assert.equal(headers['X-Pajio-Expected-Tenant'],'synthetic');assert.equal(headers['X-Pajio-Identity'],'daily');assert.equal(call.init.redirect,'error');}
+  assert.equal((calls[1].init.headers as Record<string,string>)['X-Pajio-Token'],'csrf');assert.equal(JSON.parse(calls[1].init.body as string).installation,'f'.repeat(32));
 });
 test('stopped client rejects a late response body and does not retry with old credentials',async()=>{
   let active=true,calls=0;

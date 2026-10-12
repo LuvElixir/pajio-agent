@@ -40,7 +40,7 @@ export class HealthHistoryApi {
   private async request(path:string,body?:object,raw=false,retry=true):Promise<unknown>{
     if(!this.enabled||!this.active())throw new ApiError('账户或页面已切换，请重新打开。',409);
     const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),25000);
-    try{const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body?'POST':'GET',signal:controller.signal,redirect:'error',headers:{...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity,...(body?{'Content-Type':'application/json','X-Wearing-Token':this.token}:{})},...(body?{body:JSON.stringify(body)}:{})});
+    try{const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body?'POST':'GET',signal:controller.signal,redirect:'error',headers:{...connectionHeaders(this.connection),'X-Pajio-Identity':this.connection.identity,...(body?{'Content-Type':'application/json','X-Pajio-Token':this.token}:{})},...(body?{body:JSON.stringify(body)}:{})});
       if(body&&response.status===403&&retry){await this.bootstrap();return this.request(path,body,raw,false);}
       if(!response.ok)throw new ApiError(response.status===404?'运行历史尚未接入或报告已过期。':response.status===429?'今日诊断文件已达上限，请使用已生成的文件。':'运行历史暂时无法读取，请重试。',response.status);
       if(!response.headers.get('Content-Type')?.includes('application/json'))throw bad();

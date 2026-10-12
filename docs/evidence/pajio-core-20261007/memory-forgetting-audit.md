@@ -4,7 +4,7 @@
 
 ## 现状和原始承诺
 
-- `PRODUCT.md`“个人记忆与检索”、`docs/personal-memory.md` 定义：Hermes native memory + session_search；完整遗忘尚未实现，不另造向量库。`src/wearing/identity.md` 也明确移除个人记忆不等于删掉全部历史。
+- `PRODUCT.md`“个人记忆与检索”、`docs/personal-memory.md` 定义：Hermes native memory + session_search；完整遗忘尚未实现，不另造向量库。`src/pajio/identity.md` 也明确移除个人记忆不等于删掉全部历史。
 - `memory_controls.mutate_memory` 仅 CAS 修改当前身份的 `USER.md` 或 `MEMORY.md` 条目；`set_memory_enabled` 仅改变内建记忆的后续读取/写入标志。两者都没有会话抑制、来源标签或遗忘 journal。
 - `MemoryEditor` 已显示“本页只管理当前身份条目；聊天、其他记忆页、文件和已完成任务保留”，清空确认也只承诺本页。这些界限应保留。
 - `/api/memory` 由 app token 与 identity 路由保护，转交该 identity 的 Hermes client。并非 owner 私有存储；所有获准访问此身份的账户按既有共享语义管理同一记忆页。没有独立 memory admin/条目作者权限。
@@ -18,7 +18,7 @@
 - `memories/USER.md`、`MEMORY.md`：原生当前记忆。
 - `state.db` 的 sessions/messages、原生 FTS5/trigram/CJK 索引：历史检索和续接上下文；压缩归档消息仍可检索。
 - `sessions/<session>.jsonl` 与内建 DB 修复/备份路径可能保存转录副本。原生 memory 外部漂移检测还可能产生 `.bak.<timestamp>`。本次仅核对代码，不检查真实文件是否存在。
-- Pajio `wearing.sqlite3` 的 tasks/messages/events、目标/安排上下文、已生成产物及用户文档是另外的内容来源；当前移除不会删除这些数据。
+- Pajio `pajio.sqlite3` 的 tasks/messages/events、目标/安排上下文、已生成产物及用户文档是另外的内容来源；当前移除不会删除这些数据。
 - 当前 owner 的续接映射在 `owner_conversations`，入场证明在 `task_conversation_sessions`。旧聊天记录和这些执行证明不宜因移除一条 memory 而随意删除。
 
 合成证明：移除 USER 条目后，新 store 内容为空，但先前冻结快照仍包含标记，历史消息未变；原生未加 guard 的 search/read/scroll/browse 均能取回标记。P0 修复现在阻止外部 owner 检索，自己的历史继续可用，故仍不等于遗忘。

@@ -116,7 +116,7 @@ test('client sends fixed identity and tenant headers, no secret in device listin
   const connection={endpoint:'https://example.test/',identity:'work',session:{accessToken:'t'.repeat(64),credentialId:'s'.repeat(32),expiresAt:'2099-01-01T00:00:00Z',tenantId:'tenant-one',userId:'user_'+'a'.repeat(32)}};
   const c=new NativeActionClient(connection,{installation_id:phone,secret:'b'.repeat(64)},async(url,init)=>{calls.push({url:String(url),init:init!});return new Response(JSON.stringify({items:[{...device,identity_id:'work'}]}),{status:200});});
   assert.equal((await c.device())?.identity_id,'work');
-  const headers=calls[0].init.headers as Record<string,string>;assert.equal(headers['X-Wearing-Identity'],'work');assert.equal(headers['X-Pajio-Expected-Tenant'],'tenant-one');assert.equal(calls[0].init.body,undefined);
+  const headers=calls[0].init.headers as Record<string,string>;assert.equal(headers['X-Pajio-Identity'],'work');assert.equal(headers['X-Pajio-Expected-Tenant'],'tenant-one');assert.equal(calls[0].init.body,undefined);
 });
 
 test('mismatched finish acknowledgement keeps durable receipt and never repeats OS write',async()=>{

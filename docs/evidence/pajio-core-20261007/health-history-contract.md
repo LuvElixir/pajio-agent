@@ -11,7 +11,7 @@
 - 用户显式创建支持包后，保存不可变 JSON，返回 SHA-256、字节数、文件名和有效期；同 request_key 重试拿到同一份内容，重启不改变回执。导出有效期 24 小时，每账户＋身份最多 5 份有效文件，单份最大 1 MiB。
 - 没有支持服务、邮件、工单或告警连接；导出恒为 `transmission=not_sent`。下载不表示已分享、已接收或有人处理。包内没有自动发送端点。
 
-文件：`src/wearing/health_history.py`、`health_history_api.py`、`tests/test_health_history.py`。另在注销 `_freeze()` 固定取消列表中加入 `health_task`，并用真实临时 tenant ASGI 测试证明已 await 采样取消，冻结后无迟到诊断写入、重启不启动采样。
+文件：`src/pajio/health_history.py`、`health_history_api.py`、`tests/test_health_history.py`。另在注销 `_freeze()` 固定取消列表中加入 `health_task`，并用真实临时 tenant ASGI 测试证明已 await 采样取消，冻结后无迟到诊断写入、重启不启动采样。
 
 ## 证据含义与状态
 

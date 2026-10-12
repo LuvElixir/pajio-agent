@@ -2,9 +2,9 @@ const {test} = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync('src/wearing/web/native-composer.js', 'utf8');
-const drafts = fs.readFileSync('src/wearing/web/conversation-drafts.js', 'utf8');
-const app = fs.readFileSync('src/wearing/web/app.js', 'utf8');
+const source = fs.readFileSync('src/pajio/web/native-composer.js', 'utf8');
+const drafts = fs.readFileSync('src/pajio/web/conversation-drafts.js', 'utf8');
+const app = fs.readFileSync('src/pajio/web/app.js', 'utf8');
 const submitHandler = app.slice(app.indexOf('$("conversation-form").addEventListener("submit"'), app.indexOf('$("message-input").addEventListener("keydown"'));
 const voiceId = 'voice-01234567-89ab-cdef-0123-456789abcdef';
 let pages = 0;
@@ -25,9 +25,9 @@ function setup({query = '?host=mobile&composer=native', host = true, ready = tru
   const storage = {
     getItem(key) {if (h.failRead) throw Error('read denied'); return data.get(key) ?? null;},
     setItem(key, value) {
-      if ((h.failDraft && key.startsWith('wearing-chat-draft:')) ||
-          (h.failJournal && key.startsWith('wearing-native-voice:')) ||
-          (h.failReceipt && key.startsWith('wearing-native-voice:') && JSON.parse(value).status === 'received')) throw Error('quota');
+      if ((h.failDraft && key.startsWith('pajio-chat-draft:')) ||
+          (h.failJournal && key.startsWith('pajio-native-voice:')) ||
+          (h.failReceipt && key.startsWith('pajio-native-voice:') && JSON.parse(value).status === 'received')) throw Error('quota');
       data.set(key, value); writes.push(key);
     },
     removeItem(key) {if (h.failDraft) throw Error('quota'); data.delete(key);},
@@ -35,13 +35,13 @@ function setup({query = '?host=mobile&composer=native', host = true, ready = tru
   const context = {
     URLSearchParams, Event, location: {search: query}, localStorage: storage,
     state: {identityId: 'daily', goalFocus: goal, lifeFocus: life, sending: false}, composerReady: ready, draftStorageWarning: false,
-    window: {WearingHost: {setActive() {}}, crypto: {randomUUID: () => 'test-page-' + (++pages)},
+    window: {PajioHost: {setActive() {}}, crypto: {randomUUID: () => 'test-page-' + (++pages)},
       ...(host ? {ReactNativeWebView: {postMessage: raw => messages.push(JSON.parse(raw))}} : {})},
     document: {getElementById: id => elements[id], querySelector: () => dock,
       addEventListener(name, fn) {const items = events.get(name) || []; items.push(fn); events.set(name, items);}},
     composerContext() {return {identity: context.state.identityId, goal: context.state.goalFocus, life: context.state.goalFocus ? null : context.state.lifeFocus};},
     rememberComposer() {return context.composerReady ? context.composerDrafts.save(context.composerContext(), input.value) : false;},
-    publishComposer() {for (const fn of events.get('wearing-composer-state') || []) fn();},
+    publishComposer() {for (const fn of events.get('pajio-composer-state') || []) fn();},
     $: id => elements[id], updateCompanion() {}, scrollToLatest() {}, loadConversation: async () => {},
     busy: async (_, action) => action(),
     notice(text, error = false) {notice.textContent = text; notice.hidden = !text; notice.classList[error ? 'add' : 'remove']('error');},
@@ -49,14 +49,14 @@ function setup({query = '?host=mobile&composer=native', host = true, ready = tru
     async api(path, options) {requests.push({path, ...options}); return h.response ? h.response() : {task: {id: 'task-real'}, delivery: 'submitted'};},
   };
   vm.createContext(context); vm.runInContext(drafts, context);
-  context.composerDrafts = context.window.WearingDrafts.create(() => storage, () => {context.draftStorageWarning = true;});
+  context.composerDrafts = context.window.PajioDrafts.create(() => storage, () => {context.draftStorageWarning = true;});
   input.value = initial ?? context.composerDrafts.read(context.composerContext())?.text ?? '原有草稿';
   context.activateComposer = () => {};
   vm.runInContext(source, context); vm.runInContext(submitHandler, context);
   h.context = context;
   h.emit = name => {for (const fn of events.get(name) || []) fn();};
   h.latest = () => messages.at(-1);
-  h.command = (kind, seq, extra = {}) => context.window.WearingHost.composerCommand({
+  h.command = (kind, seq, extra = {}) => context.window.PajioHost.composerCommand({
     identity: context.state.identityId, pageId: h.latest().pageId, contextKey: JSON.stringify(context.composerContext()), kind, seq, ...extra,
   });
   return h;
@@ -65,7 +65,7 @@ function setup({query = '?host=mobile&composer=native', host = true, ready = tru
 test('bridge is inert outside the explicit native composer host', () => {
   for (const options of [{query: ''}, {query: '?host=mobile'}, {query: '?composer=native'}, {host: false}]) {
     const h = setup(options);
-    assert.equal(h.context.window.WearingHost.composerCommand, undefined); assert.equal(h.messages.length, 0);
+    assert.equal(h.context.window.PajioHost.composerCommand, undefined); assert.equal(h.messages.length, 0);
     assert.equal(h.input.value, '原有草稿'); assert.equal(h.writes.length, 0);
   }
 });
@@ -75,7 +75,7 @@ test('initial state exposes only current composer presentation and context', () 
   assert.equal(h.latest().ready, true); assert.equal(h.latest().text, '原有草稿'); assert.equal(h.latest().ackSeq, 0);
   assert.equal(h.latest().contextLabel, '补充新情况 · 周末出行');
   assert.deepEqual(JSON.parse(h.latest().contextKey), {identity: 'daily', goal, life: null});
-  assert.equal(h.latest().type, 'wearing-composer-state'); assert.equal(h.requests.length, 0);
+  assert.equal(h.latest().type, 'pajio-composer-state'); assert.equal(h.requests.length, 0);
 });
 
 test('full literal edits persist once and duplicate or older sequences cannot overwrite them', () => {
@@ -104,7 +104,7 @@ test('commands from an old page, identity, or contextual revision are rejected',
 test('bootstrap cannot accept a mutation and never publishes unrestored input as ready', () => {
   const h = setup({ready: false}); assert.equal(h.latest().ready, false); assert.equal(h.latest().text, '');
   h.command('change', 1, {text: '太早'}); assert.equal(h.input.value, '原有草稿');
-  h.context.composerReady = true; h.input.value = '恢复的草稿'; h.emit('wearing-composer-ready');
+  h.context.composerReady = true; h.input.value = '恢复的草稿'; h.emit('pajio-composer-ready');
   assert.equal(h.latest().text, '恢复的草稿'); assert.equal(h.latest().ready, true);
   h.command('change', 1, {text: '可以了'}); assert.equal(h.input.value, '可以了');
 });
@@ -122,7 +122,7 @@ test('send enters only the real conversation submit handler with its stable requ
   h.command('send', 1, {text: '重复发送'}); h.command('send', 2, {text: '正在发送时重试'});
   assert.equal(h.requests.length, 1); assert.equal(h.requests[0].path, '/api/conversation');
   assert.deepEqual(JSON.parse(h.requests[0].body), {content: '真正的原话', request_id: 'request-stable'});
-  await Promise.all(h.submits); h.emit('wearing-composer-state');
+  await Promise.all(h.submits); h.emit('pajio-composer-state');
   assert.equal(h.latest().sending, false); assert.equal(h.latest().text, ''); assert.equal(h.acknowledged.id, 'request-stable');
 });
 
@@ -140,7 +140,7 @@ test('late send completion cannot erase a newer native edit', async () => {
   const h = setup(); let resolve;
   h.response = () => new Promise(done => {resolve = done;});
   h.command('send', 1, {text: '第一条'}); h.command('change', 2, {text: '下一条正在写'});
-  resolve({task: {id: 'task-real'}, delivery: 'submitted'}); await Promise.all(h.submits); h.emit('wearing-composer-state');
+  resolve({task: {id: 'task-real'}, delivery: 'submitted'}); await Promise.all(h.submits); h.emit('pajio-composer-state');
   assert.equal(h.latest().text, '下一条正在写'); assert.equal(h.latest().ackSeq, 2); assert.equal(h.latest().sending, false);
 });
 
@@ -155,9 +155,9 @@ test('native send reports form validation failure instead of acknowledging a sil
 
 test('late notification publishes the current identity and scope instead of stale data', () => {
   const h = setup(), old = h.latest();
-  h.context.state.identityId = 'overseas'; h.input.value = '另一个身份'; h.emit('wearing-composer-ready');
+  h.context.state.identityId = 'overseas'; h.input.value = '另一个身份'; h.emit('pajio-composer-ready');
   h.command('change', 1, {identity: old.identity, contextKey: old.contextKey, text: '旧身份'});
-  h.emit('wearing-composer-state');
+  h.emit('pajio-composer-state');
   assert.equal(h.latest().identity, 'overseas'); assert.equal(h.latest().text, '另一个身份'); assert.equal(h.latest().ackSeq, 0);
 });
 
@@ -212,6 +212,6 @@ test('failed edit persistence retains input, blocks send, and rejects an older d
 test('input and notice events reflect edits, sending, and errors without triggering execution', () => {
   const h = setup(); h.input.value = '网页补充'; h.input.dispatchEvent(new Event('input'));
   assert.equal(h.latest().text, '网页补充');
-  h.context.notice('服务未返回保存回执', true); h.context.state.sending = false; h.emit('wearing-composer-state');
+  h.context.notice('服务未返回保存回执', true); h.context.state.sending = false; h.emit('pajio-composer-state');
   assert.equal(h.latest().error, '服务未返回保存回执'); assert.equal(h.requests.length, 0);
 });

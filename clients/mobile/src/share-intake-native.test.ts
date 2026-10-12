@@ -9,7 +9,7 @@ import {fileURLToPath, pathToFileURL} from 'node:url';
 import ts from 'typescript';
 import * as model from './share-intake-model';
 
-const GROUP = 'group.io.luckyloading.wearing.mobile.share';
+const GROUP = 'group.io.luckyloading.pajio.mobile.share';
 const ID = 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee';
 const nativeSource = fs.readFileSync(path.join(import.meta.dirname, 'share-intake-native.ts'), 'utf8');
 function fixture(platform: 'ios' | 'android') {

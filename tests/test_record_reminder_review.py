@@ -26,7 +26,7 @@ async def test_transient_source_retirement_between_observations_stays_disabled(e
 
 
 async def test_series_cancel_then_reset_between_observations_does_not_reenable(env):
-    from wearing.calendar_series import CalendarSeriesBook
+    from pajio.calendar_series import CalendarSeriesBook
     service, _, clock, calls = env
     register(service)
     book = CalendarSeriesBook(service.store)
@@ -63,7 +63,7 @@ async def test_due_moved_away_and_back_invalidates_old_claim_but_title_change_do
 
 
 async def test_native_import_complete_then_reopen_also_invalidates_old_claim(env):
-    from wearing.native_sync import NativeSyncBook
+    from pajio.native_sync import NativeSyncBook
     service, life, clock, calls = env
     register(service)
     sync = NativeSyncBook(service.store)
@@ -86,7 +86,7 @@ async def test_native_import_complete_then_reopen_also_invalidates_old_claim(env
 
 
 def test_reminder_settings_export_only_current_owner_without_delivery_or_request_journals(env):
-    from wearing.identity_export import IdentityExports
+    from pajio.identity_export import IdentityExports
     service, life, clock, _ = env
     record = make(life, clock); save(service, record)
     other = 'b' * 64 if OWNER != 'b' * 64 else 'c' * 64

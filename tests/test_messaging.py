@@ -5,9 +5,9 @@ from fastapi import HTTPException
 import httpx
 import pytest
 
-from wearing.messaging import ChannelError, ChannelNetwork, MessagingBridge
-from wearing.service import TaskService
-from wearing.store import Store
+from pajio.messaging import ChannelError, ChannelNetwork, MessagingBridge
+from pajio.service import TaskService
+from pajio.store import Store
 
 
 TOKEN = "123456789:" + "fake-secret-" * 3
@@ -18,7 +18,7 @@ class Engine:
         self.starts = []
 
     async def probe(self):
-        return {"state": "reachable", "wearing": {}}
+        return {"state": "reachable", "pajio": {}}
 
     async def start(self, payload, key):
         self.starts.append((payload, key))
@@ -229,9 +229,9 @@ async def test_httpx_logging_never_records_telegram_bot_credential(caplog):
 
 
 async def test_channel_routes_inherit_product_csrf_identity_and_secret_safe_validation(tmp_path):
-    from wearing.app import create_app
-    from wearing.config import Settings
-    from wearing.messaging_api import install_messaging_routes
+    from pajio.app import create_app
+    from pajio.config import Settings
+    from pajio.messaging_api import install_messaging_routes
     app = create_app(Settings(tmp_path))
     bridge = getattr(app.state, "messaging", None)
     if bridge is None:
@@ -244,7 +244,7 @@ async def test_channel_routes_inherit_product_csrf_identity_and_secret_safe_vali
         body = {"secret": TOKEN, "allowed_users": ["42"]}
         assert (await client.put("/api/messaging/telegram", json=body)).status_code == 403
         token = (await client.get("/api/bootstrap")).json()["token"]
-        client.headers["X-Wearing-Token"] = token
+        client.headers["X-Pajio-Token"] = token
         result = await client.put("/api/messaging/telegram", json=body)
         assert result.status_code == 200
         assert TOKEN not in result.text

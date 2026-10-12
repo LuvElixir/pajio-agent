@@ -19,12 +19,12 @@ async function receipt(body: TextRequest) {return {identity_id: 'daily', source_
 function api(handler: (url: string, body?: TextRequest) => Response | Promise<Response>) {
   const calls: {url: string; body?: TextRequest}[] = [];
   const client = new WorkspaceTextApi(connection, digest, (async (url, init) => {
-    assert.equal(new Headers(init?.headers).get('X-Wearing-Identity'), 'daily');
+    assert.equal(new Headers(init?.headers).get('X-Pajio-Identity'), 'daily');
     assert.equal(init?.redirect, 'error'); assert.ok(init?.signal);
     if (String(url).endsWith('/api/bootstrap')) return Response.json({token: 'test-csrf', identities: [{id: 'daily'}]});
     const body = init?.body ? JSON.parse(String(init.body)) as TextRequest : undefined;
     calls.push({url: String(url), body});
-    if (body) assert.equal(new Headers(init?.headers).get('X-Wearing-Token'), 'test-csrf');
+    if (body) assert.equal(new Headers(init?.headers).get('X-Pajio-Token'), 'test-csrf');
     return handler(String(url), body);
   }) as typeof fetch);
   return {client, calls};

@@ -5,7 +5,7 @@
 ## 源码与自动验证
 
 - `.venv/bin/python -m pytest -q`：**383 passed, 18 skipped**，36.05 秒；一个既有 Authlib httpx 弃用警告。跳过的集成项不是已通过项。
-- `node --check src/wearing/web/app.js` 与 `life.js`：通过。
+- `node --check src/pajio/web/app.js` 与 `life.js`：通过。
 - 记录测试覆盖身份分隔、持久重开、并发幂等、版本冲突、Agent 迟到写入、移除/恢复、类型与时间校验、无效编辑回滚、消息引用与原话原子提交。
 - 现有 Hermes 集成验收增加 profile 9 的生活 MCP 注册与工具发现，不替代真实模型验收。
 - MCP SDK stdio 客户端实际发现 `life_records/life_create/life_change`，创建并移除合成记录，独立 `LifeBook` 能看到同一结果。
@@ -16,7 +16,7 @@ FullCalendar 7.1.0 标准组件从官方文档指定的发行文件下载，文�
 
 首次测试任务 `ac60cef5bae44cc78fe42a640d364efe` 没有成功写入。模型明确报告生活工具未加载，没有将口头回答算作成功。原因是受管引擎缺少启动发现步骤；补齐三个工具的发现与就绪检查后重新测试。
 
-第二次任务 `d9975754fb954345984be825287def61` 实际调用 `life_create`，生成 `life_ad85a7e9e1b54578ab500f06635a7230`。独立产品 API 检查标题、正文和类型一致后将任务标记验证；合成笔记可恢复移除，未混入用户正式笔记。私人核对元数据保存在 `.wearing/qa/life-tools-20261004/live-model-verified.json`，凭据与完整私有数据库不公开。
+第二次任务 `d9975754fb954345984be825287def61` 实际调用 `life_create`，生成 `life_ad85a7e9e1b54578ab500f06635a7230`。独立产品 API 检查标题、正文和类型一致后将任务标记验证；合成笔记可恢复移除，未混入用户正式笔记。私人核对元数据保存在 `.pajio/qa/life-tools-20261004/live-model-verified.json`，凭据与完整私有数据库不公开。
 
 最后重启本地服务与受管引擎：运行阶段 `running`，profile 9，能力接口实际列出三个生活工具。升级前和最终聊天引用变更前分别取得 SQLite 私有备份，保留原有对话及资源。
 

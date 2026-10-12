@@ -5,13 +5,13 @@ import sqlite3
 import httpx
 import pytest
 from pydantic import ValidationError
-from wearing.config import Settings
-from wearing.goals import GoalBook, GoalCoordinator, GoalError
-from wearing.hermes import HermesClient
-from wearing.life import LifeBook
-from wearing.life_proxy import dispatch
-from wearing.service import TaskService
-from wearing.store import Store
+from pajio.config import Settings
+from pajio.goals import GoalBook, GoalCoordinator, GoalError
+from pajio.hermes import HermesClient
+from pajio.life import LifeBook
+from pajio.life_proxy import dispatch
+from pajio.service import TaskService
+from pajio.store import Store
 from test_goals import GoalWire, report
 
 
@@ -22,7 +22,7 @@ def proposal(**changes):
 
 @pytest.fixture
 def rig(tmp_path):
-    store=Store(tmp_path/'wearing.sqlite3');book=GoalBook(store)
+    store=Store(tmp_path/'pajio.sqlite3');book=GoalBook(store)
     message=store.create_message('交给你持续研究，最多三轮，只用测试资料。')
     store.update(message['id'],status='running',run_id='conversation-run')
     return store,book,message
@@ -99,7 +99,7 @@ def test_background_or_existing_goal_discussion_cannot_multiply_work(rig,kind):
         parent=book.create('daily','既有目标','只用测试资料','核对结果',3)
         task,_=book.create_message(parent['id'],'daily','继续讨论这个目标')
     else:
-        from wearing.schedules import ScheduleBook,ScheduleDraft
+        from pajio.schedules import ScheduleBook,ScheduleDraft
         schedules=ScheduleBook(store)
         schedule=schedules.create('daily',ScheduleDraft(title='后台测试',instruction='只用测试资料',kind='once',at='2035-01-01T00:00:00+00:00'),'s')
         task=store.create_message('synthetic anomalous schedule-message link')

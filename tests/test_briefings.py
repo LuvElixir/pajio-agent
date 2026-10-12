@@ -7,11 +7,11 @@ import pytest
 from fastapi import FastAPI, Request
 from pydantic import ValidationError
 
-from wearing.artifacts import ArtifactBook, ArtifactDraft
-from wearing.briefing_api import BriefingBook, BriefingError, CreateBriefing, install_briefing_routes
-from wearing.life import LifeBook, LifeDraft
-from wearing.service import TaskService
-from wearing.store import Store
+from pajio.artifacts import ArtifactBook, ArtifactDraft
+from pajio.briefing_api import BriefingBook, BriefingError, CreateBriefing, install_briefing_routes
+from pajio.life import LifeBook, LifeDraft
+from pajio.service import TaskService
+from pajio.store import Store
 
 
 class NoNetworkHermes:
@@ -45,7 +45,7 @@ def draft(key='test-briefing-request-01', base=0, **values):
 ])
 @pytest.mark.parametrize('target', ['2026-10-08', '2026-10-10', '2026-10-12'])
 def test_prompt_anchors_request_day_in_requested_timezone_and_keeps_target(tmp_path, monkeypatch, zone, local_stamp, local_day, target):
-    monkeypatch.setattr('wearing.briefing_api.now', lambda: '2026-10-09T18:40:00+00:00')
+    monkeypatch.setattr('pajio.briefing_api.now', lambda: '2026-10-09T18:40:00+00:00')
     _, _, _, _, book = setup(tmp_path)
     request = CreateBriefing(date=target, timezone=zone, request_key='qa-date-anchor-request')
     row = book.reserve('daily', request)
@@ -54,7 +54,7 @@ def test_prompt_anchors_request_day_in_requested_timezone_and_keeps_target(tmp_p
     assert f'本版目标日期：{target}' in row['prompt']
     assert '正文不使用今天、明天、昨天代替目标日期' in row['prompt']
     # A replay across midnight must retain the original intent and time context.
-    monkeypatch.setattr('wearing.briefing_api.now', lambda: '2026-10-11T18:40:00+00:00')
+    monkeypatch.setattr('pajio.briefing_api.now', lambda: '2026-10-11T18:40:00+00:00')
     assert book.reserve('daily', request) == row
 
 
@@ -220,12 +220,12 @@ async def test_replaced_symlink_is_not_followed_to_decide_briefing_exclusion(tmp
     # If followed, equal bytes would hide the file. A raced symlink must stay
     # uncertain instead; the later scoped tool must perform a fresh safe read.
     outside = tmp_path / 'outside.html'; outside.write_text(raw)
-    from wearing.workspace import list_files
+    from pajio.workspace import list_files
     def replaced(*args, **kwargs):
         listing = list_files(*args, **kwargs)
         path.unlink(); path.symlink_to(outside)
         return listing
-    monkeypatch.setattr('wearing.briefing_api.list_files', replaced)
+    monkeypatch.setattr('pajio.briefing_api.list_files', replaced)
     assert book.sources('daily', ['files'])[0]['count'] == 1
 
 
@@ -276,7 +276,7 @@ async def test_http_listing_is_read_only_and_returns_owned_contract(tmp_path):
     app = FastAPI()
     @app.middleware('http')
     async def identity(request: Request, call_next):
-        request.state.identity_id = request.headers.get('X-Wearing-Identity', 'daily')
+        request.state.identity_id = request.headers.get('X-Pajio-Identity', 'daily')
         return await call_next(request)
     install_briefing_routes(app, store, service, artifacts)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url='http://qa.test') as client:

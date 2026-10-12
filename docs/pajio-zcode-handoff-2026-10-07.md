@@ -15,17 +15,17 @@
 
 ## Implement in your scope
 
-1. 全部 Web / Desktop 用户可见 Wearing 改为 Pajio，包括 title、无障碍名、空态、连接提示、账户摘要和新助手称呼。旧历史消息、不可变产物原件不重写。保留协议、cookie/storage/IPC、包标识和 API 兼容。
+1. 全部 Web / Desktop 用户可见 Pajio 改为 Pajio，包括 title、无障碍名、空态、连接提示、账户摘要和新助手称呼。旧历史消息、不可变产物原件不重写。保留协议、cookie/storage/IPC、包标识和 API 兼容。
 2. Web 实现浅色/深色/跟随系统，使用 App 语义配色。取消旧 Today 蓝杏渐变、重玻璃外框和假会员卡；正文背景平静，账户信息真实。
 3. 使用提供的 Pajio 字标和单星，默认睡衣小熊；我的→外观与个性化→八套衣橱，预览后显式保存，按连接和身份隔离。无新定价/虚构权限，不重造角色图。
 4. 五入口聊天/今天/任务/记忆/我的，大屏以桌面阅读宽度组织；窄屏不挤压正文。聊天只保留一个总进展入口，真实任务/记忆事件低干扰，搜索/设置可达。移除泛化逐条核对/记成目标。
 5. 对齐非聊天页紧凑输入入口；草稿与上下文保留。今天基于真实已接任务/返回结果/需介入，不能伪造自动简报。任务使用现有新分页接口 `limit/cursor`，409 保留当前内容并明确刷新；总体数量与当前载入数量分开。
-6. Desktop 原生 Tauri 外壳也必须更新：productName、窗口标题、连接页、图标、构建 App 名称；保留 `io.luckyloading.wearing.desktop` 和现有数据路径兼容。核对 `clients/desktop/src-tauri/tauri.conf.json`、frontend 和 Rust 用户可见字符串。完成实际编译和本地候选包，勿以浏览器适配替代桌面交付。
+6. Desktop 原生 Tauri 外壳也必须更新：productName、窗口标题、连接页、图标、构建 App 名称；保留 `io.luckyloading.pajio.desktop` 和现有数据路径兼容。核对 `clients/desktop/src-tauri/tauri.conf.json`、frontend 和 Rust 用户可见字符串。完成实际编译和本地候选包，勿以浏览器适配替代桌面交付。
 7. 更新根 DESIGN.md 及 Web/Desktop 交付记录，明确主导文件及兼容边界。
 
 ## Boundary and shared working tree
 
-只改 Web 常规分支、Desktop 和其测试/交付文档。`clients/mobile/**`、`src/wearing/web/mobile-host.css`、`mobile-host.js`、原生 bridge、后端和语音/数据库/认证只读。index/app/life 等共享文件须增量修改，保留 `html.mobile-host`、WearingHost、ackSeq/ackVoiceId、身份/草稿/确认安全边界。常规 Web CSS 用 `html:not(.mobile-host)` 门控。不要 git reset/clean，当前有大量他人脏改。不要 push/部署/服务重启/删历史数据。
+只改 Web 常规分支、Desktop 和其测试/交付文档。`clients/mobile/**`、`src/pajio/web/mobile-host.css`、`mobile-host.js`、原生 bridge、后端和语音/数据库/认证只读。index/app/life 等共享文件须增量修改，保留 `html.mobile-host`、PajioHost、ackSeq/ackVoiceId、身份/草稿/确认安全边界。常规 Web CSS 用 `html:not(.mobile-host)` 门控。不要 git reset/clean，当前有大量他人脏改。不要 push/部署/服务重启/删历史数据。
 
 ## Verify before saying done
 

@@ -1,20 +1,20 @@
 # 独立租户运行入口
 
-2026-10-03。本次是 S1 的租户 Worker 基础：把现有 Wearing 与 Hermes 的状态和生命周期封装进一份独立实例，复用原会话、目标、文件和记忆实现。没有引入第二个 Agent 循环。随后已完成首台腾讯 VM 的实际运行与 S2 出站设备连接，最新状态见[连接器验收](evidence/remote-device-2026-10-03.md)。
+2026-10-03。本次是 S1 的租户 Worker 基础：把现有 Pajio 与 Hermes 的状态和生命周期封装进一份独立实例，复用原会话、目标、文件和记忆实现。没有引入第二个 Agent 循环。随后已完成首台腾讯 VM 的实际运行与 S2 出站设备连接，最新状态见[连接器验收](evidence/remote-device-2026-10-03.md)。
 
 ## 初始化与启动
 
 以下为开发示例。生产应在每租户独立 VM/microVM 内执行，不能在共享服务器上建立两个目录就宣称完成 VM 隔离。
 
 ```sh
-wearing tenant init --root ./tenant-A --tenant-id tenant_A --origin https://wearing.example
-wearing tenant status --root ./tenant-A
-wearing tenant serve --root ./tenant-A --port 8781
+pajio tenant init --root ./tenant-A --tenant-id tenant_A --origin https://pajio.example
+pajio tenant status --root ./tenant-A
+pajio tenant serve --root ./tenant-A --port 8781
 ```
 
 初始化生成私有 `instance.json`、内部服务凭据 `gateway.key`、`data/instance-owner.json`。重复初始化相同租户与网页来源不会换密钥；尝试改租户或采用已有本地用户目录会拒绝。云厂商可替换，实例配置不写入提供商管理凭据。
 
-实例固定一个 tenant_id。数据卷也保存 instance_id/tenant_id，启动前核对归属，发现错误卷时不打开用户数据库。实例私有状态位于 `data/`：Wearing SQLite、Hermes Home/SessionDB/记忆、身份和文件都在里面；启动参数与请求不能切换这份目录。
+实例固定一个 tenant_id。数据卷也保存 instance_id/tenant_id，启动前核对归属，发现错误卷时不打开用户数据库。实例私有状态位于 `data/`：Pajio SQLite、Hermes Home/SessionDB/记忆、身份和文件都在里面；启动参数与请求不能切换这份目录。
 
 每份数据卷使用现有 FileLock 防止同时启动两个本服务写入者。锁不能阻止拥有文件系统权限的其他程序或管理员。Windows 需当前用户私有 ACL，不能仅依赖 POSIX chmod。
 
@@ -23,7 +23,7 @@ wearing tenant serve --root ./tenant-A --port 8781
 本入口只监听回环地址，不是可直接开放公网的 SaaS 登录服务。所有页面、文件、记忆和 API 都要求：
 
 - 每实例独立的 `Authorization: Bearer ...` 内部服务凭据。
-- 与启动配置相同的 `X-Wearing-Tenant`，重复字段或误路由拒绝。
+- 与启动配置相同的 `X-Pajio-Tenant`，重复字段或误路由拒绝。
 - 网页 Origin 必须与初始化记录完全匹配，Host 仍由 TrustedHostMiddleware 检查；产品修改操作继续要求页面 CSRF token。
 
 内部凭据由受信任入口代理添加，不能发送到浏览器、放进 URL 或访问日志。代理必须先用成熟 OIDC 验证用户及 membership，再从可信平台记录决定实例和凭据；不能依据用户提交的 tenant_id 直接转发。当前已新增 [OIDC 入口](gateway-runtime.md)、会员查询、入口路由与会话撤销，平台 PostgreSQL 权限/RLS 已在本机真实数据库及合成 IdP 双用户 HTTP 链路验收；独立腾讯 VM 已运行；真实 IdP、生产入口和内部凭据轮换仍待接通。私有 Worker 的服务凭据校验自身不能冒充用户登录。
@@ -37,8 +37,8 @@ wearing tenant serve --root ./tenant-A --port 8781
 使用同一固定版本 Hermes。每实例自行安装和配置，模型凭据由本人或明确的租户配置流程接入；本工具不会复制开发机 `.env`、会话、记忆或设备配置。可以在实例内用已有命令准备引擎：
 
 ```sh
-wearing engine install --data-dir ./tenant-A/data
-wearing engine model --data-dir ./tenant-A/data
+pajio engine install --data-dir ./tenant-A/data
+pajio engine model --data-dir ./tenant-A/data
 ```
 
 启动 Worker 时，已安装的受管引擎会自动尝试启动，并保存本实例的连接。未安装或模型未配置时保留产品记录，允许继续配置，不伪造执行成功。停止 Worker 沿用现有生命周期清理自己启动的引擎。未发送草稿不会因重启就自动成为授权任务；原运行恢复沿用 TaskService 的核对规则。
@@ -49,8 +49,8 @@ wearing engine model --data-dir ./tenant-A/data
 
 ## VM 内服务模板
 
-[wearing-tenant.service](../deploy/tenant/wearing-tenant.service) 供 Linux VM 内使用：一个 `wearing` 用户、一份私有 StateDirectory、失败重启与受管进程关闭。Linux 承载云端 Agent 核心，不替代用户用于 App/账号的 Mac、Windows 或手机。
+[pajio-tenant.service](../deploy/tenant/pajio-tenant.service) 供 Linux VM 内使用：一个 `pajio` 用户、一份私有 StateDirectory、失败重启与受管进程关闭。Linux 承载云端 Agent 核心，不替代用户用于 App/账号的 Mac、Windows 或手机。
 
-部署者需先准备独立 VM、具有 `/var/lib/wearing` home 的服务用户、`/opt/wearing/venv` 安装环境和对应实例。模板不下载未知脚本、不携带密钥、不创建付费实例，也不自动安装到本机。systemd 语义以 [官方服务说明](https://raw.githubusercontent.com/systemd/systemd/main/man/systemd.service.xml) 为依据；本机是 macOS；该模板已在腾讯 Ubuntu VM 经启动和整 VM 重启验收，见[证据](evidence/tencent-vm-2026-10-03.md)。
+部署者需先准备独立 VM、具有 `/var/lib/pajio` home 的服务用户、`/opt/pajio/venv` 安装环境和对应实例。模板不下载未知脚本、不携带密钥、不创建付费实例，也不自动安装到本机。systemd 语义以 [官方服务说明](https://raw.githubusercontent.com/systemd/systemd/main/man/systemd.service.xml) 为依据；本机是 macOS；该模板已在腾讯 Ubuntu VM 经启动和整 VM 重启验收，见[证据](evidence/tencent-vm-2026-10-03.md)。
 
 私有状态需要一致性备份与恢复，不能只把运行中的 SQLite 文件复制走。生产 OIDC、TLS/mTLS 入口、平台 Secret Manager、持久唤醒、VM 网络限制、自动备份和远程设备转发仍是后续工作。本次实际证据见 [租户 Worker 验收](evidence/tenant-worker-2026-10-03.md)。

@@ -5,7 +5,7 @@
 - 通用确认卡去掉重复标签、内嵌灰底区、按钮装饰和常驻提示；保留具体动作与必要影响。决定后显示单行可展开回执，提交与异常提示按需出现。
 - 新增 `goal_change`，支持当前用户对话对原目标暂停、继续、结束、补充和部分修订。原进展、轮次和未修改约定保留；变更使旧计划/唤醒失效。
 - 原子变更及重试回执；并发只应用一次，重试不会再次加轮次或复活手动暂停的目标。工具不能指定身份或来源，不能由后台给自己变更范围/轮次，也不能自行验收完成。
-- Wearing 身份与工具 profile v23；继续使用既有 Hermes 执行和目标协调器。
+- Pajio 身份与工具 profile v23；继续使用既有 Hermes 执行和目标协调器。
 
 ## 自动验证
 
@@ -29,7 +29,7 @@ Impeccable 静态检查 confirmations.css/js 返回空发现。该检查不替�
 
 ![手机确认卡](images/compact-confirmations-20261006/mobile-pending.png)
 
-私有验收记录：`.wearing/qa/goal-changes-20261006/live-check.json`、`decline-recheck.json`。合成数据与凭据文件不纳入公开交付。
+私有验收记录：`.pajio/qa/goal-changes-20261006/live-check.json`、`decline-recheck.json`。合成数据与凭据文件不纳入公开交付。
 
 ## 本地更新与边界
 

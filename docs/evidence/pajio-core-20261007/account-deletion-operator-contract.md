@@ -5,9 +5,9 @@
 The production adapter is executable software, not a success stub. It imports an accepted account deletion request from the control plane, pins an explicit asset manifest, freezes the tenant, revokes supported grants and device access, drains execution, and calls fixed Tencent APIs. Each phase must have a separate observation before it advances. No real tenant, cloud API, credential, stop or deletion was executed during development. Tests use new temporary control databases and tenant roots, an injected fake Tencent CLI, and synthetic identifiers.
 
 Files:
-- `src/wearing/account_deletion_operator.py`: private registry, immutable control-request/journal binding, tenant HTTP client, production phase adapter.
-- `src/wearing/cloud/deletion_tencent.py`: separate bounded Tencent transport and state reconciliation. The discovery `TencentCLI.READ_ACTIONS` is unchanged.
-- `src/wearing/cloud/account_deletion_tenant.py`: fixed `/internal/account-deletion` operator endpoint, durable tombstone, phase receipt readback.
+- `src/pajio/account_deletion_operator.py`: private registry, immutable control-request/journal binding, tenant HTTP client, production phase adapter.
+- `src/pajio/cloud/deletion_tencent.py`: separate bounded Tencent transport and state reconciliation. The discovery `TencentCLI.READ_ACTIONS` is unchanged.
+- `src/pajio/cloud/account_deletion_tenant.py`: fixed `/internal/account-deletion` operator endpoint, durable tombstone, phase receipt readback.
 - `account_deletion_cli.py`: explicit enrollment/import/resume commands.
 - Worker, relay and instance startup reject ordinary work after a tombstone. A worker may restart only to expose its operator endpoint, without starting business background workers.
 
@@ -34,9 +34,9 @@ The separately enrolled 64-character operator key lives at the worker's fixed `d
 ## Control bridge and commands
 
 ```sh
-python -m wearing.account_deletion_cli --journal <private-journal> assets-register --file <private-manifest>
-python -m wearing.account_deletion_cli --journal <private-journal> operator-prepare --gateway-root <gateway-root> --request <accepted-control-request-id>
-python -m wearing.account_deletion_cli --journal <private-journal> operator-resume --gateway-root <gateway-root> --job <journal-job-id> --profile <tccli-profile> --operator-keys <private-key-directory> --execute
+python -m pajio.account_deletion_cli --journal <private-journal> assets-register --file <private-manifest>
+python -m pajio.account_deletion_cli --journal <private-journal> operator-prepare --gateway-root <gateway-root> --request <accepted-control-request-id>
+python -m pajio.account_deletion_cli --journal <private-journal> operator-resume --gateway-root <gateway-root> --job <journal-job-id> --profile <tccli-profile> --operator-keys <private-key-directory> --execute
 ```
 
 These are operational commands, **not commands run in this development session**. `operator-prepare` changes only accepted request/control metadata and the private journal; it does not call Tencent. `operator-resume` without `--execute` refuses before loading gateway/provider credentials. PostgreSQL uses the existing separate operator database role; no browser role gains registry or membership administration.

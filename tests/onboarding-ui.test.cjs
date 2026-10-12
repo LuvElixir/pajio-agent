@@ -5,9 +5,9 @@ const assert = require("node:assert");
 const fs = require("node:fs");
 const vm = require("node:vm");
 
-const onboarding = fs.readFileSync("src/wearing/web/onboarding.js", "utf8");
-const app = fs.readFileSync("src/wearing/web/app.js", "utf8");
-const html = fs.readFileSync("src/wearing/web/index.html", "utf8");
+const onboarding = fs.readFileSync("src/pajio/web/onboarding.js", "utf8");
+const app = fs.readFileSync("src/pajio/web/app.js", "utf8");
+const html = fs.readFileSync("src/pajio/web/index.html", "utf8");
 
 test("onboarding.js and app.js compile (syntax gate)", () => {
   new vm.Script(onboarding);
@@ -31,13 +31,13 @@ test("contract wiring: journals, completed-edit guard, skip empty, receipt verif
   assert.match(onboarding, /const canonicalValues=/);
   assert.match(onboarding, /JSON\.stringify\(canonicalValues\(ui\.pending\.values\)\)===JSON\.stringify\(request\.values\)/);
   // B2：journal 必须持久成功才发请求。
-  assert.match(onboarding, /window\.WearingStore\.set\(name,JSON\.stringify\(row\)\)===true/);
+  assert.match(onboarding, /window\.PajioStore\.set\(name,JSON\.stringify\(row\)\)===true/);
   assert.match(onboarding, /本机暂时没能保留这次保存，没有发出请求。/);
   // C9：晚回执 fresh 落后或同版不同内容不可清 pending。
   assert.match(onboarding, /fresh\.revision<receipt\.revision\|\|\(fresh\.revision===receipt\.revision&&/);
   assert.match(onboarding, /最新偏好还没有核对，请重试同一次保存。/);
   // C7：注销冻结门 + 工作门。
-  assert.match(onboarding, /WearingDeletion\?\.workAllowed\?\.\(\)===false/);
+  assert.match(onboarding, /PajioDeletion\?\.workAllowed\?\.\(\)===false/);
   assert.match(onboarding, /registerWorkGate\?\.\(\{stop\(\)/);
   // B4：单选不受多选上限约束。
   assert.match(onboarding, /disabled\(\)\|\|limit&&!selected&&/);
@@ -62,17 +62,17 @@ test("sources stay honest: no App Secret form, no fake connected, revoking wins 
 test("app.js hooks fire after entry recovery; index.html wiring in place", () => {
   const loadStatusBody = app.slice(app.indexOf("async function loadStatus"), app.indexOf("async function loadRuntime"));
   assert.ok(!loadStatusBody.includes("maybeOffer"), "loadStatus must not trigger onboarding before entry recovery");
-  assert.match(app, /if\(activityTask\)await window\.WearingActivity\?\.openTask\(activityTask\);window\.WearingOnboarding\?\.maybeOffer\(\);/);
-  assert.match(app, /await loadComputer\(\);window\.WearingOnboarding\?\.maybeOffer\(\);/);
-  assert.match(app, /window\.WearingOnboarding\?\.reset\(\);/);
+  assert.match(app, /if\(activityTask\)await window\.PajioActivity\?\.openTask\(activityTask\);window\.PajioOnboarding\?\.maybeOffer\(\);/);
+  assert.match(app, /await loadComputer\(\);window\.PajioOnboarding\?\.maybeOffer\(\);/);
+  assert.match(app, /window\.PajioOnboarding\?\.reset\(\);/);
   assert.match(html, /onboarding\.js\?v=7/);
   assert.match(html, /id="onboarding-panel"/);
   assert.match(html, /id="onboarding-entry"/);
   assert.match(html, /app\.js\?v=59/);
   assert.match(html, /pajio\.css\?v=\d+/);
   // 幽灵面板回归：作者样式不得覆盖 UA 的 dialog:not([open]) display:none。
-  assert.match(fs.readFileSync("src/wearing/web/pajio.css","utf8"), /\.ob-panel\[open\]\{width:min\(640px/);
-  assert.doesNotMatch(fs.readFileSync("src/wearing/web/pajio.css","utf8"), /\.ob-panel\{[^}]*display:flex/);
+  assert.match(fs.readFileSync("src/pajio/web/pajio.css","utf8"), /\.ob-panel\[open\]\{width:min\(640px/);
+  assert.doesNotMatch(fs.readFileSync("src/pajio/web/pajio.css","utf8"), /\.ob-panel\{[^}]*display:flex/);
   assert.match(html, /id="ob-back" data-ob-back/);
 });
 
@@ -110,18 +110,18 @@ function harness({get, post, failSet=false, search="", lifeMode=false, deletion=
     closePanel(id){opened.push("close:"+id);const el=elements[id];if(el)el.open=false;},
     setTimeout,clearTimeout,Date,JSON,Number,Array,Object,String,Boolean,Math,Error,Promise,
   };
-  context.window.WearingStore={get:name=>store[name]??null,
+  context.window.PajioStore={get:name=>store[name]??null,
     set:(name,v)=>{if(failSet)return false;store[name]=String(v);return true;},
     remove:name=>{delete store[name];return true;}};
-  context.window.WearingIds={uuid:()=>"k0123456789abcdef0123456789abcdef"};
-  context.window.WearingPajio={bearMarkup:()=>""};
-  context.window.WearingLife={openView(){}};
-  if(deletion)context.window.WearingDeletion=deletion;
+  context.window.PajioIds={uuid:()=>"k0123456789abcdef0123456789abcdef"};
+  context.window.PajioBrand={bearMarkup:()=>""};
+  context.window.PajioLife={openView(){}};
+  if(deletion)context.window.PajioDeletion=deletion;
   vm.createContext(context);
   vm.runInNewContext(onboarding,context);
   const flush=()=>new Promise(r=>setTimeout(r,5));
   const journal=name=>{try{return JSON.parse(store[name]||"null");}catch{return null;}};
-  return {context,calls,store,opened,journal,element,flush,mod:context.window.WearingOnboarding,
+  return {context,calls,store,opened,journal,element,flush,mod:context.window.PajioOnboarding,
     releasePost:()=>releasePost&&releasePost()};
 }
 const snap=(over={})=>({schema:1,identity_id:"qa",revision:0,status:"draft",step:0,
@@ -185,7 +185,7 @@ test("C5b legacy pending with click-order body retries semantically and clears",
       return {...snap({revision:1,status:"draft",step:1,values:canonical}),request_key:parsed.request_key};
     },
   });
-  h.context.window.WearingStore.set("onboarding-request:v1:qa",JSON.stringify({identity:"qa",body:legacyBody}));
+  h.context.window.PajioStore.set("onboarding-request:v1:qa",JSON.stringify({identity:"qa",body:legacyBody}));
   h.mod.open();await h.flush();
   const t=h.mod._test;
   assert.deepEqual(t.ui.pending.values.roles,["student","employed"],"pending body loaded from journal wrapper");
@@ -402,7 +402,7 @@ test("C7 deletion freeze blocks writes and POST; work gate unlocks in-flight sta
   h.mod.open();await h.flush();
   assert.equal(gates.length,1,"work gate registered");
   const t=h.mod._test;
-  h.context.window.WearingDeletion.workAllowed=()=>false;
+  h.context.window.PajioDeletion.workAllowed=()=>false;
   t.choose({...empty,roles:["employed"]});
   assert.equal(h.journal("onboarding-draft:v1:qa"),null,"no draft write while frozen");
   await t.save("draft",1);
@@ -531,7 +531,7 @@ test("ticket separation: read-only feishu load and reopen never strand a save's 
 });
 
 test("deletion cache cleanup covers onboarding journals (cross-file)", () => {
-  const deletion=fs.readFileSync("src/wearing/web/account-deletion.js","utf8");
+  const deletion=fs.readFileSync("src/pajio/web/account-deletion.js","utf8");
   assert.match(deletion, /onboarding-draft:v1/);
   assert.match(deletion, /onboarding-request:v1/);
 });
@@ -547,7 +547,7 @@ test("panel handoff: settings entry closes the parent settings dialog; completio
       return {...snap({revision:4,status:"completed",step:5,values:parsed.values,confirmed_at:"2026-10-09T02:00:00Z",updated_at:"2026-10-09T02:00:00Z",recommend_onboarding:false}),request_key:parsed.request_key};
     },
   });
-  h.context.window.WearingLife={openView(v){views.push(v);}};
+  h.context.window.PajioLife={openView(v){views.push(v);}};
   // 模拟：设置面板打开着，用户点「打开初始偏好」。
   h.element("settings-panel").open=true;
   for(const fn of (h.element("document").listeners.click||[]))

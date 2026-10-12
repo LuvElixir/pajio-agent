@@ -5,8 +5,8 @@ import time
 
 import pytest
 
-from wearing.cloud.bundle_activation import ActivationError, public_progress
-from wearing.cloud.bundle_activation_worker import ActivationWorker, Lease, LeaseLost
+from pajio.cloud.bundle_activation import ActivationError, public_progress
+from pajio.cloud.bundle_activation_worker import ActivationWorker, Lease, LeaseLost
 
 
 def progress(state='pending'):

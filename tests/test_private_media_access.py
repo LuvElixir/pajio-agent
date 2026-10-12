@@ -5,8 +5,8 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from wearing.cloud.relay import RelayStore, ConnectionRequest, PairRequest, PollRequest, RelayError
-from wearing.private_media_access import offer, transport
+from pajio.cloud.relay import RelayStore, ConnectionRequest, PairRequest, PollRequest, RelayError
+from pajio.private_media_access import offer, transport
 
 
 @pytest.fixture

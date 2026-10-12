@@ -15,11 +15,11 @@ from test_gateway import lab, ORIGIN, ISSUER
 from test_invitations import issue
 from test_mobile_gateway import VERIFIER, CHALLENGE, STATE
 from test_registration import Provider, KEY, PASSWORD, URL
-from wearing.cloud.control import ControlStore, states, invitations
-from wearing.cloud.gateway import create_gateway_app, load_gateway
-from wearing.cloud.invitations import InvitationStore, code_hash
-from wearing.cloud.native_enrollment import PREFIX, operation_key
-from wearing.cloud.registration import RegistrationBroker, RegistrationError
+from pajio.cloud.control import ControlStore, states, invitations
+from pajio.cloud.gateway import create_gateway_app, load_gateway
+from pajio.cloud.invitations import InvitationStore, code_hash
+from pajio.cloud.native_enrollment import PREFIX, operation_key
+from pajio.cloud.registration import RegistrationBroker, RegistrationError
 
 
 class BrokerWire(httpx.AsyncBaseTransport):
@@ -194,7 +194,7 @@ async def test_rejection_release_crash_is_reconciled_without_releasing_new_attem
 
 
 async def test_handoff_failure_after_redemption_recovers_without_new_identity(tmp_path, monkeypatch):
-    import wearing.cloud.native_enrollment as module
+    import pajio.cloud.native_enrollment as module
     async with enrollment_lab(tmp_path) as (client, app, ops, code, issued, provider, broker, wire):
         body = start(code)
         await client.post(PREFIX+'verify', json=body)

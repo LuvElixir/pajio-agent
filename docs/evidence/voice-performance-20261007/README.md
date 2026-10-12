@@ -1,6 +1,6 @@
 # 语音修复验收
 
-2026-10-07。实际 iPhone Air / iOS 27.0 **模拟器**，Expo Go，`/voice-lab` 开发专用路线。使用独立 wearing-voice-qa.db，语音状态为合成驱动；无麦克风、网络录音、用户资料读写。
+2026-10-07。实际 iPhone Air / iOS 27.0 **模拟器**，Expo Go，`/voice-lab` 开发专用路线。使用独立 pajio-voice-qa.db，语音状态为合成驱动；无麦克风、网络录音、用户资料读写。
 
 - `native-processing.png`：200/200 原生 SQLite 并发检查通过，输入栏只有一处识别反馈，栏高 58 pt。
 - `native-error.png`：同一 IntentComposer 的错误提示净化检查，无 Swift/SQLite 堆栈，栏高不变。

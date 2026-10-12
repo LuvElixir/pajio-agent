@@ -143,8 +143,8 @@ export class DeviceManagementApi {
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), path.endsWith('/permissions') && path.startsWith('/api/computer') ? 45000 : 20000);
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method: mutation ? 'POST' : 'GET', signal: controller.signal, redirect: 'error',
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity,
-          ...(mutation ? {'Content-Type': 'application/json', 'X-Wearing-Token': this.token} : {})}, ...(mutation ? {body: JSON.stringify(body)} : {})});
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity,
+          ...(mutation ? {'Content-Type': 'application/json', 'X-Pajio-Token': this.token} : {})}, ...(mutation ? {body: JSON.stringify(body)} : {})});
       if (response.status === 403 && mutation && retry) {await this.bootstrap(); return this.request(path, body, false);}
       const result: unknown = await response.json().catch(() => {throw new ApiError('没有收到完整回执，请先重新检测设备状态。', mutation ? 0 : 422);});
       if (!response.ok) throw new ApiError(object(result) && string(result.detail) ? result.detail : '设备操作未完成，请重新检测后再试。', response.status);

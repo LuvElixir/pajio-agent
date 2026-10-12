@@ -54,7 +54,7 @@ export class BriefingApi {
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 30000);
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method: body ? 'POST' : 'GET', signal: controller.signal, redirect: 'error',
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(body ? {'X-Wearing-Token': this.token, 'Content-Type': 'application/json'} : {})},
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(body ? {'X-Pajio-Token': this.token, 'Content-Type': 'application/json'} : {})},
         ...(body ? {body: JSON.stringify(body)} : {})});
       if (response.status === 403 && body && retry) {await this.bootstrap(); return await this.request(path, body, false);}
       const data = await response.json().catch(() => {throw new ApiError('回执不完整，请重新读取这次简报。', body ? 0 : 422);});

@@ -10,7 +10,7 @@ The name and artwork are product decisions; this delivery does not establish mar
 
 ## Delivered App and runtime
 
-- Pajio display name, permission explanations, connection UI and account wordmark; new icon/adaptive assets and light/dark single-star splash. Legacy wearing installation IDs, storage and protocol names retained, `pajio` deep-link scheme additive.
+- Pajio display name, permission explanations, connection UI and account wordmark; new icon/adaptive assets and light/dark single-star splash. Legacy pajio installation IDs, storage and protocol names retained, `pajio` deep-link scheme additive.
 - Fresh identities default to mist-blue teddy; existing explicit companion/outfit preferences preserved. Eight outfits preview then save; failure does not silently replace current outfit.
 - Non-chat pages use compact handoff/continue-draft entry. Composer and conversation stay mounted; connection/identity remain the state boundary.
 - Expo Network drives offline send guard without treating LAN-only connectivity as offline. Voice remains editable before explicit send. Font scale is controlled in host CSS, not whole-page zoom.
@@ -35,7 +35,7 @@ The name and artwork are product decisions; this delivery does not establish mar
 
 ## Local activation
 
-Local backend was idle before graceful replacement. New server PID79991 serves Pajio/profile24; live read-only pagination walked nine records in page sizes 2,2,2,2,1 with no missing/duplicate IDs and unchanged aggregate counts. Existing four-hour phone pairing had expired before activation; renewed bridge PID80373 returned authenticated 200. Its private QR is `.wearing/mobile-dev/pajio-iphone-20261007T101304Z.png`, expires 22:13 Beijing; this does not imply the physical phone already reconnected. Runtime log is local private `.wearing/runtime/pajio-server-20261007T101048Z.log`.
+Local backend was idle before graceful replacement. New server PID79991 serves Pajio/profile24; live read-only pagination walked nine records in page sizes 2,2,2,2,1 with no missing/duplicate IDs and unchanged aggregate counts. Existing four-hour phone pairing had expired before activation; renewed bridge PID80373 returned authenticated 200. Its private QR is `.pajio/mobile-dev/pajio-iphone-20261007T101304Z.png`, expires 22:13 Beijing; this does not imply the physical phone already reconnected. Runtime log is local private `.pajio/runtime/pajio-server-20261007T101048Z.log`.
 
 ## Design-tool findings
 

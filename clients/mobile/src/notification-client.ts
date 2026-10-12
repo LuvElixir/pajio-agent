@@ -73,8 +73,8 @@ export class NotificationClient {
     try {
       if(controller.signal.aborted)throw new ApiError('通知停止请求已结束，回执尚未确认。');
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method: mutation ? 'POST' : 'GET', redirect: 'error', signal: controller.signal,
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity,
-          ...(mutation ? {'Content-Type': 'application/json', 'X-Wearing-Token': this.token} : {})}, ...(mutation ? {body: JSON.stringify(body)} : {})});
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity,
+          ...(mutation ? {'Content-Type': 'application/json', 'X-Pajio-Token': this.token} : {})}, ...(mutation ? {body: JSON.stringify(body)} : {})});
       if(controller.signal.aborted)throw new ApiError('通知停止请求已结束，回执尚未确认。');
       if (response.status === 403 && mutation && retry) {await this.bootstrap(signal); return this.request(path, body, false, signal);}
       const value: unknown = await response.json().catch(() => {throw malformed();});

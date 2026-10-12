@@ -11,10 +11,10 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError
 
 from test_control_postgres import pg  # the same explicit qa_only cluster guard
-from wearing.account_deletion import DeletionError
-from wearing.cloud.account_deletion_control import AccountDeletionControl
-from wearing.cloud.control import ControlError, ControlStore, deletion_requests, members, ownership, sessions, users
-from wearing.cloud.postgres import migrate_database
+from pajio.account_deletion import DeletionError
+from pajio.cloud.account_deletion_control import AccountDeletionControl
+from pajio.cloud.control import ControlError, ControlStore, deletion_requests, members, ownership, sessions, users
+from pajio.cloud.postgres import migrate_database
 
 
 def registered(pg):
@@ -53,14 +53,14 @@ def test_pg_request_is_self_scoped_immutable_and_immediately_freezes(pg):
 
 
 @pytest.mark.parametrize('statement',[
-    "UPDATE wearing_control.wearing_users SET deletion_state='active'",
-    "UPDATE wearing_control.wearing_tenant_ownership SET classification='private'",
-    "DELETE FROM wearing_control.wearing_tenant_ownership",
-    "UPDATE wearing_control.wearing_deletion_requests SET state='completed'",
-    "DELETE FROM wearing_control.wearing_deletion_requests",
-    "TRUNCATE wearing_control.wearing_deletion_requests",
-    "INSERT INTO wearing_control.wearing_deletion_requests(id,user_id,request_key,plan_revision,plan_json,created_at,state) VALUES ('fake','fake','fake','fake','{}',1,'completed')",
-    "UPDATE wearing_control.wearing_sessions SET auth_time=2147483647",
+    "UPDATE pajio_control.pajio_users SET deletion_state='active'",
+    "UPDATE pajio_control.pajio_tenant_ownership SET classification='private'",
+    "DELETE FROM pajio_control.pajio_tenant_ownership",
+    "UPDATE pajio_control.pajio_deletion_requests SET state='completed'",
+    "DELETE FROM pajio_control.pajio_deletion_requests",
+    "TRUNCATE pajio_control.pajio_deletion_requests",
+    "INSERT INTO pajio_control.pajio_deletion_requests(id,user_id,request_key,plan_revision,plan_json,created_at,state) VALUES ('fake','fake','fake','fake','{}',1,'completed')",
+    "UPDATE pajio_control.pajio_sessions SET auth_time=2147483647",
 ])
 def test_pg_web_cannot_administer_deletion_or_forge_progress(pg, statement):
     _, _, _, a = registered(pg)
@@ -117,22 +117,22 @@ def test_upgrade_0001_preserves_existing_accounts_and_unknown_ownership(pg):
     engine = create_engine(target_url,hide_parameters=True)
     try:
         config = Config()
-        config.set_main_option('script_location',str(Path(__file__).parents[1]/'src/wearing/cloud/migrations'))
+        config.set_main_option('script_location',str(Path(__file__).parents[1]/'src/pajio/cloud/migrations'))
         with engine.begin() as db:
             config.attributes['connection'] = db
-            command.upgrade(config,'wearing_control_0001')
+            command.upgrade(config,'pajio_control_0001')
         admin_target = create_engine(make_url(pg['admin']).set(database=name),hide_parameters=True)
         try:
             with admin_target.begin() as db:
-                assert db.scalar(text("SELECT count(*) FROM information_schema.columns WHERE table_schema='wearing_control' AND column_name='deletion_state'")) == 0
-                db.execute(text("INSERT INTO wearing_control.wearing_users(id,issuer,subject) VALUES ('legacy','synthetic','legacy')"))
-                db.execute(text("INSERT INTO wearing_control.wearing_tenants(id) VALUES ('legacy')"))
-                db.execute(text("INSERT INTO wearing_control.wearing_memberships VALUES ('legacy','legacy',true)"))
+                assert db.scalar(text("SELECT count(*) FROM information_schema.columns WHERE table_schema='pajio_control' AND column_name='deletion_state'")) == 0
+                db.execute(text("INSERT INTO pajio_control.pajio_users(id,issuer,subject) VALUES ('legacy','synthetic','legacy')"))
+                db.execute(text("INSERT INTO pajio_control.pajio_tenants(id) VALUES ('legacy')"))
+                db.execute(text("INSERT INTO pajio_control.pajio_memberships VALUES ('legacy','legacy',true)"))
             migrate_database(target_url)
             migrate_database(target_url)
             with admin_target.connect() as db:
-                assert db.execute(text("SELECT issuer,subject,deletion_state FROM wearing_control.wearing_users WHERE id='legacy'")).one() == ('synthetic','legacy','active')
-                assert db.scalar(text('SELECT count(*) FROM wearing_control.wearing_tenant_ownership')) == 0
+                assert db.execute(text("SELECT issuer,subject,deletion_state FROM pajio_control.pajio_users WHERE id='legacy'")).one() == ('synthetic','legacy','active')
+                assert db.scalar(text('SELECT count(*) FROM pajio_control.pajio_tenant_ownership')) == 0
         finally: admin_target.dispose()
         web = ControlStore(make_url(pg['app']).set(database=name))
         try:

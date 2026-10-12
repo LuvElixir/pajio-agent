@@ -125,7 +125,7 @@ components:
 
 当前 App 实现记录，2026-10-07。正式名称为 **Pajio**，中文与英文界面统一使用；默认助手为已确认的睡衣小熊。语音交代、明确接收、执行进展与结果构成产品核心。近中性日夜色面、单四角星、账户与能力前置和个性化二级入口已写入当前源码。数字品牌资产已完成，市场验证尚未完成。[本轮交付证据](../../docs/evidence/pajio-delivery-2026-10-07.md)记录当前检查边界；[Pro 研究](../../docs/review/brand-reset-20261007/pro-review.txt)与[独立审视](../../docs/review/brand-reset-20261007/independent-review.md)是设计输入，不代替真实用户证据。
 
-作用域是 `clients/mobile` 与 `src/wearing/web/mobile-host.css` 的 App 宿主样式。常规网页与桌面由 ZCode 负责；旧根设计保留，不应覆盖 App。当前运行界面名称为 Pajio；底层 wearing 包名、协议、存储键与安装标识保留兼容。
+作用域是 `clients/mobile` 与 `src/pajio/web/mobile-host.css` 的 App 宿主样式。常规网页与桌面由 ZCode 负责；旧根设计保留，不应覆盖 App。当前运行界面名称为 Pajio；底层 pajio 包名、协议、存储键与安装标识保留兼容。
 
 当前品牌方向为[睡衣小熊](../../docs/plans/pajama-bear-brand-direction-2026-10-07.md)。八套资产已接入；无有效保存选择时默认雾蓝条纹小熊，已有 v1 穿搭和有效 v2 明确形象选择继续保留。外观二级页按睡衣小熊／简洁标记排列，切换不改变能力。正式名称为 Pajio；技术安装标识继续兼容，数字品牌文件见 [Pajio 品牌包](../../design/brand/pajio/README.md)。主张为「你先休息，这件事我来」，日常交互为「你说，我来做」。
 
@@ -169,7 +169,7 @@ components:
 
 `BrandStar` 是 24×24 viewBox 内约 16×20 的纵长单路径、单中心、四尖端实心标记，使用当前 ink 单色。它用于应用图标、日夜启动页、账户签名、简洁模式进展入口及形象预览；小熊模式进展入口显示当前穿搭头像，导航与技能仍使用各自功能图标。装饰星自身不增加辅助焦点。
 
-`BrandWordmark` 使用 Pajio 的 Nunito 760 字重轮廓字标，标准写法不带句号。字标以 SVG 路径随包提供，通过当前 ink 适应日夜，无网络字体依赖；OFL 授权随资产保留。应用图标、Android 自适应图标与 72pt 日夜启动页来自同一品牌母版。名称、权限说明和新 `pajio://` scheme 已配置，旧 `wearing://`、安装标识与数据键保留兼容；Android 原生目录的名称、双 scheme、五级密度图标与日夜启动资源已从隔离的 Expo 候选同步；`expo-system-ui` 支持 Android 跟随系统。保留原安装标识与本机网络安全配置，详见[原生同步证据](../../docs/evidence/pajio-20261007/native-brand-sync.json)。iOS 原生候选由 CNG 在临时目录生成，未手工建立项目内 ios；独立安装包与启动页仍须设备验收。
+`BrandWordmark` 使用 Pajio 的 Nunito 760 字重轮廓字标，标准写法不带句号。字标以 SVG 路径随包提供，通过当前 ink 适应日夜，无网络字体依赖；OFL 授权随资产保留。应用图标、Android 自适应图标与 72pt 日夜启动页来自同一品牌母版。名称、权限说明和新 `pajio://` scheme 已配置，旧 `pajio://`、安装标识与数据键保留兼容；Android 原生目录的名称、双 scheme、五级密度图标与日夜启动资源已从隔离的 Expo 候选同步；`expo-system-ui` 支持 Android 跟随系统。保留原安装标识与本机网络安全配置，详见[原生同步证据](../../docs/evidence/pajio-20261007/native-brand-sync.json)。iOS 原生候选由 CNG 在临时目录生成，未手工建立项目内 ios；独立安装包与启动页仍须设备验收。
 
 ## Components
 

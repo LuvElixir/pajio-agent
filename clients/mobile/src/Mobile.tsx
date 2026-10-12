@@ -37,7 +37,7 @@ import {File} from 'expo-file-system';
 import {ImageManipulator, SaveFormat} from 'expo-image-manipulator';
 import {AudioModule, RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState} from 'expo-audio';
 import {Camera, Image as ImageIcon, ChevronLeft, Clock3, FileText, Folder, Inbox, Mic, Search, Plus, RefreshCw, Settings, Target, X} from 'lucide-react-native';
-import {Connection, Kind, makeDraft, Media, Outbox, Pending, RecordItem, scopeOf, WearingApi, connectionEndpoint} from './core';
+import {Connection, Kind, makeDraft, Media, Outbox, Pending, RecordItem, scopeOf, PajioApi, connectionEndpoint} from './core';
 import {keepMedia, preview, storage} from './storage';
 import {PickerRecovery, type PickedPhoto} from './picker-recovery';
 import TimeField from './TimeField';
@@ -286,7 +286,7 @@ function Mobile() {
     if (!provisioningGate.current.allows(connection) || !aiConsent.allows(connection) || !accountWorkAllowed(connection)) {setConnected(false); return;}
     syncBusy.current = true; setBusy(true);
     try {
-      const api = new WearingApi(connection, serviceFetch); const data = await api.bootstrap();
+      const api = new PajioApi(connection, serviceFetch); const data = await api.bootstrap();
       if (current.current !== connection || !provisioningGate.current.allows(connection) || !aiConsent.allows(connection) || !accountWorkAllowed(connection)) return;
       setIdentities(data.identities);
       // Opening a short-term development pairing must not send an existing queue.
@@ -356,7 +356,7 @@ function Mobile() {
     const stop = observeNotificationResponses(async target => {
       const original = current.current;
       if (!original || !live) return false;
-      const data = await new WearingApi(original, serviceFetch).bootstrap();
+      const data = await new PajioApi(original, serviceFetch).bootstrap();
       if (!data.identities.some(item => item.id === target.identity_id) || !live || current.current !== original) return false;
       const destination = {...original, identity:target.identity_id};
       const client = new NotificationClient(destination, await notificationInstallation(storage,()=>Crypto.randomUUID()), serviceFetch);
@@ -365,7 +365,7 @@ function Mobile() {
       let record: RecordItem | null = null;
       if (resolved.type === 'record') {
         if (resolved.seriesId && resolved.occurrenceKey) record = (await new CalendarSeriesClient(destination, serviceFetch, () => live && current.current === original && accountWorkAllowed(original)).get(resolved.seriesId, resolved.occurrenceKey)).selected ?? null;
-        else record = await new WearingApi(destination, serviceFetch).record(resolved.recordId);
+        else record = await new PajioApi(destination, serviceFetch).record(resolved.recordId);
         if (!record || record.id !== resolved.recordId || (record as RecordItem & {identity_id?: string}).identity_id !== destination.identity || record.deleted_at) throw new Error('这项安排已取消或改变，请在日历与待办中查看最新状态。');
       }
       if (!live || current.current !== original || !accountWorkAllowed(original)) return false;
@@ -521,7 +521,7 @@ function Mobile() {
       const prior = current.current;
       const connection: Connection = {endpoint: address, identity, ...(prior?.session && address.trim().replace(/\/$/,'')===prior.endpoint.replace(/\/$/,'') ? {session:prior.session}:{}), ...(prior?.development && address.trim().replace(/\/$/, '') === prior.endpoint.replace(/\/$/, '') && identity === prior.identity ? {development: prior.development} : {})};
       connection.endpoint = connectionEndpoint(connection); setBusy(true);
-      const data = await new WearingApi(connection, serviceFetch).bootstrap(); setIdentities(data.identities);
+      const data = await new PajioApi(connection, serviceFetch).bootstrap(); setIdentities(data.identities);
       await activateConnection(connection); setReady(true); setScreen('conversation'); setMessage('已连接，可以继续说。');
     } catch (error) {setMessage(error instanceof Error ? error.message : '连接没有成功，原连接仍在。');}
     finally {connectionWrite.current=false;setBusy(false);}
@@ -536,7 +536,7 @@ function Mobile() {
       await mutations.enqueue(scope, item, {completed: !item.completed});
       if (current.current !== intended) return;
       await local(intended); setMessage('完成状态已留在本机，连接后会同步。');
-      void mutations.flush(scope, new WearingApi(intended, serviceFetch), () => current.current === intended && AppState.currentState === 'active', Date.now(), error => observeDiagnosticError(intended, 'record', error)).then(() => local(intended)).catch(error => {if (current.current === intended) setMessage(error instanceof Error ? error.message : '修改仍在本机，稍后可重试。');});
+      void mutations.flush(scope, new PajioApi(intended, serviceFetch), () => current.current === intended && AppState.currentState === 'active', Date.now(), error => observeDiagnosticError(intended, 'record', error)).then(() => local(intended)).catch(error => {if (current.current === intended) setMessage(error instanceof Error ? error.message : '修改仍在本机，稍后可重试。');});
     } catch (error) {observeDiagnosticError(intended, 'record', error); if (current.current === intended) setMessage(error instanceof Error ? error.message : '本机保存未完成，请重试。');}
     finally {recordWrites.current.delete(key); setWritingRecords([...recordWrites.current]);}
   }
@@ -550,7 +550,7 @@ function Mobile() {
     const intended = current.current, ticket = ++searchOpen.current;
     if (!intended) return;
     try {
-      const item = await new WearingApi(intended, serviceFetch).record(id);
+      const item = await new PajioApi(intended, serviceFetch).record(id);
       if (current.current === intended && screenRef.current === 'search' && ticket === searchOpen.current) open(item);
     } catch (error) {
       observeDiagnosticError(intended, 'record', error);

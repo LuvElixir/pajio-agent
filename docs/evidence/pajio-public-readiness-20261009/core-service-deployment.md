@@ -11,7 +11,7 @@
 - 两个租户配置真实 DeepSeek `deepseek-flash`；只传输了该模型凭据，没有复制开发机的历史会话、记忆或其他服务凭据。
 - App 源码的默认服务地址已指向上述 HTTPS 入口；本轮没有声称重新签名、分发或在实体 iPhone 上完成新版安装。
 
-安装产物：`wearing-0.2.0-py3-none-any.whl`，SHA-256 `c69d66b4ad1aed6357ee563efde4c4666b0d9af590e0fc7d4d6e51969de29457`；固定依赖清单 SHA-256 `eaf7aff142f7b272f6853e51ff512e74ddeee06d6044512fd77a5613ccc0f2a8`。Hermes 源归档及运行工具均通过固定散列校验。
+安装产物：`pajio-0.2.0-py3-none-any.whl`，SHA-256 `c69d66b4ad1aed6357ee563efde4c4666b0d9af590e0fc7d4d6e51969de29457`；固定依赖清单 SHA-256 `eaf7aff142f7b272f6853e51ff512e74ddeee06d6044512fd77a5613ccc0f2a8`。Hermes 源归档及运行工具均通过固定散列校验。
 
 ## 实际验收
 
@@ -42,10 +42,10 @@
 
 1. 公网代理首次返回 502：内部服务证书名称与 Nginx 校验名不匹配。补全 DNS SAN，并使用固定内部服务名校验；没有关闭 TLS 验证。
 2. Linux Node.js 缺少 `libatomic.so.1`，固定工具无法通过启动校验。补装 Ubuntu `libatomic1` 后重试成功。
-3. 主服务 wheel 的整个 site-packages 被插入 Hermes 搜索路径，导致 Python 3.14 加载了 Python 3.12 的 pydantic 扩展。桥接改为只加载 wearing 包，隔离宿主依赖；新增独立进程回归测试。真实引擎启动及模型调用随后通过。
+3. 主服务 wheel 的整个 site-packages 被插入 Hermes 搜索路径，导致 Python 3.14 加载了 Python 3.12 的 pydantic 扩展。桥接改为只加载 pajio 包，隔离宿主依赖；新增独立进程回归测试。真实引擎启动及模型调用随后通过。
 4. 安装镜像下载超时并发生重试；使用经固定 SHA 校验的工具缓存完成安装。临时公开缓存仅包含官方安装包，已清理。
 
-早期登录成功但 worker 未就绪时的 502、首次安装失败日志及最终成功记录分别保存于私有 `.wearing/on-prem/20261009/`，不覆盖失败记录。
+早期登录成功但 worker 未就绪时的 502、首次安装失败日志及最终成功记录分别保存于私有 `.pajio/on-prem/20261009/`，不覆盖失败记录。
 
 ## 代码验证与剩余边界
 

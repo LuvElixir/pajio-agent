@@ -21,9 +21,9 @@ The shortest route for the owner's own iPhone is a local, signed `Release` build
 | Expo / React Native | Expo 57.0.26 / React Native 0.86.3; package and versioned Expo docs checked |
 | Local toolchain | Node 24.16.0, Xcode 27.0; compatible with the Expo 57 requirements checked in the official docs |
 | Display / version | Pajio / 0.2.0; legacy bundle identifiers intentionally preserved |
-| Main bundle | `io.luckyloading.wearing.mobile` |
-| Share extension | `io.luckyloading.wearing.mobile.share` |
-| App Group | `group.io.luckyloading.wearing.mobile.share`, shared only between main app and share extension |
+| Main bundle | `io.luckyloading.pajio.mobile` |
+| Share extension | `io.luckyloading.pajio.mobile.share` |
+| App Group | `group.io.luckyloading.pajio.mobile.share`, shared only between main app and share extension |
 | Public API | `https://pajio.luckyloading.com/`; fresh production native installs do not ask for an endpoint |
 | Login | System browser, PKCE/state, `pajio://auth`; old custom-origin credentials stay isolated |
 | Native credential storage | SecureStore `WHEN_UNLOCKED_THIS_DEVICE_ONLY` |
@@ -91,7 +91,7 @@ Validation after the final source change:
 
 ## Signing and artifact boundary
 
-The parent owns the guarded runner at `.wearing/on-prem/20261009/iphone-personal-20261010/build-device.py`. It backs up and prepares the isolated candidate, records exact source hashes, and supplies the explicitly selected team and physical device. This audit does not duplicate that runner or alter its signing inputs.
+The parent owns the guarded runner at `.pajio/on-prem/20261009/iphone-personal-20261010/build-device.py`. It backs up and prepares the isolated candidate, records exact source hashes, and supplies the explicitly selected team and physical device. This audit does not duplicate that runner or alter its signing inputs.
 
 The relevant build action is `xcodebuild` on the generated `Pajio.xcworkspace`, scheme `Pajio`, configuration `Release`, destination `id=<explicit device UDID>`, with explicit `DEVELOPMENT_TEAM`, automatic signing and the parent-authorized provisioning/device-registration flags. Both main and extension targets must resolve to the same team with profiles permitting the shared App Group. Push entitlement must agree with the selected signing profile; it should not be removed to make signing pass.
 

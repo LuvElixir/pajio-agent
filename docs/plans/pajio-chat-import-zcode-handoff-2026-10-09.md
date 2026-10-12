@@ -8,7 +8,7 @@ App 与共享后端由 Codex 实现，Web / Desktop 由 ZCode 实现。App 源�
 - `clients/mobile/src/chat-import-parser.ts`：严格的 ZIP / UTF-8 / 来源消息解析。可以移植为浏览器模块，不修改 App。
 - `clients/mobile/src/chat-import-client.ts`：作用域 journal、先查 receipt、确认才 POST、未知结果保持同 key。
 - `clients/mobile/docs/chat-import.md`：支持格式、上限与生命周期。
-- `src/wearing/chat_imports{,_api,_tools}.py`：服务端契约、可信 owner、删除边界。
+- `src/pajio/chat_imports{,_api,_tools}.py`：服务端契约、可信 owner、删除边界。
 - `clients/mobile/test-fixtures/chat-import/`：全部是合成资料，可用于验收。
 
 ## 必须完成的行为

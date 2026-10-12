@@ -68,7 +68,7 @@ The old-snapshot isolation assessment is a source-review conclusion; the new han
 
 ## Backend and model status evidence
 
-At `2026-10-07T10:45:58Z`, a read-only `GET http://127.0.0.1:8765/api/runtime` with `X-Wearing-Identity: daily` returned HTTP success and:
+At `2026-10-07T10:45:58Z`, a read-only `GET http://127.0.0.1:8765/api/runtime` with `X-Pajio-Identity: daily` returned HTTP success and:
 
 ```json
 {

@@ -1,6 +1,6 @@
 # Today 连接能力与 App 落地核查
 
-核查日期：2026-10-07。依据：用户本轮 Today 真机截图、Today 官方产品与隐私说明、Apple 与 Expo SDK 57 文档，以及 Wearing 当前源代码。截图中的个人资料、公司信息和对话仅用于理解界面，不作为 Wearing 的示例数据。
+核查日期：2026-10-07。依据：用户本轮 Today 真机截图、Today 官方产品与隐私说明、Apple 与 Expo SDK 57 文档，以及 Pajio 当前源代码。截图中的个人资料、公司信息和对话仅用于理解界面，不作为 Pajio 的示例数据。
 
 ## 可以确认什么
 
@@ -14,21 +14,21 @@ Today 官方介绍说明其长期记忆可查看、修改和删除，简报围�
 
 ## 苹果原生能力如何接
 
-| 能力 | Apple 提供的路径 | Wearing 要做什么 |
+| 能力 | Apple 提供的路径 | Pajio 要做什么 |
 | --- | --- | --- |
 | 日历、提醒事项 | EventKit 访问系统事件存储；事件有只写和完整访问，读取事件/提醒需要完整访问，系统不提供单独的只读授权档位 | App 内可以承诺并实现“仅用于读取简报”，但系统权限描述必须真实；按需请求、选择需要的日历、记录同步时间，写操作单独交代。参考 [EventKit 访问说明](https://developer.apple.com/documentation/eventkit/accessing-the-event-store) |
 | 位置 | Core Location，经用户允许后获取；前台 When In Use 和 Always 是不同权限 | 首先做用户主动请求附近地点时的前台定位；连接页展示真实授权状态。参考 [位置授权](https://developer.apple.com/documentation/corelocation/requesting-authorization-to-use-location-services) |
 | 照片 | 系统 PhotosPicker 只交付用户选择的照片；全面查询图库是 PhotoKit 的另一种访问范围 | 优先保留“选照片交给 agent”的最小链路，不把选过一次照片写成“全图库已连接”。参考 [PhotosUI](https://developer.apple.com/documentation/photosui) |
 | 健康 | HealthKit 需要独立原生能力、分类授权与同步实现 | 当前 Expo Go 不能因为列表有健康图标就宣布接通；需要原生构建与独立验收。Today 自身使用 HealthKit 是其隐私页明确披露的事实 |
-| Apple 邮件、备忘录 | iOS 的 MessageUI 是撰写并由用户发送邮件/短信的界面，并非邮箱读取器；macOS 可以用 Apple Events/Scripting Bridge 控制支持脚本的应用 | 用户截图中 Apple 邮件、备忘录旁有电脑标识。由 Mac 伴随端提供这些能力是合理解释，但不是已查明的 Today 内部实现。Wearing 应区分“本机能力”和“需要连接 Mac”。参考 [MessageUI](https://developer.apple.com/documentation/messageui)、[Scripting Bridge](https://developer.apple.com/documentation/scriptingbridge) |
+| Apple 邮件、备忘录 | iOS 的 MessageUI 是撰写并由用户发送邮件/短信的界面，并非邮箱读取器；macOS 可以用 Apple Events/Scripting Bridge 控制支持脚本的应用 | 用户截图中 Apple 邮件、备忘录旁有电脑标识。由 Mac 伴随端提供这些能力是合理解释，但不是已查明的 Today 内部实现。Pajio 应区分“本机能力”和“需要连接 Mac”。参考 [MessageUI](https://developer.apple.com/documentation/messageui)、[Scripting Bridge](https://developer.apple.com/documentation/scriptingbridge) |
 
-“iPhone 24 小时可用”的产品文案不能等同于 iOS 给任意 App 永久在线、任意远程控制权限。Apple 的后台框架按任务类型授予运行机会；云端 agent 可以持续工作，手机的本地能力仍受系统运行和权限条件约束。Wearing 应显示设备的最近在线时间和具体能力，而不是无依据承诺全天候控制。[Apple 后台任务](https://developer.apple.com/documentation/BackgroundTasks)
+“iPhone 24 小时可用”的产品文案不能等同于 iOS 给任意 App 永久在线、任意远程控制权限。Apple 的后台框架按任务类型授予运行机会；云端 agent 可以持续工作，手机的本地能力仍受系统运行和权限条件约束。Pajio 应显示设备的最近在线时间和具体能力，而不是无依据承诺全天候控制。[Apple 后台任务](https://developer.apple.com/documentation/BackgroundTasks)
 
 ## 云端连接为什么可以很多
 
 一个连接器可以由四层组成：用户授权 → 服务商接口 → agent 工具适配 → 结果和撤销状态。它不要求第三方都有 CLI。例如飞书官方直接提供 HTTP API，使用 `tenant_access_token` 或 `user_access_token`，可读范围还受用户/应用和接口权限共同限制。CLI 可以封装这些 HTTP 请求，MCP 可以把它们以工具形式提供给 agent；二者都不会自动获得额外的数据权限。[飞书消息 API 的凭据和权限说明](https://open.feishu.cn/document/uAjLw4CM/ukTMukTMukTM/reference/im-v1/message/list)
 
-因此，Wearing 可以复用已有 CLI/MCP 来降低接入成本，但产品层仍需要完成每种服务的登录回调、凭据存储、权限范围、失效处理、最后同步时间和真实动作结果。当前电脑已登录某个 CLI，不等于每一位 App 用户都已连接该服务。聊天机器人连接还涉及入口身份映射和消息送达，不只是展示一个应用图标。
+因此，Pajio 可以复用已有 CLI/MCP 来降低接入成本，但产品层仍需要完成每种服务的登录回调、凭据存储、权限范围、失效处理、最后同步时间和真实动作结果。当前电脑已登录某个 CLI，不等于每一位 App 用户都已连接该服务。聊天机器人连接还涉及入口身份映射和消息送达，不只是展示一个应用图标。
 
 建议连接页采用与参考一致、用户易懂的三组：**本机 / 云端 / 其他设备**。每项给出真正的动作和状态：选择照片、允许定位、去授权、重新连接、需要 Mac、需要安装版。已授权与已验证成功分开判断；显示数量由真实配置计算。
 
@@ -36,9 +36,9 @@ Today 官方介绍说明其长期记忆可查看、修改和删除，简报围�
 
 Today 官方确认可检查记忆；截图进一步展示了主题文件夹和文件计数，但没有证明其服务器使用 Markdown 或某一种文件系统。[Today 的记忆说明](https://today.ai/articles/blog/what-is-today)
 
-Wearing 已有可直接利用的基础：
+Pajio 已有可直接利用的基础：
 
-- `src/wearing/engine_runner.py::memory_snapshot()` 读取 agent 本身使用的 `USER.md` / `MEMORY.md` 存储，并返回 user、memory 两组条目。`GET /api/memory` 通过当前身份的引擎读取这份数据，没有第二个独立记忆写入器。
+- `src/pajio/engine_runner.py::memory_snapshot()` 读取 agent 本身使用的 `USER.md` / `MEMORY.md` 存储，并返回 user、memory 两组条目。`GET /api/memory` 通过当前身份的引擎读取这份数据，没有第二个独立记忆写入器。
 - `GET /api/workspace` 和 `/api/workspace/file` 提供当前身份专用文件空间的目录清单与下载，路径校验拒绝越界与符号链接。它是工作文件空间，并非自动等同于记忆目录。
 - 引擎状态已探测 `skills_list`、`skill_view`、`skill_manage` 工具是否可用；“能执行技能工具”不等于 App 已有完整技能管理 API。
 

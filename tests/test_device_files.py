@@ -11,22 +11,22 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from wearing.cloud.commands import DeviceCommand
-from wearing.cloud.device_files import DeviceFiles, TransferRequest, ChunkRequest, install_device_file_routes
-from wearing.cloud.relay import (RelayStore, RelayError, PairRequest, ConnectionRequest, PollRequest,
+from pajio.cloud.commands import DeviceCommand
+from pajio.cloud.device_files import DeviceFiles, TransferRequest, ChunkRequest, install_device_file_routes
+from pajio.cloud.relay import (RelayStore, RelayError, PairRequest, ConnectionRequest, PollRequest,
     ClaimRequest, ResultRequest, ResourceControl, create_relay_app)
-from wearing.cloud.instance import initialize_instance
-from wearing.config import write_private_json
-from wearing.device_files_io import (InboxOutbox, source_info, FileChannelError, MAX_BYTES, FILE_METHODS,
+from pajio.cloud.instance import initialize_instance
+from pajio.config import write_private_json
+from pajio.device_files_io import (InboxOutbox, source_info, FileChannelError, MAX_BYTES, FILE_METHODS,
                                     directory_fd, read_regular)
-from wearing.device_files_native import dispatch, execute_transfer
-from wearing.device_gateway import DeviceGateway, GatewayScope
-from wearing.connectors.remote.client import Connector
-from wearing.store import Store
+from pajio.device_files_native import dispatch, execute_transfer
+from pajio.device_gateway import DeviceGateway, GatewayScope
+from pajio.connectors.remote.client import Connector
+from pajio.store import Store
 
 TOKEN = 'a' * 64
 RID = 'computer_test'
-from wearing.cloud.mobile_auth import session_storage_scope
+from pajio.cloud.mobile_auth import session_storage_scope
 ACTOR = session_storage_scope('user_test', 'tenant_test')
 SPEC = {'resource_id': RID, 'name': 'Synthetic desktop', 'kind': 'computer', 'methods': ['computer.status', *FILE_METHODS]}
 
@@ -41,8 +41,8 @@ def fixture(tmp_path):
     conn = relay.connect(TOKEN, ConnectionRequest())['connection_id']
     relay.poll(TOKEN, PollRequest(connection_id=conn, availability={RID: True}))
     channel = DeviceFiles(relay, actor=ACTOR)
-    from wearing.cloud.device_admission import AccountProof
-    from wearing.cloud.instance import load_instance
+    from pajio.cloud.device_admission import AccountProof
+    from pajio.cloud.instance import load_instance
     import time
     channel.bind_owner(AccountProof(tenant_id='tenant_test', identity_id='daily',
         instance_id=load_instance(root).instance_id, owner_user_id='user_test', ownership_revision=1,
@@ -63,7 +63,7 @@ def command(relay, request_id):
 
 async def execute(fixture, monkeypatch, request_id, *, break_after_commit=False):
     root, relay, bundle, conn, channel, workspace, local, io = fixture
-    import wearing.device_files_native as native
+    import pajio.device_files_native as native
     class Bound:
         def __init__(self, resource): assert resource == RID
         def call(self, action, **params):
@@ -210,7 +210,7 @@ def test_outbox_only_regular_bounded_files_and_no_path_or_install(fixture):
 
 
 def test_file_permission_does_not_widen_existing_input(fixture):
-    from wearing.cloud.device_permissions import create_permission, ChangePermission
+    from pajio.cloud.device_permissions import create_permission, ChangePermission
     root, relay, bundle, conn, channel, workspace, local, io = fixture
     write_private_json(root/'data/device-endpoint.json', {'endpoint': 'https://relay.example', 'ca_pem': 'test'})
     rev = relay.inventory('daily')[0]['permission_revision']
@@ -243,7 +243,7 @@ def test_hardlinks_and_replaced_directory_do_not_expose_other_files(fixture):
 
 async def test_local_private_handoff_blocks_file_access_even_if_server_stale(fixture, monkeypatch):
     root, relay, bundle, conn, channel, workspace, local, io = fixture
-    import wearing.device_files_native as native
+    import pajio.device_files_native as native
     touched = []
     class Bound:
         def __init__(self, resource): pass
@@ -261,7 +261,7 @@ async def test_local_private_handoff_blocks_file_access_even_if_server_stale(fix
 
 async def test_cancellation_keeps_native_lock_until_worker_stops(fixture, monkeypatch):
     root, relay, bundle, conn, channel, workspace, local, io = fixture
-    import wearing.device_files_native as native
+    import pajio.device_files_native as native
     entered, release = threading.Event(), threading.Event()
     class Bound:
         def __init__(self, resource): pass
@@ -292,7 +292,7 @@ async def test_transport_auth_happens_before_upload_body_and_no_browser_access(f
 
 async def test_concurrent_first_status_cannot_recreate_deleted_import(fixture, monkeypatch):
     from fastapi import FastAPI, Request
-    from wearing.workspace_upload import WorkspaceImports
+    from pajio.workspace_upload import WorkspaceImports
     root, relay, bundle, conn, channel, workspace, local, io = fixture
     (io.root/'Outbox'/'result.txt').write_bytes(b'synthetic output')
     channel.start('daily', RID, TransferRequest(request_id='1'*32, direction='list'))
@@ -329,7 +329,7 @@ async def test_concurrent_first_status_cannot_recreate_deleted_import(fixture, m
 
 
 def test_old_grants_stay_disabled_and_explicit_files_permission_is_two_sided(fixture):
-    from wearing.cloud.device_permissions import create_permission, ChangePermission, apply_permission, ApplyPermission
+    from pajio.cloud.device_permissions import create_permission, ChangePermission, apply_permission, ApplyPermission
     root, relay, bundle, conn, channel, workspace, local, io = fixture
     with relay.tx() as db:
         db.execute('UPDATE connectors SET resources=?', (json.dumps([{**SPEC, 'methods': ['computer.status', 'computer.observe']}]),))
@@ -352,10 +352,10 @@ def test_old_grants_stay_disabled_and_explicit_files_permission_is_two_sided(fix
 
 @pytest.mark.parametrize('kind', ['computer', 'android'])
 async def test_real_two_sided_permission_enable_then_disable_preserves_native_methods(fixture, monkeypatch, kind):
-    from wearing.cloud.device_permissions import create_permission, ChangePermission
-    from wearing.connectors.remote.permissions import update_permissions
-    from wearing.connectors.remote.adapter import NativeAdapter
-    import wearing.connectors.remote.permissions as module
+    from pajio.cloud.device_permissions import create_permission, ChangePermission
+    from pajio.connectors.remote.permissions import update_permissions
+    from pajio.connectors.remote.adapter import NativeAdapter
+    import pajio.connectors.remote.permissions as module
     root, relay, bundle, conn, channel, workspace, local, io = fixture
     methods = ['computer.status', 'computer.observe'] if kind == 'computer' else ['phone.mobile_get_screen_size']
     old = {**SPEC, 'kind': kind, 'methods': methods}
@@ -381,7 +381,7 @@ async def test_real_two_sided_permission_enable_then_disable_preserves_native_me
 
 
 def test_snapshot_quota_is_bounded_and_same_snapshot_is_idempotent(fixture, monkeypatch):
-    import wearing.cloud.device_files as module
+    import pajio.cloud.device_files as module
     root, relay, bundle, conn, channel, workspace, local, io = fixture
     monkeypatch.setattr(module, 'QUOTA_BYTES', 4)
     (workspace/'one.txt').write_bytes(b'1234')
@@ -393,11 +393,11 @@ def test_snapshot_quota_is_bounded_and_same_snapshot_is_idempotent(fixture, monk
 
 @pytest.mark.skipif(not __import__('sys').platform.startswith('linux'), reason='Linux root broker uses procfs and SO_PEERCRED')
 def test_broker_owns_independent_lock_and_readonly_epoch_check(tmp_path, monkeypatch):
-    from wearing.device_files_broker import agent_fence
-    import wearing.device_gateway as module
+    from pajio.device_files_broker import agent_fence
+    import pajio.device_gateway as module
     home = tmp_path.resolve()
     monkeypatch.setattr(module.Path, 'home', classmethod(lambda cls: home))
-    gateway = DeviceGateway(home/'.wearing/device-gateway')
+    gateway = DeviceGateway(home/'.pajio/device-gateway')
     permit = gateway.permit_agent(RID)
     with gateway.native_lock(RID):
         with pytest.raises(BlockingIOError):
@@ -414,7 +414,7 @@ def test_broker_owns_independent_lock_and_readonly_epoch_check(tmp_path, monkeyp
 def test_unix_socket_real_peer_credential_and_bounded_frames():
     import socket
     import struct
-    from wearing.device_files_native import require_peer_uid, receive, transmit, WIRE_LIMIT
+    from pajio.device_files_native import require_peer_uid, receive, transmit, WIRE_LIMIT
     left, right = socket.socketpair()
     try:
         require_peer_uid(left, os.getuid())
@@ -427,31 +427,31 @@ def test_unix_socket_real_peer_credential_and_bounded_frames():
 
 async def test_public_file_api_inherits_real_tenant_identity_and_csrf_boundary(fixture, monkeypatch):
     monkeypatch.setenv("PAJIO_TRIAL_LIMITS", "1")
-    from wearing.cloud.worker import create_tenant_app
+    from pajio.cloud.worker import create_tenant_app
     root, relay, *_ = fixture
     app = create_tenant_app(root, engine_autostart=False)
     async with app.router.lifespan_context(app), httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='https://app.example') as client:
         path = f'/api/devices/{RID}/files'
         assert (await client.get(path)).status_code == 401
-        client.headers.update({'Authorization': 'Bearer '+(root/'gateway.key').read_text().strip(), 'X-Wearing-Tenant': 'other'})
+        client.headers.update({'Authorization': 'Bearer '+(root/'gateway.key').read_text().strip(), 'X-Pajio-Tenant': 'other'})
         assert (await client.get(path)).status_code == 403
-        client.headers['X-Wearing-Tenant'] = 'tenant_test'
+        client.headers['X-Pajio-Tenant'] = 'tenant_test'
         assert (await client.get(path)).status_code == 401
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         client.headers['X-Pajio-Storage-Scope'] = ACTOR
         assert (await client.get(path)).status_code == 403
         client.headers['X-Pajio-Private-Owner-Scope'] = ACTOR
         assert (await client.get(path)).status_code == 200
         assert (await client.post(path+'/transfers', json={'request_id':'1'*32, 'direction':'list'}, headers={'Origin':'https://other.example'})).status_code == 403
-        client.headers['X-Wearing-Identity'] = 'overseas'
+        client.headers['X-Pajio-Identity'] = 'overseas'
         assert (await client.get(path)).status_code == 404
         assert not list(channel for channel in relay.inventory('overseas'))
 
 
 def test_actor_anchor_is_operator_bound_immutable_and_legacy_rows_are_hidden(fixture):
     import time
-    from wearing.cloud.device_admission import AccountProof
-    from wearing.cloud.instance import load_instance
+    from pajio.cloud.device_admission import AccountProof
+    from pajio.cloud.instance import load_instance
     root, relay, bundle, conn, channel, workspace, *_ = fixture
     (workspace/'a.txt').write_bytes(b'synthetic')
     source = channel.snapshot('daily', RID, workspace, 'a.txt')
@@ -476,14 +476,14 @@ def test_actor_anchor_is_operator_bound_immutable_and_legacy_rows_are_hidden(fix
 
 
 async def test_worker_two_actors_and_unproven_owner_cannot_read_file_history(fixture, monkeypatch):
-    from wearing.cloud.worker import create_tenant_app
+    from pajio.cloud.worker import create_tenant_app
     monkeypatch.setenv('PAJIO_TRIAL_LIMITS', '1')
     root, relay, bundle, conn, channel, *_ = fixture
     channel.start('daily', RID, TransferRequest(request_id='1'*32, direction='list'))
     app = create_tenant_app(root, engine_autostart=False)
     async with app.router.lifespan_context(app), httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='https://app.example') as client:
-        client.headers.update({'Authorization':'Bearer '+(root/'gateway.key').read_text().strip(), 'X-Wearing-Tenant':'tenant_test'})
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        client.headers.update({'Authorization':'Bearer '+(root/'gateway.key').read_text().strip(), 'X-Pajio-Tenant':'tenant_test'})
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         prefix = f'/api/devices/{RID}/files'
         actor_b = session_storage_scope('other', 'tenant_test')
         for actor, owner, code in [(ACTOR, None,403),(actor_b,ACTOR,403),(actor_b,actor_b,404),(ACTOR,ACTOR,200)]:
@@ -498,13 +498,13 @@ async def test_worker_two_actors_and_unproven_owner_cannot_read_file_history(fix
 def test_broker_process_retains_lock_after_client_disconnect_and_rejects_old_epoch(tmp_path, monkeypatch):
     import multiprocessing
     import socket
-    from wearing.device_files_broker import agent_fence
-    from wearing.device_files_native import require_peer_uid
-    from wearing.device_gateway import GatewayError
-    import wearing.device_gateway as module
+    from pajio.device_files_broker import agent_fence
+    from pajio.device_files_native import require_peer_uid
+    from pajio.device_gateway import GatewayError
+    import pajio.device_gateway as module
     home=tmp_path.resolve()
     monkeypatch.setattr(module.Path, 'home', classmethod(lambda cls: home))
-    gateway=DeviceGateway(home/'.wearing/device-gateway', private_access_ready=True)
+    gateway=DeviceGateway(home/'.pajio/device-gateway', private_access_ready=True)
     permit=gateway.permit_agent(RID)
     with gateway.native_lock(RID): pass  # Actual persistent lock inode.
     context=multiprocessing.get_context('fork')

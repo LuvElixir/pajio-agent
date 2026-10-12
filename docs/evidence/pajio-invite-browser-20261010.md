@@ -52,8 +52,8 @@ Root is implementing the edge correction; this document does not assert it is de
 
 | File | SHA-256 |
 | --- | --- |
-| `src/wearing/cloud/join.py` | `5550ad0e8bf683766f2554f0d618eaca9a3a8133d0bac15f4ebdcc45f3f8452a` |
-| `src/wearing/cloud/gateway.py` | `6ea3857a41166096a319088aede5d331e250d6dd63ce02f17046ca1379f6e7f5` |
+| `src/pajio/cloud/join.py` | `5550ad0e8bf683766f2554f0d618eaca9a3a8133d0bac15f4ebdcc45f3f8452a` |
+| `src/pajio/cloud/gateway.py` | `6ea3857a41166096a319088aede5d331e250d6dd63ce02f17046ca1379f6e7f5` |
 | `tests/test_invitation_gateway.py` | `c1eb0a2296027dee6d0d3ecdc700fdaf1f11c2d09ec8516206f1b979fac29d3e` |
 
 All temporary synthetic browser sessions were closed. No recurring monitor was installed.

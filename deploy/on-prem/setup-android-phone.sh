@@ -64,7 +64,7 @@ if [ "$adb_port" -lt 1024 ] || [ "$adb_port" -gt 65535 ]; then echo 'Invalid loo
 adb_serial="127.0.0.1:$adb_port"
 case "$image" in docker.m.daocloud.io/redroid/redroid@sha256:11d58a64bfbde2253d1cce81bff409ff58174980222d1bada232d9ef59181191|sha256:639792975c26fa2920562c5b8dfbb808405f4a6ecce8fb65005e07b484d4d392|sha256:1426149f9c830c53572eb89bd9f2ade07838eb21be06edd98830aa9f4ef634fb) ;; *) echo 'Image digest is not the accepted Android 14 build' >&2; exit 2;; esac
 if ! systemd-detect-virt --quiet; then echo 'A dedicated execution VM is required' >&2; exit 2; fi
-if [ -d /etc/pve ] || [ -d /var/lib/wearing/instance ]; then echo 'Refusing to install a phone on a hypervisor or Agent core VM' >&2; exit 2; fi
+if [ -d /etc/pve ] || [ -d /var/lib/pajio/instance ]; then echo 'Refusing to install a phone on a hypervisor or Agent core VM' >&2; exit 2; fi
 if id pajio-phone >/dev/null 2>&1; then
   test "$(getent passwd pajio-phone | cut -d: -f6)" = /home/pajio-phone
   test "$(getent passwd pajio-phone | cut -d: -f7)" = /usr/sbin/nologin

@@ -3,7 +3,7 @@ import io
 import json
 import zipfile
 
-from wearing.identity_export import IdentityExports
+from pajio.identity_export import IdentityExports
 from test_briefing_automation import system, config, schedule_id, A, B
 
 
@@ -60,6 +60,6 @@ def test_hidden_automation_preferences_do_not_consume_export_budget(system, monk
     with store.connection() as db:
         db.execute('UPDATE briefing_automations SET preferences=? WHERE owner_scope=?',
                    (json.dumps({'hidden': 'b' * 20000}), B))
-    monkeypatch.setattr('wearing.identity_export.MAX_DATA_BYTES', 10000)
+    monkeypatch.setattr('pajio.identity_export.MAX_DATA_BYTES', 10000)
     data, _, _ = IdentityExports(store)._snapshot('daily', owner_scope=A)
     assert len(data['briefing_automations']) == 1

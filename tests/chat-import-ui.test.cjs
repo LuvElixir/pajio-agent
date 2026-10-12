@@ -5,12 +5,12 @@ const assert = require("node:assert");
 const fs = require("node:fs");
 const vm = require("node:vm");
 
-const module_ = fs.readFileSync("src/wearing/web/chat-import.js", "utf8");
-const fflateSrc = fs.readFileSync("src/wearing/web/vendor/fflate/index.js", "utf8");
-const app = fs.readFileSync("src/wearing/web/app.js", "utf8");
-const views = fs.readFileSync("src/wearing/web/views.js", "utf8");
-const deletion = fs.readFileSync("src/wearing/web/account-deletion.js", "utf8");
-const html = fs.readFileSync("src/wearing/web/index.html", "utf8");
+const module_ = fs.readFileSync("src/pajio/web/chat-import.js", "utf8");
+const fflateSrc = fs.readFileSync("src/pajio/web/vendor/fflate/index.js", "utf8");
+const app = fs.readFileSync("src/pajio/web/app.js", "utf8");
+const views = fs.readFileSync("src/pajio/web/views.js", "utf8");
+const deletion = fs.readFileSync("src/pajio/web/account-deletion.js", "utf8");
+const html = fs.readFileSync("src/pajio/web/index.html", "utf8");
 const FIX = "clients/mobile/test-fixtures/chat-import/";
 
 test("chat-import.js and touched modules compile (syntax gate)", () => {
@@ -30,9 +30,9 @@ test("wiring: panel, dual entries, vendor fflate (local, no CDN), versions, rese
   assert.match(html, /views\.js\?v=18/);
   assert.match(html, /pajio\.css\?v=23/);
   assert.match(html, /account-deletion\.js\?v=8/);
-  assert.match(app, /window\.WearingChatImport\?\.reset\(\);/);
+  assert.match(app, /window\.PajioChatImport\?\.reset\(\);/);
   assert.match(views, /chat_import: "聊天来源"/);
-  assert.match(views, /WearingChatImport\?\.openSearchResult\?\.\(item\.target\)/);
+  assert.match(views, /PajioChatImport\?\.openSearchResult\?\.\(item\.target\)/);
   assert.match(deletion, /chat-import-draft:v1/);
   assert.match(deletion, /chat-import-pending:v1/);
   // 私密远控未开放：不出现任何远控/远程登录入口。
@@ -103,11 +103,11 @@ function harness({get, post, del, receiptGet, deletion = null, hangPost = false,
     setTimeout, clearTimeout, Date, JSON, Number, Array, Object, String, Boolean, Math, Error, Promise, RegExp, Uint8Array, DataView, Set, Map,
   };
   const storage = {denied: denyStorage};
-  context.window.WearingStore = {get: name => {if (storage.denied) throw new DOMException("denied", "SecurityError"); return store[name] ?? null;},
+  context.window.PajioStore = {get: name => {if (storage.denied) throw new DOMException("denied", "SecurityError"); return store[name] ?? null;},
     set: (name, v) => {if (storage.denied) return false; store[name] = String(v); return true;},
     remove: name => {if (failRemove) return false; if (storage.denied) throw new DOMException("denied", "SecurityError"); delete store[name]; return true;}};
-  context.window.WearingIds = {uuid: () => "k0123456789abcdef0123456789abcdef"};
-  if (deletion) context.window.WearingDeletion = deletion;
+  context.window.PajioIds = {uuid: () => "k0123456789abcdef0123456789abcdef"};
+  if (deletion) context.window.PajioDeletion = deletion;
   vm.createContext(context);
   vm.runInNewContext(fflateSrc, context);
   context.window.fflate = context.fflate;
@@ -115,7 +115,7 @@ function harness({get, post, del, receiptGet, deletion = null, hangPost = false,
   const flush = () => new Promise(r => setTimeout(r, 5));
   const journal = name => {try {return JSON.parse(store[name] || "null");} catch {return null;}};
   const fileOf = (path, name) => {const buf = fs.readFileSync(path); const copy = new Uint8Array(buf.length); copy.set(buf); return {name: name || path.split("/").at(-1), arrayBuffer: async () => copy.buffer.slice(0, copy.length)};};
-  return {context, calls, store, opened, journal, element, flush, fileOf, mod: context.window.WearingChatImport, releasePost: () => releasers.splice(0).forEach(release => release()), denyStorage: v => {storage.denied = v;}};
+  return {context, calls, store, opened, journal, element, flush, fileOf, mod: context.window.PajioChatImport, releasePost: () => releasers.splice(0).forEach(release => release()), denyStorage: v => {storage.denied = v;}};
 }
 const fixtureHash = () => {const crypto = require("node:crypto"); return crypto.createHash("sha256").update(fs.readFileSync(FIX + "合成选定聊天.zip")).digest("hex");};
 const receiptOf = (key, over = {}) => ({schema: 1, request_key: key, import_id: "imp_test01", identity_id: "qa", status: "imported", created_at: "2026-10-09T05:00:00Z", ...over});
@@ -245,7 +245,7 @@ test("deletion freeze blocks pick/confirm/delete with honest notice", async () =
   });
   h.mod.open(); await h.flush();
   const t = h.mod._test;
-  h.context.window.WearingDeletion.workAllowed = () => false;
+  h.context.window.PajioDeletion.workAllowed = () => false;
   await t.pick(h.fileOf(FIX + "合成选定聊天.zip")); await h.flush();
   assert.match(t.ui.error, /注销申请已受理/);
   assert.equal(h.journal("chat-import-draft:v1:qa"), null, "no local write while frozen");
@@ -297,7 +297,7 @@ test("scoped journals are per-identity; other identity's rows invisible", async 
     receiptGet: () => {const e = new Error("nf"); e.status = 404; throw e;},
     post: () => {throw new Error("unused");},
   });
-  h.context.window.WearingStore.set("chat-import-draft:v1:other", JSON.stringify({identity: "other", draft: {version: 1, key: "x", sourceHash: "y", preview: {title: "别的人"}, selfAuthor: null}}));
+  h.context.window.PajioStore.set("chat-import-draft:v1:other", JSON.stringify({identity: "other", draft: {version: 1, key: "x", sourceHash: "y", preview: {title: "别的人"}, selfAuthor: null}}));
   h.mod.open(); await h.flush();
   const t = h.mod._test;
   assert.equal(t.ui.draft, null, "other identity's journal is invisible");
@@ -368,7 +368,7 @@ test("P1-2 regression: deletion freeze during receipt GET blocks POST and journa
   await t.pick(h.fileOf(FIX + "合成选定聊天.zip")); await h.flush();
   const confirming = t.confirm();
   await h.flush();
-  h.context.window.WearingDeletion.workAllowed = () => false;
+  h.context.window.PajioDeletion.workAllowed = () => false;
   h.mod._test.ui.generation++; // 模拟冻结门 stop() 作废围栏
   h.releasePost();
   await confirming; await h.flush();
@@ -483,6 +483,6 @@ test("no nested buttons in any rendered state", async () => {
 });
 
 test("scoped-store remove returns verifiable boolean (cross-file)", () => {
-  const storeSrc = fs.readFileSync("src/wearing/web/scoped-store.js", "utf8");
+  const storeSrc = fs.readFileSync("src/pajio/web/scoped-store.js", "utf8");
   assert.match(storeSrc, /remove\(name\) \{ try \{ this\.backend\.removeItem\(this\.key\(name\)\); return true; \} catch \{ return false; \} \}/);
 });

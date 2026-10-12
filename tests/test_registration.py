@@ -15,10 +15,10 @@ import pytest
 from filelock import Timeout
 
 from test_invitations import ISSUER, invitation_lab, issue
-from wearing.cloud.control import ControlStore, digest
-from wearing.cloud.invitations import InvitationStore, InvitationError, code_hash
-from wearing.cloud.registration import RegistrationBroker, RegistrationClient, RegistrationError, credentials
-from wearing.cloud.registration import private_listener
+from pajio.cloud.control import ControlStore, digest
+from pajio.cloud.invitations import InvitationStore, InvitationError, code_hash
+from pajio.cloud.registration import RegistrationBroker, RegistrationClient, RegistrationError, credentials
+from pajio.cloud.registration import private_listener
 
 PASSWORD='Synthetic-Password-42'
 KEY='k'*64
@@ -217,7 +217,7 @@ def test_password_length_counts_unicode_codepoints():
 
 @pytest.mark.asyncio
 async def test_broker_body_boundary_preserves_413_without_calling_registration(tmp_path,monkeypatch):
-    import wearing.cloud.registration as module
+    import pajio.cloud.registration as module
     config=tmp_path/'config.json';config.write_text('{}');config.chmod(0o600)
     class FakeBroker:
         def __init__(self,*args,**kwargs):pass

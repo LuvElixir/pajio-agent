@@ -175,7 +175,7 @@ fn quick_capture(app: &AppHandle) {
             .is_some_and(|url| service_origin(app, &url))
         {
             // Static intent only. The web application owns the record, identity and draft.
-            let _ = window.eval("window.dispatchEvent(new Event('wearing:quick-capture'))");
+            let _ = window.eval("window.dispatchEvent(new Event('pajio:quick-capture'))");
         } else {
             app.state::<DesktopState>()
                 .pending_capture
@@ -252,7 +252,7 @@ fn install_menu(app: &AppHandle) -> tauri::Result<()> {
     )?;
     app.set_menu(Menu::with_items(app, &[&product, &edit, &window_menu])?)?;
     let tray_menu = Menu::with_items(app, &[&show, &capture, &settings, &sep, &quit])?;
-    TrayIconBuilder::with_id("wearing-presence")
+    TrayIconBuilder::with_id("pajio-presence")
         .tooltip("Pajio — 随时记一下")
         .icon(tauri::image::Image::from_bytes(include_bytes!(
             "../icons/tray.png"
@@ -286,7 +286,7 @@ fn build_main(app: &AppHandle) -> tauri::Result<()> {
                     .pending_capture
                     .swap(false, Ordering::Relaxed)
             {
-                let _ = window.eval("window.dispatchEvent(new Event('wearing:quick-capture'))");
+                let _ = window.eval("window.dispatchEvent(new Event('pajio:quick-capture'))");
             }
         })
         .on_new_window(move |url, features| {
@@ -318,7 +318,7 @@ fn build_main(app: &AppHandle) -> tauri::Result<()> {
     main.on_window_event(move |event| {
         if let tauri::WindowEvent::CloseRequested { api, .. } = event {
             api.prevent_close();
-            let _ = close_window.eval("window.dispatchEvent(new Event('wearing:window-hidden'))");
+            let _ = close_window.eval("window.dispatchEvent(new Event('pajio:window-hidden'))");
             let _ = close_window.hide();
         }
     });

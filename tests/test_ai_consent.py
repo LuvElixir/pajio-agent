@@ -11,9 +11,9 @@ import uuid
 import httpx
 import pytest
 
-from wearing.ai_consent import ConsentBook, ConsentError, POLICY_VERSION
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.worker import create_tenant_app
+from pajio.ai_consent import ConsentBook, ConsentError, POLICY_VERSION
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.worker import create_tenant_app
 
 ACTOR = 'a' * 64
 
@@ -70,7 +70,7 @@ def test_anchor_atomic_and_never_inherits_another_owner_or_instance(book, tmp_pa
 def test_cas_policy_change_and_unsafe_or_deleted_ledger_fail_closed(book, monkeypatch):
     decide(book)
     with pytest.raises(ConsentError): decide(book, 'revoke', 0)
-    monkeypatch.setattr('wearing.ai_consent.POLICY_VERSION', 'deepseek-new-policy')
+    monkeypatch.setattr('pajio.ai_consent.POLICY_VERSION', 'deepseek-new-policy')
     assert not book.snapshot('daily', ACTOR)['accepted']
     with pytest.raises(ConsentError): book.require('daily')
     book.path.chmod(0o644)
@@ -85,7 +85,7 @@ async def test_actual_tenant_api_csrf_owner_and_strict_body(tmp_path, monkeypatc
     root = tmp_path / 'instance'
     initialize_instance(root, 'tenant_fixture', 'https://consent.example')
     app = create_tenant_app(root, engine_autostart=False)
-    auth = {'Authorization': 'Bearer ' + (root / 'gateway.key').read_text().strip(), 'X-Wearing-Tenant': 'tenant_fixture',
+    auth = {'Authorization': 'Bearer ' + (root / 'gateway.key').read_text().strip(), 'X-Pajio-Tenant': 'tenant_fixture',
             'X-Pajio-Storage-Scope': ACTOR, 'X-Pajio-Private-Owner-Scope': ACTOR}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='https://consent.example', headers=auth) as client:
         before = await client.get('/api/ai-consent')
@@ -94,7 +94,7 @@ async def test_actual_tenant_api_csrf_owner_and_strict_body(tmp_path, monkeypatc
         payload = dict(action='accept', policy_version=POLICY_VERSION, expected_revision=0, request_id=uuid.uuid4().hex)
         assert (await client.post('/api/ai-consent', json=payload)).status_code == 403
         token = (await client.get('/api/bootstrap')).json()['token']
-        client.headers['X-Wearing-Token'] = token
+        client.headers['X-Pajio-Token'] = token
         assert (await client.post('/api/ai-consent', json={**payload, 'owner': ACTOR})).status_code == 422
         accepted = await client.post('/api/ai-consent', json=payload)
         assert accepted.status_code == 200 and accepted.json()['accepted']
@@ -113,8 +113,8 @@ async def test_actual_tenant_api_csrf_owner_and_strict_body(tmp_path, monkeypatc
 
 @pytest.mark.asyncio
 async def test_cloud_capture_requires_own_decision_but_manual_save_still_works(tmp_path, monkeypatch):
-    from wearing.capture import CaptureDraft
-    from wearing.life import LifeDraft
+    from pajio.capture import CaptureDraft
+    from pajio.life import LifeDraft
     monkeypatch.setenv('PAJIO_TRIAL_LIMITS', '1')
     root = tmp_path / 'instance'
     initialize_instance(root, 'tenant_fixture', 'https://consent.example')
@@ -138,12 +138,12 @@ async def test_cloud_capture_requires_own_decision_but_manual_save_still_works(t
 
 @pytest.mark.asyncio
 async def test_real_core_task_paths_deny_without_consent_and_after_revoke(book, monkeypatch):
-    from wearing.app import create_app
-    from wearing.briefing_api import CreateBriefing
-    from wearing.config import Settings
-    from wearing.hermes import HermesClient
-    from wearing.schedules import ScheduleDraft
-    from wearing.service import TaskError
+    from pajio.app import create_app
+    from pajio.briefing_api import CreateBriefing
+    from pajio.config import Settings
+    from pajio.hermes import HermesClient
+    from pajio.schedules import ScheduleDraft
+    from pajio.service import TaskError
 
     monkeypatch.setenv('PAJIO_TRIAL_LIMITS', '0')  # Consent cannot depend on pricing being enabled.
     calls, guarded = [], [False]
@@ -151,7 +151,7 @@ async def test_real_core_task_paths_deny_without_consent_and_after_revoke(book, 
     def wire(request):
         calls.append((request.method, request.url.path))
         if request.url.path == '/v1/capabilities':
-            return httpx.Response(200, json={'features': {}, 'wearing': {'ai_consent_guard': 'deepseek-v1' if guarded[0] else None}})
+            return httpx.Response(200, json={'features': {}, 'pajio': {'ai_consent_guard': 'deepseek-v1' if guarded[0] else None}})
         assert request.method == 'POST' and request.url.path == '/v1/runs'
         return httpx.Response(200, json={'run_id': 'synthetic-run'})
 
@@ -181,7 +181,7 @@ async def test_real_core_task_paths_deny_without_consent_and_after_revoke(book, 
         app.state.goals.control(goal['id'], goal['revision'], 'resume', owner_scope=ACTOR)
         goal_task = app.state.goals.claim(goal['id'])
         clock = ['2026-10-10T00:00:00+00:00']
-        monkeypatch.setattr('wearing.schedules.now', lambda: clock[0])
+        monkeypatch.setattr('pajio.schedules.now', lambda: clock[0])
         scheduled = app.state.schedules.create('daily', ScheduleDraft(title='Fixture', instruction='Synthetic only', kind='once', at='2026-10-10T00:01:00+00:00'), uuid.uuid4().hex, owner_scope=ACTOR)
         clock[0] = '2026-10-10T00:01:01+00:00'
         schedule_task = app.state.schedules.claim(scheduled['id'])
@@ -204,7 +204,7 @@ async def test_real_core_task_paths_deny_without_consent_and_after_revoke(book, 
 
 @pytest.mark.parametrize('trial', [True, False])
 def test_installed_sdk_sync_async_child_aux_and_revocation_without_trial_switch(tmp_path, trial):
-    installed = Path(__file__).parents[1] / '.wearing/runtime/installed.json'
+    installed = Path(__file__).parents[1] / '.pajio/runtime/installed.json'
     if not installed.exists(): pytest.skip('Managed Hermes SDK unavailable')
     python = Path(json.loads(installed.read_text())['python'])
     if not python.is_file(): pytest.skip('Managed Hermes SDK unavailable')
@@ -215,9 +215,9 @@ from pathlib import Path
 sys.path.insert(0,sys.argv[1])
 import httpx
 from openai import OpenAI,AsyncOpenAI
-from wearing.ai_consent import ConsentBook,ConsentError,POLICY_VERSION
-from wearing.usage_guard import UsageGuardConfig,install_usage_guard
-from wearing.usage import UsageError,UsageBook
+from pajio.ai_consent import ConsentBook,ConsentError,POLICY_VERSION
+from pajio.usage_guard import UsageGuardConfig,install_usage_guard
+from pajio.usage import UsageError,UsageBook
 root=Path(sys.argv[2])/'instance'
 b=ConsentBook(root/'data',create=True);actor='a'*64
 calls=[]

@@ -13,7 +13,7 @@ export class DataExportApi {
   private async call<T>(path: string, consume: (response: Response) => Promise<T>, init: RequestInit = {}): Promise<T> {
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 60000);
     try {
-      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {...init, signal: controller.signal, redirect: 'error', headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...init.headers}});
+      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {...init, signal: controller.signal, redirect: 'error', headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...init.headers}});
       if (!response.ok) {const error = await response.json().catch(() => null); throw new ApiError(response.status === 401 ? '连接已失效，请重新连接后导出。' : typeof error?.detail === 'string' ? error.detail : '这次导出没有完成，请重试。', response.status);}
       return await consume(response);
     } catch (error) {if (error instanceof ApiError) throw error; throw new ApiError('暂时连不上服务，请检查连接后重试。');}
@@ -30,7 +30,7 @@ export class DataExportApi {
   async create(requestKey: string): Promise<DataExport> {
     const bootstrap = await this.call('/api/bootstrap', response => response.json());
     if (bootstrap.version !== '0.2.0' || typeof bootstrap.token !== 'string' || !Array.isArray(bootstrap.identities) || !bootstrap.identities.some((row: {id?: string}) => row.id === this.connection.identity)) throw new ApiError('请重新连接当前身份后导出。', 422);
-    return this.call('/api/data-exports', async response => dataExport(await response.json(), this.connection.identity), {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Wearing-Token': bootstrap.token}, body: JSON.stringify({request_key: requestKey})});
+    return this.call('/api/data-exports', async response => dataExport(await response.json(), this.connection.identity), {method: 'POST', headers: {'Content-Type': 'application/json', 'X-Pajio-Token': bootstrap.token}, body: JSON.stringify({request_key: requestKey})});
   }
   async bytes(item: DataExport): Promise<Uint8Array> {
     dataExport(item, this.connection.identity);

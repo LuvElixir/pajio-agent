@@ -4,14 +4,14 @@
 
 ## 已实现
 
-### Web 远程接管模块（`src/wearing/web/remote-device.js` v4，window.WearingRemoteDevice）
+### Web 远程接管模块（`src/pajio/web/remote-device.js` v4，window.PajioRemoteDevice）
 
 - **状态机对齐 App**（NativeRemoteDevicePanel/remote-device-model/remote-viewer-document/remote-text-input 逐项移植）：request（带 request_id＋expected_generation）→ 等设备 ACK → transport（ice_servers 严格校验）→ offer/answer（gateway_epoch 绑定）→ 首帧 ready+frame（几何/CRC 语义）→ **用户显式「开始操作」** → 双确认交还（safe_screen＋scope）→ 等设备 ACK（agent_ready＋device_confirmed＋gateway_epoch 前进）。
 - **WebRTC**：页面与服务同源，页面内 RTCPeerConnection＋`pajio-control` DataChannel（recvonly video、5s 心跳、bufferedAmount>8192 停、20 KiB 帧上限）；协商失败/连接断开/通道关闭 → viewerStop。
 - **会话隔离（第一轮代码审查#3 落实）**：每个 viewer 一个本地 session 对象（pc/channel/几何/回执全部局部捕获）；模块级 `attempt` 全局单调（open 不归零）；每个异步续体校验 会话对象/代数/资源/身份快照；**API 身份冻结**（gatedApi 发出前同步核对 identityId+identityEpoch，旧异步绝不借新身份发送——A/B 读取竞态同款修复）。
 - **输入**：pointer/tap/swipe/scroll/key/text 按 ready 能力白名单——**Android touch fallback 仅在 `touch===true`（keyboard 不构成触摸）、快捷键需要 keyboard 能力**；几何映射拒绝黑边；滑动时长按后端协议 50..1000ms **截取合法值**（不拒绝后重放）；输入 ACK 未确认 2.5s → 停止发送（input_unconfirmed）。
 - **中文/私密输入**：password 型输入框（不回显、autocomplete=new-password）；超长/非法**保留未发草稿**（仅内存/DOM 镜像 ui.textDraft，绝不持久化/剪贴板/日志/截图），不截断不分段；重绘保留草稿与焦点；发送成功即清空；**身份切换 reset 清空 DOM 残留**。
-- **停止边界**：页面隐藏（visibilitychange）/桌面 `wearing:window-hidden`/pagehide/offline/换身份/注销冻结立即停止输入与视频；不自动恢复 Agent、不自动重发输入；close 每会话仅一次、失败如实（「暂停回执尚未收到」不自动重试）。
+- **停止边界**：页面隐藏（visibilitychange）/桌面 `pajio:window-hidden`/pagehide/offline/换身份/注销冻结立即停止输入与视频；不自动恢复 Agent、不自动重发输入；close 每会话仅一次、失败如实（「暂停回执尚未收到」不自动重试）。
 - **入口**：云设备列表「远程接管」按钮按**显式输入方法白名单**（电脑 `computer.input`；云手机 phone.* 输入方法集合，与 App device-management.ts 同集；**files.\* 与只读观察不算**）。
 - 布局：桌面大屏（1100px 面板、视频 letterbox 等比、控制区滚动、竖屏云手机 min-height 420px）；状态常显（你正在操作 · Pajio 已暂停 / 查看画面 · Pajio 已暂停 / 等待设备确认…）；RTT 显示。
 
@@ -26,7 +26,7 @@ root 实测：`https://pajio.luckyloading.com/api/bootstrap` 未登录 401（正
 ## 独立复核修复记录（三批，全部行为复现→修复→回归）
 
 1. **第一批（代码审查 5 项）**：①`data-rd-send` 局部 `const input` 遮蔽 `sendInput` 致合法文本 TypeError；②超长分支 paint 重建丢草稿——重绘保留草稿＋焦点（真 DOM innerHTML 重建语义测试）；③startViewer 全局 pc/channel/旧回调可作用新会话——本地 session 对象捕获＋单调代数＋身份冻结＋open 不归零代数；④重连中协商失败可卡 busy——viewerStop 对任何已建会话（非仅 live）都进入面板编排；⑤文本栏重绘焦点/草稿生命周期真 DOM 覆盖。
-2. **第二批（验收边界）**：桌面 `wearing:window-hidden` 监听停止；`WearingDeletion.registerWorkGate({stop})`＋canInput 受注销冻结阻断；Android 输入能力按显式 phone.* 白名单（files.* 不算）；测试 setTimeout 改异常捕获型（吞异常即断言失败）。
+2. **第二批（验收边界）**：桌面 `pajio:window-hidden` 监听停止；`PajioDeletion.registerWorkGate({stop})`＋canInput 受注销冻结阻断；Android 输入能力按显式 phone.* 白名单（files.* 不算）；测试 setTimeout 改异常捕获型（吞异常即断言失败）。
 3. **第三批（repro.test.cjs 4 场景）**：①A 设备迟到读取不得写进 B 面板（读取绑定资源快照＋readRevision 单调＋回执 resource_id 校验）；②Android touch/keyboard:false 时 tap fallback 与快捷键零发送；③慢滑 1200ms → 按协议截取 ≤1000ms（不拒绝重放）；④身份切换 reset 清空私密草稿 DOM 残留。
 
 另修复（自测发现）：clearViewer→viewerStop→stop() 重入抬升代数导致第二次 begin 提前失效——先摘 viewer 再停会话。
@@ -57,9 +57,9 @@ root 实测：`https://pajio.luckyloading.com/api/bootstrap` 未登录 401（正
 - 桌面：`endpoint.rs`/`main.rs`/frontend 连接页文案（默认正式地址）；**Rust 无变——QA 包复用** `/tmp/pajio-desktop-remote-qa-target/debug/bundle/macos/Pajio Remote QA.app`（构建于 Rust 终版后，未重新打包）。
 - 测试：**239/239**（web，新增零输入形态回归）＋13/13（rust）＋复核方 repro 4/4（v4 复跑通过）。
 - 冻结 SHA-256（前 16 位，交付机实测）：
-  - `src/wearing/web/remote-device.js` — `68da063781d9cf6a`
-  - `src/wearing/web/app.js` — `8cc1b0943462e12e`
-  - `src/wearing/web/index.html` — `d4c70219203d8ef3`
+  - `src/pajio/web/remote-device.js` — `68da063781d9cf6a`
+  - `src/pajio/web/app.js` — `8cc1b0943462e12e`
+  - `src/pajio/web/index.html` — `d4c70219203d8ef3`
   - `clients/desktop/src-tauri/src/endpoint.rs` — `5af53dcb4d6ccc40`
   - `clients/desktop/src-tauri/src/main.rs` — `7342469affc2c2f6`
 
@@ -75,10 +75,10 @@ root 实测：`https://pajio.luckyloading.com/api/bootstrap` 未登录 401（正
 **测试**：全套 **244/244**（+5 项入口回归）；Rust 无变复用 QA 包。
 
 **冻结 SHA-256（前 16 位，attempt 2 实测）**：
-- `src/wearing/web/app.js`（v55） — `0e65cd2a3ce653de`
-- `src/wearing/web/index.html` — `ec2d9d707f17a6a5`
-- `src/wearing/web/pajio.css`（v22） — `dd5c280cc115c405`
-- `src/wearing/web/remote-device.js`（v4 未变） — `68da063781d9cf6a`
+- `src/pajio/web/app.js`（v55） — `0e65cd2a3ce653de`
+- `src/pajio/web/index.html` — `ec2d9d707f17a6a5`
+- `src/pajio/web/pajio.css`（v22） — `dd5c280cc115c405`
+- `src/pajio/web/remote-device.js`（v4 未变） — `68da063781d9cf6a`
 - Rust 无变（endpoint.rs `5af53dcb4d6ccc40` / main.rs `7342469affc2c2f6`）；QA 包复用。
 
 
@@ -113,10 +113,10 @@ v5 独立复审阻断：RTCPeerConnection 构造 / addTransceiver / createDataCh
 **回归**：新增 1 项（reviewer 复现 3 分支：constructor NotSupportedError / transceiver InvalidStateError / channel SecurityError——均 raw_message_visible=false、fixed_stage_visible=true），并入自套共 16 项；reviewer 全量 16 项通过。全套 **246/246**。
 
 **最终冻结 SHA-256（前 16 位，attempt 4 实测）**：
-- `src/wearing/web/remote-device.js`（v6） — `9086adb692f09632`
-- `src/wearing/web/app.js`（v55） — `0e65cd2a3ce653de`
-- `src/wearing/web/index.html` — `cea1ce0bc89e871c`
-- `src/wearing/web/pajio.css`（v22） — `dd5c280cc115c405`
+- `src/pajio/web/remote-device.js`（v6） — `9086adb692f09632`
+- `src/pajio/web/app.js`（v55） — `0e65cd2a3ce653de`
+- `src/pajio/web/index.html` — `cea1ce0bc89e871c`
+- `src/pajio/web/pajio.css`（v22） — `dd5c280cc115c405`
 - Rust 无变（QA 包复用）。root 已独立复核通过（3 setup 复现＋246/246）。
 
 ## attempt 5（index.html 字面量换行修复，2026-10-10）
@@ -136,7 +136,7 @@ v5 独立复审阻断：RTCPeerConnection 构造 / addTransceiver / createDataCh
 
 **修复（`app.js` v56）**：新增 `resolveControlAction`（对齐 App deviceControlAction）——点击恢复前读 `/api/devices/access/{resource}`，冻结 identity/resource/generation 并核对异步续体后分派：
 
-- `paused`/`human_private` → **进 `WearingRemoteDevice.open` 查看并明确交还，不发 `paused:false`**；
+- `paused`/`human_private` → **进 `PajioRemoteDevice.open` 查看并明确交还，不发 `paused:false`**；
 - `handoff_pending`/`return_pending` → 等待（禁用提示）；
 - `agent_ready` 或 `supported:false`（只读/legacy）→ **普通恢复**（`/api/devices/control`）；不把所有设备强制远控；
 - generation 不匹配 / identity 在途切换 / API 失败 → 提示检查设备状态。
@@ -148,8 +148,8 @@ v5 独立复审阻断：RTCPeerConnection 构造 / addTransceiver / createDataCh
 **测试**：全套 **248/248**。
 
 **冻结 SHA-256（前 16 位，attempt 6 实测）**：
-- `src/wearing/web/app.js`（v56） — `3cb4c42e3a67579f`
-- `src/wearing/web/index.html` — `6ff699bc02e63cb4`
+- `src/pajio/web/app.js`（v56） — `3cb4c42e3a67579f`
+- `src/pajio/web/index.html` — `6ff699bc02e63cb4`
 - `remote-device.js` v6 `9086adb692f09632` / `pajio.css` v22 `dd5c280cc115c405` — 未变
 
 
@@ -169,6 +169,6 @@ v56 root 复审发现 click handler 传 `resolveControlAction` 的 paused 参数
 **测试**：全套 **249/249**。
 
 **冻结 SHA-256（前 16 位，attempt 7 实测）**：
-- `src/wearing/web/app.js`（v57） — `76096fd72a6f4e6e`
-- `src/wearing/web/index.html` — `bb61db82eedd2de8`
+- `src/pajio/web/app.js`（v57） — `76096fd72a6f4e6e`
+- `src/pajio/web/index.html` — `bb61db82eedd2de8`
 - `remote-device.js` v6 `9086adb692f09632` / `pajio.css` v22 `dd5c280cc115c405` — 未变

@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 import httpx
 import pytest
 
-from wearing.dev_mobile import MAX_BODY, TTL_SECONDS, addresses, create_dev_mobile_app
+from pajio.dev_mobile import MAX_BODY, TTL_SECONDS, addresses, create_dev_mobile_app
 
 ORIGIN = "http://192.168.1.42:8795"
 UPSTREAM = "http://127.0.0.1:8794"
@@ -75,14 +75,14 @@ async def test_native_bearer_webview_cookie_and_credential_header_boundary(tmp_p
     def worker(request):
         seen.append(request)
         assert request.headers["Host"] == "127.0.0.1:8794"
-        assert request.headers["X-Wearing-Identity"] == "daily"
-        for name in ["authorization", "cookie", "x-forwarded-host", "x-forwarded-for", "x-wearing-tenant", "x-arbitrary"]:
+        assert request.headers["X-Pajio-Identity"] == "daily"
+        for name in ["authorization", "cookie", "x-forwarded-host", "x-forwarded-for", "x-pajio-tenant", "x-arbitrary"]:
             assert name not in request.headers
         return reply(headers={"Content-Type": "application/json", "Set-Cookie": "upstream-secret=bad", "Content-Security-Policy": "default-src 'self'"})
 
     app, _, auth = setup(tmp_path, worker)
     async with app.router.lifespan_context(app), httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url=ORIGIN) as client:
-        response = await client.get("/", headers={**auth, "X-Forwarded-Host": "bad.example", "Cookie": "browser=bad", "X-Wearing-Tenant": "bad", "X-Arbitrary": "bad"})
+        response = await client.get("/", headers={**auth, "X-Forwarded-Host": "bad.example", "Cookie": "browser=bad", "X-Pajio-Tenant": "bad", "X-Arbitrary": "bad"})
         assert response.status_code == 200
         cookie = response.headers["set-cookie"]
         assert "HttpOnly" in cookie and "SameSite=strict" in cookie and "Max-Age=" in cookie
@@ -90,9 +90,9 @@ async def test_native_bearer_webview_cookie_and_credential_header_boundary(tmp_p
         response = await client.get("/assets/app.js")
         assert response.status_code == 200 and "set-cookie" not in response.headers
         assert response.headers["content-security-policy"] == "default-src 'self'"
-        assert (await client.post("/api/conversation", json={}, headers={"Origin": ORIGIN, "X-Wearing-Token": "csrf-token"})).status_code == 200
+        assert (await client.post("/api/conversation", json={}, headers={"Origin": ORIGIN, "X-Pajio-Token": "csrf-token"})).status_code == 200
         assert seen[-1].headers["origin"] == UPSTREAM
-        assert seen[-1].headers["x-wearing-token"] == "csrf-token"
+        assert seen[-1].headers["x-pajio-token"] == "csrf-token"
         assert (await client.post("/api/conversation", json={}, headers=auth)).status_code == 200
         assert "origin" not in seen[-1].headers
         assert (await client.get("/assets/app.js", headers={"Authorization": "Bearer invalid"})).status_code == 401
@@ -109,7 +109,7 @@ async def test_csrf_exact_host_identity_scope_and_no_bearer_forwarding(tmp_path)
         assert (await client.get("/api/life", headers={**auth, "Origin": "http://192.168.1.42:1111"})).status_code == 403
         assert (await client.post("/api/conversation", json={})).status_code == 403
         assert (await client.post("/api/conversation", headers={"Origin": "null"}, json={})).status_code == 403
-        assert (await client.get("/api/life", headers={**auth, "X-Wearing-Identity": "other"})).status_code == 403
+        assert (await client.get("/api/life", headers={**auth, "X-Pajio-Identity": "other"})).status_code == 403
         assert (await client.get("/api/life?identity=other", headers=auth)).status_code == 403
         assert (await client.get("/api/life?identity=daily&identity=other", headers=auth)).status_code == 403
         assert (await client.post("/api/identities", json={}, headers=auth)).status_code == 403
@@ -155,7 +155,7 @@ async def test_15mb_stream_limit_accepts_audio_size_and_blocks_both_declared_and
 
     async with app.router.lifespan_context(app), httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url=ORIGIN) as client:
         response = await client.post("/api/life/assets?name=sample.m4a", content=b"x" * MAX_BODY,
-                                     headers={**auth, "Content-Type": "audio/mp4", "X-Wearing-Token": "csrf"})
+                                     headers={**auth, "Content-Type": "audio/mp4", "X-Pajio-Token": "csrf"})
         assert response.status_code == 200 and len(seen[-1].content) == MAX_BODY
         assert seen[-1].headers["content-type"] == "audio/mp4"
         response = await client.post("/api/life/assets", content=b"", headers={**auth, "Content-Length": str(MAX_BODY + 1)})
@@ -205,8 +205,8 @@ def test_pairing_file_is_never_overwritten_or_written_through_symlink(tmp_path):
 
 @pytest.mark.parametrize("local_devices,activity_status", [(True, 200), (False, 401)])
 async def test_bridge_keeps_real_loopback_app_origin_and_csrf_guards(tmp_path, local_devices, activity_status):
-    from wearing.app import create_app
-    from wearing.config import Settings
+    from pajio.app import create_app
+    from pajio.config import Settings
 
     core = create_app(Settings(tmp_path / "isolated-core"), engine_autostart=False, local_devices=local_devices)
     path = tmp_path / "pair.json"
@@ -220,15 +220,15 @@ async def test_bridge_keeps_real_loopback_app_origin_and_csrf_guards(tmp_path, l
         assert bootstrap["deployment"] == ("local" if local_devices else "cloud")
         assert (await client.post("/api/activity/seen", json={"items": []}, headers={**auth, "Origin": ORIGIN})).status_code == 403
         response = await client.post("/api/activity/seen", json={"items": []},
-                                     headers={**auth, "Origin": ORIGIN, "X-Wearing-Token": token})
+                                     headers={**auth, "Origin": ORIGIN, "X-Pajio-Token": token})
         assert response.status_code == 422  # CSRF passed; empty items fail body validation.
         assert (await client.get("/api/activity", headers=auth)).status_code == activity_status
         # A LAN capability cannot mint a cloud account's trusted owner scope.
-        forged = {**auth, "X-Pajio-Storage-Scope": "a" * 64, "X-Wearing-Tenant": "forged"}
+        forged = {**auth, "X-Pajio-Storage-Scope": "a" * 64, "X-Pajio-Tenant": "forged"}
         assert (await client.get("/api/activity?owner_scope=" + "a" * 64, headers=forged)).status_code == activity_status
         if not local_devices:
             response = await client.post("/api/activity/seen",
                                          json={"items": [{"task_id": "fixture", "version": "a" * 64}]},
-                                         headers={**forged, "Origin": ORIGIN, "X-Wearing-Token": token})
+                                         headers={**forged, "Origin": ORIGIN, "X-Pajio-Token": token})
             assert response.status_code == 401
     await core.state.service.hermes.close()

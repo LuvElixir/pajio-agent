@@ -4,7 +4,7 @@ import os
 import pytest
 import yaml
 
-from wearing.profile import PROFILE_VERSION, ProfileError, digest, identity_text, prepare_profile
+from pajio.profile import PROFILE_VERSION, ProfileError, digest, identity_text, prepare_profile
 
 
 def upstream(tmp_path):
@@ -37,9 +37,9 @@ def test_migration_preserves_credentials_memory_and_user_config(tmp_path):
     assert (home / "memories/USER.md").read_text() == "用户原有偏好"
     assert (home / "SOUL.md").read_text().strip() == identity_text()
     assert "private-test-value" not in json.dumps(result)
-    assert any(p.read_text() == original for p in (home / "wearing-backups").iterdir())
+    assert any(p.read_text() == original for p in (home / "pajio-backups").iterdir())
     if os.name != "nt":
-        for path in (home / "config.yaml", home / "SOUL.md", *list((home / "wearing-backups").iterdir())):
+        for path in (home / "config.yaml", home / "SOUL.md", *list((home / "pajio-backups").iterdir())):
             assert path.stat().st_mode & 0o077 == 0
 
 
@@ -47,10 +47,10 @@ def test_reapply_is_idempotent_and_does_not_overwrite_custom_identity(tmp_path):
     source, home = upstream(tmp_path), tmp_path / "home"
     first = prepare_profile(home, source)
     config = (home / "config.yaml").read_bytes()
-    backups = list((home / "wearing-backups").glob("*"))
+    backups = list((home / "pajio-backups").glob("*"))
     assert prepare_profile(home, source) == first
     assert config == (home / "config.yaml").read_bytes()
-    assert backups == list((home / "wearing-backups").glob("*"))
+    assert backups == list((home / "pajio-backups").glob("*"))
     (home / "SOUL.md").write_text("用户自定义身份")
     with pytest.raises(ProfileError, match="未覆盖"):
         prepare_profile(home, source)
@@ -83,15 +83,15 @@ def test_profile_refuses_config_symlinks(tmp_path):
 def test_remote_tools_are_opt_in_and_preserve_model_config(tmp_path):
     source,home=upstream(tmp_path),tmp_path/'home'
     home.mkdir();(home/'config.yaml').write_text('model:\n  provider: deepseek\n  default: chosen-model\n')
-    remote={'command':'/private/wearing/python','args':['/private/remote_proxy.py']}
+    remote={'command':'/private/pajio/python','args':['/private/remote_proxy.py']}
     result=prepare_profile(home,source,remote=remote)
-    assert result['toolsets']==['memory','session_search','web','todo','skills','vision','wearing_devices']
+    assert result['toolsets']==['memory','session_search','web','todo','skills','vision','pajio_devices']
     config=yaml.safe_load((home/'config.yaml').read_text())
-    assert config['mcp_servers']['wearing_devices']==remote
+    assert config['mcp_servers']['pajio_devices']==remote
     assert config['model']['default']=='chosen-model'
     result=prepare_profile(home,source)
-    assert 'wearing_devices' not in result['toolsets']
-    assert 'wearing_devices' not in yaml.safe_load((home/'config.yaml').read_text())['mcp_servers']
+    assert 'pajio_devices' not in result['toolsets']
+    assert 'pajio_devices' not in yaml.safe_load((home/'config.yaml').read_text())['mcp_servers']
 
 
 def test_existing_web_provider_settings_are_preserved(tmp_path):
@@ -106,17 +106,17 @@ def test_existing_web_provider_settings_are_preserved(tmp_path):
 def test_owned_previous_brand_migrates_with_backup_and_preserves_custom_changes(tmp_path):
     source, home = upstream(tmp_path), tmp_path / 'home'
     home.mkdir()
-    previous = '你是 Wearing。保留上一版产品身份说明。\n'
+    previous = '你是 Pajio。保留上一版产品身份说明。\n'
     soul = home / 'SOUL.md'
     soul.write_text(previous)
-    manifest = home / 'wearing-profile.json'
+    manifest = home / 'pajio-profile.json'
     manifest.write_text(json.dumps({'version': 23, 'identity_sha256': digest(previous)}))
 
     result = prepare_profile(home, source)
     assert result['version'] == PROFILE_VERSION
-    assert result['mode'] == 'wearing-personal'
+    assert result['mode'] == 'pajio-personal'
     assert '你的名字是 Pajio。' in soul.read_text()
-    assert any(path.read_text() == previous for path in (home / 'wearing-backups').glob('SOUL.md.*'))
+    assert any(path.read_text() == previous for path in (home / 'pajio-backups').glob('SOUL.md.*'))
 
     custom = soul.read_text() + '\n用户自定义：只用简短中文回答。\n'
     soul.write_text(custom)

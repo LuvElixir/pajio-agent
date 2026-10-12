@@ -22,7 +22,7 @@
 | control → C mTLS | 200，reachable；CA 与 IP SAN 校验开启 |
 | 无 TLS 客户端证书 | 400，未进入 worker |
 | C 主动连接 A/B、control、两台 A 执行 VM、宿主 SSH、公司 PVE | 七项 TCP 连接均未建立，结合已核对的防火墙规则验证隔离 |
-| 私有配置 | instance/gateway/owner/model env/config 均 wearing 所有、0600、非符号链接 |
+| 私有配置 | instance/gateway/owner/model env/config 均 pajio 所有、0600、非符号链接 |
 
 服务自身已 enable/start；VM `onboot=0` 保持创建时状态，本记录不声称宿主重启后会自动启动 C。未重启或修改 A/B/control 的服务。网络探针只是这些固定端点的有限时点验收，不等同于全网隔离形式证明或长期互联网可用性。
 
@@ -34,7 +34,7 @@
 
 ## 证据与交接
 
-私有证据位于 `.wearing/on-prem/20261009/personal-compute/invitation-entry-20261010/`。`tenant-c-final-summary.json` SHA-256 为 `111383666899d4a00aa450518f46efd6b9f63d2e34eb7733936769190173b287`，索引系统身份、源码、TLS、安装恢复、Core/网络健康和私有权限证明。
+私有证据位于 `.pajio/on-prem/20261009/personal-compute/invitation-entry-20261010/`。`tenant-c-final-summary.json` SHA-256 为 `111383666899d4a00aa450518f46efd6b9f63d2e34eb7733936769190173b287`，索引系统身份、源码、TLS、安装恢复、Core/网络健康和私有权限证明。
 
 交给控制面任务的最小 `tenant-c-route-bundle/` 仅包含登记所需的 instance/owner/gateway 文件及无凭据状态证明，目录 0700、文件 0600。本任务没有登记 route、发行邀请码或修改用户 membership。
 

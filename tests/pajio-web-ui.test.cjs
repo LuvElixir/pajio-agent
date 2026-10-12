@@ -4,12 +4,12 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 
 const read = path => fs.readFileSync(path, 'utf8');
-const html = read('src/wearing/web/index.html');
-const css = read('src/wearing/web/pajio.css');
-const pajio = read('src/wearing/web/pajio.js');
-const views = read('src/wearing/web/views.js');
-const life = read('src/wearing/web/life.js');
-const app = read('src/wearing/web/app.js');
+const html = read('src/pajio/web/index.html');
+const css = read('src/pajio/web/pajio.css');
+const pajio = read('src/pajio/web/pajio.js');
+const views = read('src/pajio/web/views.js');
+const life = read('src/pajio/web/life.js');
+const app = read('src/pajio/web/app.js');
 
 test('web shell loads Pajio brand and theme assets beside the App host assets', () => {
   assert.match(html, /pajio\.css\?v=\d+/);
@@ -147,7 +147,7 @@ test('follow-ups: navigation stays reachable, wordmark is filled and sized, copy
 test('Hypit motion: idle only for the mist-blue top bear; wardrobe film only for the blue-cream pair', () => {
   // 素材已进入 web/motion。
   for (const file of ['mist-blue-idle.mp4', 'mist-blue-poster.jpg', 'blue-to-cream.mp4', 'cream-to-blue.mp4']) {
-    assert.ok(fs.existsSync(`src/wearing/web/motion/${file}`), file);
+    assert.ok(fs.existsSync(`src/pajio/web/motion/${file}`), file);
   }
   // 顶部进展熊 idle：静音、内联、无控件、23 秒一次、隐藏/离屏/减少动态暂停并落 poster。
   assert.match(pajio, /mist-blue-idle\.mp4/);

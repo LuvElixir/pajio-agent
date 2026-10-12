@@ -50,7 +50,7 @@
 
 新安装 iOS / Android 默认使用 `https://pajio.luckyloading.com/`；保留所有已有存储连接与身份。普通账户登录位于连接页，开发身份和手动连接收在“高级 / 开发连接”内。三个测试覆盖默认、预览 origin 与已存本地 / 云端 / 开发连接保留；原生已确认升级后 OAuth 保留、开发入口折叠 / 展开均可用。
 
-证据：被 Git 忽略的 `.wearing/on-prem/20261009/personal-compute/mobile-native-proof.json`，以及 mobile-linux-view-only.png、mobile-linux-returned.png、mobile-public-connection.png。源码 / 构建 / 原生运行分别记录，不视为实机或移动网络证据。
+证据：被 Git 忽略的 `.pajio/on-prem/20261009/personal-compute/mobile-native-proof.json`，以及 mobile-linux-view-only.png、mobile-linux-returned.png、mobile-public-connection.png。源码 / 构建 / 原生运行分别记录，不视为实机或移动网络证据。
 
 
 ### Android 原生复验与聊天恢复
@@ -77,4 +77,4 @@
 
 安装包位于 `/Users/archieliew/Downloads/Pajio-test-20261010/Pajio-0.2.0-20261010-arm64-test.apk`，67,798,698 字节；SHA-256 `bf842764cbfab65b239ccc15bf758ebcdd78a43d6eca91310327b95ac8d8f943`。同目录 `build-proof.json` 保存源码逐文件 SHA、嵌入 bundle SHA 和验证边界。
 
-APK v2 签名及 16 KB zipalign 检查通过，显示名 Pajio、包名 `io.luckyloading.wearing.mobile`、版本 0.2.0 / code 1、最低 API 24。当前签名为 Android Debug 测试证书，仅 arm64-v8a；没有进行这份最终包的 Android 真机安装验证，也不是正式分发签名。iOS 仍为独立模拟器 Release 构建，Apple 组织签名 / TestFlight 限制未改变。
+APK v2 签名及 16 KB zipalign 检查通过，显示名 Pajio、包名 `io.luckyloading.pajio.mobile`、版本 0.2.0 / code 1、最低 API 24。当前签名为 Android Debug 测试证书，仅 arm64-v8a；没有进行这份最终包的 Android 真机安装验证，也不是正式分发签名。iOS 仍为独立模拟器 Release 构建，Apple 组织签名 / TestFlight 限制未改变。

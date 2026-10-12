@@ -12,20 +12,20 @@ import yaml
 import httpx
 import pytest
 
-from wearing.engine_runner import ALLOWED_ROUTES, expected_life_tool_names
-from wearing.cloud_apps_contract import NAMES as CLOUD_NAMES
-from wearing.native_actions_contract import NAMES as NATIVE_NAMES
-from wearing.profile import PROFILE_VERSION, prepare_profile
-from wearing.store import Store
-from wearing.runtime import HermesRuntime, stop_owned_process
-from wearing.filesystem import configuration as filesystem_configuration
-from wearing.mobile import configuration as phone_configuration
-from wearing import mobile
-from wearing.config import write_private_json
+from pajio.engine_runner import ALLOWED_ROUTES, expected_life_tool_names
+from pajio.cloud_apps_contract import NAMES as CLOUD_NAMES
+from pajio.native_actions_contract import NAMES as NATIVE_NAMES
+from pajio.profile import PROFILE_VERSION, prepare_profile
+from pajio.store import Store
+from pajio.runtime import HermesRuntime, stop_owned_process
+from pajio.filesystem import configuration as filesystem_configuration
+from pajio.mobile import configuration as phone_configuration
+from pajio import mobile
+from pajio.config import write_private_json
 
 
 def test_life_registration_matches_engine_startup_contract_without_installed_engine():
-    from wearing.life_proxy import TOOLS
+    from pajio.life_proxy import TOOLS
     registered = {tool.name for tool in TOOLS}
     assert {"chat_import_search", "chat_import_read"} <= registered
     assert registered == expected_life_tool_names()
@@ -33,7 +33,7 @@ def test_life_registration_matches_engine_startup_contract_without_installed_eng
 
 @pytest.mark.parametrize("connectors,computer,disabled_memory,life,remote", [(False, False, False, False, False), (True, False, False, False, False), (False, True, False, False, False), (False, False, True, False, False), (False, False, False, True, False), (False, False, False, False, True)])
 def test_real_adapter_exposes_only_personal_engine_routes(tmp_path, connectors, computer, disabled_memory, life, remote):
-    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".wearing")
+    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".pajio")
     if not runtime.python.is_file():
         pytest.skip("Install the pinned local engine to run its integration contract")
     home = tmp_path / "home"
@@ -68,16 +68,16 @@ def test_real_adapter_exposes_only_personal_engine_routes(tmp_path, connectors, 
     life_connector = None
     if life:
         life_root = tmp_path / "life"
-        Store(life_root / "wearing.sqlite3")
-        life_connector = {"command": sys.executable, "args": [str(Path(__file__).resolve().parents[1] / "src/wearing/life_proxy.py"), str(life_root), "daily"]}
+        Store(life_root / "pajio.sqlite3")
+        life_connector = {"command": sys.executable, "args": [str(Path(__file__).resolve().parents[1] / "src/pajio/life_proxy.py"), str(life_root), "daily"]}
     remote_connector = None
     if remote:
-        from wearing.cloud.instance import initialize_instance
-        from wearing.cloud.relay import instance_relay, PairRequest
-        from wearing.cloud.device_setup import tools_for
+        from pajio.cloud.instance import initialize_instance
+        from pajio.cloud.relay import instance_relay, PairRequest
+        from pajio.cloud.device_setup import tools_for
         remote_root = tmp_path / 'cloud'
         initialize_instance(remote_root, 'tenant_test', 'http://127.0.0.1:18865')
-        remote_connector = {'command': sys.executable, 'args': [str(Path(__file__).resolve().parents[1] / 'src/wearing/remote_proxy.py'), str(remote_root), 'daily']}
+        remote_connector = {'command': sys.executable, 'args': [str(Path(__file__).resolve().parents[1] / 'src/pajio/remote_proxy.py'), str(remote_root), 'daily']}
     prepare_profile(home, runtime.source, files, phone, computer, remote=remote_connector, life=life_connector)
     with socket.socket() as reservation:
         reservation.bind(("127.0.0.1", 0))
@@ -85,12 +85,12 @@ def test_real_adapter_exposes_only_personal_engine_routes(tmp_path, connectors, 
     key = secrets.token_urlsafe(36)
     env = runtime.env()
     guard_root = tmp_path / "guard"
-    Store(guard_root / "wearing.sqlite3")
+    Store(guard_root / "pajio.sqlite3")
     env.update(HERMES_HOME=str(home), API_SERVER_PORT=str(port), API_SERVER_KEY=key,
                PAJIO_CONFIRMATION_DATA_DIR=str(guard_root), PAJIO_CONFIRMATION_IDENTITY="daily",
                PAJIO_RECALL_DATA_DIR=str(guard_root), PAJIO_RECALL_IDENTITY="daily", PAJIO_RECALL_LOCAL="1",
                PAJIO_USAGE_DATA_DIR=str(guard_root), PAJIO_USAGE_IDENTITY="daily", PAJIO_TRIAL_LIMITS="1")
-    runner = Path(__file__).resolve().parents[1] / "src/wearing/engine_runner.py"
+    runner = Path(__file__).resolve().parents[1] / "src/pajio/engine_runner.py"
     with (tmp_path / "engine.log").open("w") as log:
         process = subprocess.Popen([str(runtime.python), str(runner), str(runtime.source)],
                                    env=env, cwd=tmp_path, stdout=log, stderr=log)
@@ -107,21 +107,21 @@ def test_real_adapter_exposes_only_personal_engine_routes(tmp_path, connectors, 
                 else:
                     pytest.fail("Engine readiness timed out: " + (tmp_path / "engine.log").read_text()[-2000:])
                 assert client.get("/v1/capabilities").status_code == 401
-                assert client.get("/v1/wearing/memory").status_code == 401
+                assert client.get("/v1/pajio/memory").status_code == 401
                 client.headers["Authorization"] = f"Bearer {key}"
                 caps = client.get("/v1/capabilities").json()
-                assert caps["runtime"]["mode"] == "wearing-personal"
-                assert caps["wearing"]["profile_version"] == PROFILE_VERSION
-                assert caps["wearing"]["identity"] == "Pajio"
-                assert caps["wearing"]["web_tools"] == ["web_search", "web_extract"]
-                assert caps["wearing"]["planning_tools"] == ["todo_list"]
-                assert caps["wearing"]["skill_tools"] == ["skill_manage", "skill_view", "skills_list"]
-                assert set(caps["wearing"]["media_tools"]) <= {"vision_analyze"}
-                assert caps["wearing"]["research_receipts"] is True
-                assert caps["wearing"]["app_observation_receipts"] is True
-                assert caps["wearing"]["confirmation_guard"] == "durable-v1"
-                assert caps["wearing"]["session_recall_guard"] == "sources-v1"
-                assert caps['wearing']['remote_device_tools'] == []
+                assert caps["runtime"]["mode"] == "pajio-personal"
+                assert caps["pajio"]["profile_version"] == PROFILE_VERSION
+                assert caps["pajio"]["identity"] == "Pajio"
+                assert caps["pajio"]["web_tools"] == ["web_search", "web_extract"]
+                assert caps["pajio"]["planning_tools"] == ["todo_list"]
+                assert caps["pajio"]["skill_tools"] == ["skill_manage", "skill_view", "skills_list"]
+                assert set(caps["pajio"]["media_tools"]) <= {"vision_analyze"}
+                assert caps["pajio"]["research_receipts"] is True
+                assert caps["pajio"]["app_observation_receipts"] is True
+                assert caps["pajio"]["confirmation_guard"] == "durable-v1"
+                assert caps["pajio"]["session_recall_guard"] == "sources-v1"
+                assert caps['pajio']['remote_device_tools'] == []
                 if remote:
                     # Already-running engine: first enrollment publishes into the
                     # actual upstream registry and the HTTP capabilities follow.
@@ -131,48 +131,48 @@ def test_real_adapter_exposes_only_personal_engine_routes(tmp_path, connectors, 
                     pair = relay.pair_code('daily', [spec], tools_for([spec]))
                     relay.pair(PairRequest(code=pair['code'], token='a'*64))
                     write_private_json(remote_root/'data/remote-devices.json', {'schema_version': 1, 'enabled': True})
-                    expected = {'mcp__wearing_devices__wearing_list_devices', 'mcp__wearing_devices__wearing_computer_observe'}
+                    expected = {'mcp__pajio_devices__pajio_list_devices', 'mcp__pajio_devices__pajio_computer_observe'}
                     for _ in range(100):
-                        current = client.get('/v1/capabilities').json()['wearing']['remote_device_tools']
+                        current = client.get('/v1/capabilities').json()['pajio']['remote_device_tools']
                         if set(current) == expected: break
                         time.sleep(.1)
                     assert set(current) == expected
                     assert process.poll() is None
                     write_private_json(remote_root/'data/remote-devices.json', {'schema_version': 1, 'enabled': False})
                     for _ in range(100):
-                        current = client.get('/v1/capabilities').json()['wearing']['remote_device_tools']
+                        current = client.get('/v1/capabilities').json()['pajio']['remote_device_tools']
                         if not current: break
                         time.sleep(.1)
                     assert current == []
-                assert set(caps["wearing"]["life_tools"]) == ({"mcp__wearing_life__" + name for name in ("request_confirmation", "life_records", "life_create", "life_change", "task_lists", "task_list_change", "calendar_series", "goal_list", "goal_create", "goal_change", "schedule_list", "schedule_create", "schedule_change", "artifact_list", "artifact_read", "artifact_publish", "artifact_design_guide", "chat_import_search", "chat_import_read")} | {"mcp__wearing_life__" + name for name in CLOUD_NAMES | NATIVE_NAMES} if life else set())
+                assert set(caps["pajio"]["life_tools"]) == ({"mcp__pajio_life__" + name for name in ("request_confirmation", "life_records", "life_create", "life_change", "task_lists", "task_list_change", "calendar_series", "goal_list", "goal_create", "goal_change", "schedule_list", "schedule_create", "schedule_change", "artifact_list", "artifact_read", "artifact_publish", "artifact_design_guide", "chat_import_search", "chat_import_read")} | {"mcp__pajio_life__" + name for name in CLOUD_NAMES | NATIVE_NAMES} if life else set())
                 if life:
-                    from wearing.life_proxy import TOOLS
-                    assert set(caps["wearing"]["life_tools"]) == {"mcp__wearing_life__" + tool.name for tool in TOOLS}
+                    from pajio.life_proxy import TOOLS
+                    assert set(caps["pajio"]["life_tools"]) == {"mcp__pajio_life__" + tool.name for tool in TOOLS}
                 assert caps["features"]["runs_idempotency"]["durable"]
                 assert caps["features"]["session_chat"] is False
                 assert caps["features"]["browser_extension_control"] is False
-                assert len(caps["wearing"]["file_tools"]) == (6 if connectors else 0)
-                assert len(caps["wearing"]["phone_tools"]) == (11 if connectors else 0)
+                assert len(caps["pajio"]["file_tools"]) == (6 if connectors else 0)
+                assert len(caps["pajio"]["phone_tools"]) == (11 if connectors else 0)
                 if adb_blocked is not None:
                     assert not adb_blocked.exists(), "Discovery attempted forbidden device enumeration"
-                assert caps["wearing"]["computer_tools"] == (["computer_use"] if computer else [])
-                assert caps["wearing"]["memory_tools"] == (["session_search"] if disabled_memory else ["memory", "session_search"])
-                memory = client.get("/v1/wearing/memory").json()
+                assert caps["pajio"]["computer_tools"] == (["computer_use"] if computer else [])
+                assert caps["pajio"]["memory_tools"] == (["session_search"] if disabled_memory else ["memory", "session_search"])
+                memory = client.get("/v1/pajio/memory").json()
                 assert memory["targets"]["user"]["entries"] == ["喜欢简短结论", "测试偏好"]
                 assert memory["targets"]["memory"]["entries"] == ["测试经验"]
                 assert memory["targets"]["user"]["enabled"] is not disabled_memory
-                assert client.post("/v1/wearing/memory", json={}).status_code == 405
+                assert client.post("/v1/pajio/memory", json={}).status_code == 405
                 assert (home / "memories/USER.md").read_text() == "喜欢简短结论\n§\n测试偏好\n"
                 edit = {"target": "user", "revision": memory["targets"]["user"]["revision"], "action": "replace", "index": 0, "content": "喜欢准确简短结论"}
-                changed = client.patch("/v1/wearing/memory", json=edit)
+                changed = client.patch("/v1/pajio/memory", json=edit)
                 if disabled_memory:
                     assert changed.status_code == 409
                 else:
                     assert changed.status_code == 200, changed.text
                     updated = changed.json()["targets"]["user"]
                     assert updated["entries"] == ["喜欢准确简短结论", "测试偏好"]
-                    assert client.patch("/v1/wearing/memory", json=edit).status_code == 409
-                    removed = client.patch("/v1/wearing/memory", json={"target": "user", "revision": updated["revision"], "action": "remove", "index": 1})
+                    assert client.patch("/v1/pajio/memory", json=edit).status_code == 409
+                    removed = client.patch("/v1/pajio/memory", json={"target": "user", "revision": updated["revision"], "action": "remove", "index": 1})
                     assert removed.status_code == 200, removed.text
                     assert removed.json()["targets"]["user"]["entries"] == ["喜欢准确简短结论"]
                     assert '测试偏好' not in (home / "memories/USER.md").read_text()
@@ -180,28 +180,28 @@ def test_real_adapter_exposes_only_personal_engine_routes(tmp_path, connectors, 
                     record = removal["history"]["items"][0]
                     assert record["source"] == "user" and record["action"] == "remove" and record["undoable"]
                     undo = {"target": "user", "action": "undo", "history_id": record["id"], "revision": removal["revision"]}
-                    reverted = client.patch("/v1/wearing/memory", json=undo)
+                    reverted = client.patch("/v1/pajio/memory", json=undo)
                     assert reverted.status_code == 200, reverted.text
                     assert reverted.json()["targets"]["user"]["entries"] == ["喜欢准确简短结论", "测试偏好"]
                     assert "测试偏好" in (home / "memories/USER.md").read_text()
-                    assert client.patch("/v1/wearing/memory", json=undo).status_code == 409
-                    latest_read = client.get("/v1/wearing/memory").json()["targets"]["user"]
+                    assert client.patch("/v1/pajio/memory", json=undo).status_code == 409
+                    latest_read = client.get("/v1/pajio/memory").json()["targets"]["user"]
                     assert latest_read["history"]["items"][0]["action"] == "undo"
                     assert latest_read["revision"] == reverted.json()["targets"]["user"]["revision"]
-                latest = client.get("/v1/wearing/memory").json()["targets"]["user"]
+                latest = client.get("/v1/pajio/memory").json()["targets"]["user"]
                 original_entries = latest["entries"]
-                toggled = client.patch("/v1/wearing/memory", json={"target": "user", "action": "set_enabled", "enabled": not latest["enabled"], "revision": latest["revision"], "settings_revision": latest["settings_revision"]})
+                toggled = client.patch("/v1/pajio/memory", json={"target": "user", "action": "set_enabled", "enabled": not latest["enabled"], "revision": latest["revision"], "settings_revision": latest["settings_revision"]})
                 assert toggled.status_code == 200, toggled.text
                 assert toggled.json()["targets"]["user"]["entries"] == original_entries
                 assert toggled.json()["targets"]["user"]["enabled"] is not latest["enabled"]
-                stale = client.patch("/v1/wearing/memory", json={"target": "user", "action": "set_enabled", "enabled": latest["enabled"], "revision": latest["revision"], "settings_revision": latest["settings_revision"]})
+                stale = client.patch("/v1/pajio/memory", json={"target": "user", "action": "set_enabled", "enabled": latest["enabled"], "revision": latest["revision"], "settings_revision": latest["settings_revision"]})
                 assert stale.status_code == 409
-                assert "memory" in client.get("/v1/capabilities").json()["wearing"]["memory_tools"]
+                assert "memory" in client.get("/v1/capabilities").json()["pajio"]["memory_tools"]
                 if not connectors and not computer and not disabled_memory:
                     (home / "memories/USER.md").unlink()
                     (home / "memories/USER.md").symlink_to(home / "SOUL.md")
-                    assert client.get("/v1/wearing/memory").status_code == 503
-                assert "mcp__wearing_phone__mobile_get_foreground_app" not in caps["wearing"]["phone_tools"]
+                    assert client.get("/v1/pajio/memory").status_code == 503
+                assert "mcp__pajio_phone__mobile_get_foreground_app" not in caps["pajio"]["phone_tools"]
                 assert all((v["method"], v["path"]) in ALLOWED_ROUTES for v in caps["endpoints"].values())
                 for path in ("/api/jobs", "/api/sessions", "/v1/skills", "/api/model/options", "/p/default/v1/capabilities"):
                     assert client.get(path).status_code == 404

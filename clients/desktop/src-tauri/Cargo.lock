@@ -4487,7 +4487,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "wearing-desktop"
+name = "pajio-desktop"
 version = "0.2.0"
 dependencies = [
  "reqwest 0.12.28",

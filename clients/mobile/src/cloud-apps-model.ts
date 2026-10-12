@@ -1,4 +1,4 @@
-import {ApiError, Connection, connectionEndpoint, connectionHeaders, WearingApi} from './core';
+import {ApiError, Connection, connectionEndpoint, connectionHeaders, PajioApi} from './core';
 
 export type CloudFeature = 'documents' | 'calendar' | 'chat';
 export type CloudState = {provider: 'feishu'; state: 'not_configured' | 'configured' | 'authorizing' | 'authorization_expired' | 'connected' | 'expired'; configured: boolean; revision: string | null; app_id: string | null; account_name: string | null; account_id: string | null; checked_at: number | null; error: string | null; revocation_pending: boolean; context_read_at?: number | null; capabilities: {id: CloudFeature; label: string; requested: boolean; authorized: boolean; scopes: string[]}[]; authorization: {id: string; url: string; user_code: string; expires_at: number; interval: number} | null};
@@ -64,13 +64,13 @@ export function cloudDocument(value: unknown): CloudDocument {
 }
 export function cloudConfigurationError(appId: string, secret: string, features: CloudFeature[]) {return !/^cli_[A-Za-z0-9]{6,80}$/.test(appId) || !/^[A-Za-z0-9_-]{12,160}$/.test(secret) ? '请核对飞书 App ID 与 App Secret。' : !features.length ? '请选择文档或日历。' : null;}
 export class CloudAppsApi {
-  private auth: WearingApi;
-  constructor(private connection: Connection, private fetcher: typeof fetch = fetch) {this.auth = new WearingApi(connection, fetcher);}
+  private auth: PajioApi;
+  constructor(private connection: Connection, private fetcher: typeof fetch = fetch) {this.auth = new PajioApi(connection, fetcher);}
   private async request(path: string, method = 'GET', body?: unknown): Promise<unknown> {
     const token = method === 'GET' ? undefined : await this.auth.voiceAuthorization();
     const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 45000);
     try {
-      const response = await this.fetcher(new URL('/api/cloud-apps/feishu' + path, connectionEndpoint(this.connection)).toString(), {method, redirect: 'error', signal: controller.signal, headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(token ? {'X-Wearing-Token': token, 'Content-Type': 'application/json'} : {})}, ...(body === undefined ? {} : {body: JSON.stringify(body)})});
+      const response = await this.fetcher(new URL('/api/cloud-apps/feishu' + path, connectionEndpoint(this.connection)).toString(), {method, redirect: 'error', signal: controller.signal, headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(token ? {'X-Pajio-Token': token, 'Content-Type': 'application/json'} : {})}, ...(body === undefined ? {} : {body: JSON.stringify(body)})});
       const data = await response.json();
       if (!response.ok) throw new ApiError(typeof data.detail === 'string' && data.detail.length < 250 ? data.detail : '这次飞书操作没有完成，请重试。', response.status);
       return data;

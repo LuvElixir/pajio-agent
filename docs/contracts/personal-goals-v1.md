@@ -1,6 +1,6 @@
 # 持续目标契约 v1
 
-当前作用域：单实例 Wearing 服务（本地或每租户独立 VM）、现有身份分区。所有写接口沿用 CSRF token / Origin 检查，所有读写绑定 `X-Wearing-Identity`，不能跨身份访问目标。
+当前作用域：单实例 Pajio 服务（本地或每租户独立 VM）、现有身份分区。所有写接口沿用 CSRF token / Origin 检查，所有读写绑定 `X-Pajio-Identity`，不能跨身份访问目标。
 
 | 接口 | 行为 |
 | --- | --- |

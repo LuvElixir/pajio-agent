@@ -25,4 +25,4 @@
 
 原生验收修复了两个问题：服务端 PATCH 缺少 json 导入（由服务端任务处理）；App 同一帧关闭详情 Sheet 并打开另一个确认 Sheet，导致 iOS 确认窗口不显示。现为同一个 Sheet 内切换内容，已在真实原生运行时验证确认与撤销回执。初次 500 后草稿保留，先读取再由明确点击重新保存，没有自动重放。
 
-768 项模型测试不能替代真机测试；以上为 iOS 模拟器和公网合成账户验收，尚非物理 iPhone。证据位于被 Git 忽略的 `.wearing/on-prem/20261009/personal-compute/mobile-native-proof.json` 与 `mobile-memory-undo.png`。
+768 项模型测试不能替代真机测试；以上为 iOS 模拟器和公网合成账户验收，尚非物理 iPhone。证据位于被 Git 忽略的 `.pajio/on-prem/20261009/personal-compute/mobile-native-proof.json` 与 `mobile-memory-undo.png`。

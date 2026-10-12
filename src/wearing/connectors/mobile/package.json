@@ -1,8 +1,0 @@
-{
-  "name": "wearing-mobile-connector",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "@mobilenext/mobile-mcp": "1.0.7"
-  }
-}

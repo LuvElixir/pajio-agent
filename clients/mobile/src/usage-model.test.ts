@@ -14,7 +14,7 @@ test('read-only usage sends identity and never places credentials in URL', async
   let request: RequestInit | undefined, url = '';
   await loadUsage({endpoint: 'http://127.0.0.1:8765/', identity: 'work'}, (async (input, init) => {url = String(input); request = init; return new Response(JSON.stringify(snapshot));}) as typeof fetch);
   assert.equal(url, 'http://127.0.0.1:8765/api/usage');
-  assert.equal((request?.headers as Record<string, string>)['X-Wearing-Identity'], 'work');
+  assert.equal((request?.headers as Record<string, string>)['X-Pajio-Identity'], 'work');
   assert.equal(request?.redirect, 'error');
   assert.equal(request?.body, undefined);
 });

@@ -5,12 +5,12 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.confirmations import ConfirmationBook, MARKER, card_for, request_confirmation
-from wearing.hermes import HermesClient, HermesError
-from wearing.service import TaskError, TaskService
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.confirmations import ConfirmationBook, MARKER, card_for, request_confirmation
+from pajio.hermes import HermesClient, HermesError
+from pajio.service import TaskError, TaskService
+from pajio.store import Store
 from test_lifecycle import HermesStub
 
 
@@ -51,7 +51,7 @@ async def rig(tmp_path):
     stub = HermesStub()
     stub.approval = {"request_id": "decision-1", "command": MARKER + json.dumps(CARD)}
     client = HermesClient(Settings(tmp_path, hermes_key="test"), httpx.MockTransport(stub))
-    store = Store(tmp_path / "wearing.sqlite3")
+    store = Store(tmp_path / "pajio.sqlite3")
     service = TaskService(store, client)
     task = store.create_message("Synthetic confirmation acceptance")
     await service.start(task["id"])
@@ -135,7 +135,7 @@ async def test_conversation_receipts_are_identity_scoped(rig, tmp_path):
         boot = (await client.get("/api/bootstrap")).json()
         items = (await client.get("/api/conversation")).json()
         assert items[0]["turn"]["confirmations"][0]["choice"] == "deny"
-        headers = {"X-Wearing-Identity": other, "X-Wearing-Token": boot["token"]}
+        headers = {"X-Pajio-Identity": other, "X-Pajio-Token": boot["token"]}
         assert (await client.get("/api/conversation", headers=headers)).json() == []
         response = await client.post(f"/api/tasks/{task['id']}/approval", headers=headers,
                                      json={"request_id": "decision-1", "choice": "once"})

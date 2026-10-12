@@ -12,10 +12,10 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.store import Store
-from wearing.workspace_text import WorkspaceText, TextEditError, TextSave, MAX_TEXT_BYTES, install_workspace_text_routes
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.store import Store
+from pajio.workspace_text import WorkspaceText, TextEditError, TextSave, MAX_TEXT_BYTES, install_workspace_text_routes
 
 
 @pytest.fixture(autouse=True)
@@ -57,7 +57,7 @@ def test_atomic_save_restart_receipt_and_recovery(tmp_path):
 
 
 def test_import_original_immutable_and_copy_has_its_own_edit_history(tmp_path):
-    from wearing.workspace_upload import WorkspaceImports
+    from pajio.workspace_upload import WorkspaceImports
     store, editor, root = setup(tmp_path)
     path = 'imports/original-import-001/材料.txt'
     imports = WorkspaceImports(store)
@@ -226,7 +226,7 @@ async def test_real_app_routes_auth_csrf_and_extra_owner_rejected(tmp_path):
             assert response.status_code == 200 and response.json()['identity_id'] == 'daily'
             body = request(editor).model_dump()
             assert (await http.post('/api/workspace/text', json=body)).status_code == 403
-            token = (await http.get('/api/bootstrap')).json()['token']; headers = {'X-Wearing-Token': token}
+            token = (await http.get('/api/bootstrap')).json()['token']; headers = {'X-Pajio-Token': token}
             assert (await http.post('/api/workspace/text', json={**body, 'identity_id': 'foreign'}, headers=headers)).status_code == 422
             assert (await http.post('/api/workspace/text', json=body, headers={**headers, 'Origin': 'null'})).status_code == 403
             assert (await http.post('/api/workspace/text', json=body, headers=headers)).status_code == 200

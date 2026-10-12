@@ -30,11 +30,11 @@
 | 真实模型对话 | 另外发送纯回声测试，201 submitted → completed_unverified，4.129 秒返回“已收到语音文字。”；未新增目标、定时任务或生活记录 |
 | iPhone | 待用户扫码并真实录音；手势、系统权限、键盘及前后台恢复尚未真机验收 |
 
-详细本机证据为 `.wearing/mobile-dev/chain-evidence.json`，不含配对凭证或其他私聊。回声沿用了日常对话上下文，本次输入 57,976 tokens、输出 30 tokens；避免无必要重复此测试。
+详细本机证据为 `.pajio/mobile-dev/chain-evidence.json`，不含配对凭证或其他私聊。回声沿用了日常对话上下文，本次输入 57,976 tokens、输出 30 tokens；避免无必要重复此测试。
 
 ## 本轮开发连接
 
-真实 Wearing 后端继续只监听 loopback 8765；设备访问的开发桥绑定 Mac 的具体 RFC1918 地址与 8795 端口，固定上游和身份。原生 API 每次带短期 Bearer；WebView 首次根页面请求设置 HttpOnly / SameSite=Strict Cookie。配对文件 0600，四小时到期，默认普通 LAN HTTP 仍被拒绝，生产构建不接受开发配对。
+真实 Pajio 后端继续只监听 loopback 8765；设备访问的开发桥绑定 Mac 的具体 RFC1918 地址与 8795 端口，固定上游和身份。原生 API 每次带短期 Bearer；WebView 首次根页面请求设置 HttpOnly / SameSite=Strict Cookie。配对文件 0600，四小时到期，默认普通 LAN HTTP 仍被拒绝，生产构建不接受开发配对。
 
 这条 HTTP 链路只用于此次可信 Wi-Fi 开发验收，并不提供传输加密；正式移动端仍需 HTTPS 与生产认证。没有恢复云 VM、创建新的付费资源或等待 Apple Developer 会员。
 
@@ -42,16 +42,16 @@
 
 ## 首次 iPhone 尝试的实际阻塞
 
-用户扫码后，Expo Go 报“需要登录 Expo Go 和 Expo CLI”。本机 `expo whoami` 确认 Not logged in；尚未运行到 Wearing 页面。已依据 [Expo 官方说明](https://docs.expo.dev/troubleshooting/expo-go-sign-in-required/) 启动 `expo login --browser`，交由用户在电脑和手机登录同一个免费 Expo 账号。无需 Apple Developer 会员或 Expo 付费套餐。二维码生成器增加 CLI 登录预检，避免再次把健康的 Metro 误当成可直接打开的 iPhone 入口。
+用户扫码后，Expo Go 报“需要登录 Expo Go 和 Expo CLI”。本机 `expo whoami` 确认 Not logged in；尚未运行到 Pajio 页面。已依据 [Expo 官方说明](https://docs.expo.dev/troubleshooting/expo-go-sign-in-required/) 启动 `expo login --browser`，交由用户在电脑和手机登录同一个免费 Expo 账号。无需 Apple Developer 会员或 Expo 付费套餐。二维码生成器增加 CLI 登录预检，避免再次把健康的 Metro 误当成可直接打开的 iPhone 入口。
 
-随后用户已在浏览器完成电脑端 Expo 登录，`expo whoami` 确认已登录（公开记录省略账号名）；带登录预检的二维码生成器已成功运行。原 Metro 与配对地址保持不变，手机端需登录同一账号后 Try again。是否已进入 Wearing、麦克风及真实输入验收仍待用户反馈。
+随后用户已在浏览器完成电脑端 Expo 登录，`expo whoami` 确认已登录（公开记录省略账号名）；带登录预检的二维码生成器已成功运行。原 Metro 与配对地址保持不变，手机端需登录同一账号后 Try again。是否已进入 Pajio、麦克风及真实输入验收仍待用户反馈。
 
 ## 第二次 iPhone 尝试：配对时间被路由改写
 
-用户截图确认已进入 Wearing `/connect`，但显示“配对凭据不完整”。用本机 Expo Router 57.0.24 的 `extractExpoPathFromURL` 与 `parseQueryParams` 实际函数复现：旧二维码 expiry 中 `%2B00:00` 在第一轮解析成为 `+00:00`，重新拼接查询串后，第二轮解析将加号变为空格，触发客户端严格校验。尚未请求连接，因此该错误不是网络连通失败。
+用户截图确认已进入 Pajio `/connect`，但显示“配对凭据不完整”。用本机 Expo Router 57.0.24 的 `extractExpoPathFromURL` 与 `parseQueryParams` 实际函数复现：旧二维码 expiry 中 `%2B00:00` 在第一轮解析成为 `+00:00`，重新拼接查询串后，第二轮解析将加号变为空格，触发客户端严格校验。尚未请求连接，因此该错误不是网络连通失败。
 
 - 二维码生成器通过 `pairing-link.cjs` 将 ISO 时间统一为 UTC 毫秒 `Z` 格式；token、身份和原有到期时刻不变（仅截去不足毫秒的精度）。后端新会话也输出此格式。
-- 加入使用真实 Expo 路由函数的回归测试：旧格式失败、新格式完整通过 Wearing 配对校验，正负时区的同一时刻保持不变，错误/过期凭据继续拒绝。
+- 加入使用真实 Expo 路由函数的回归测试：旧格式失败、新格式完整通过 Pajio 配对校验，正负时区的同一时刻保持不变，错误/过期凭据继续拒绝。
 - 本轮 12 项配对测试、28 项 LAN 桥测试、TypeScript、客户端 `src` 与 `scripts` ESLint 通过。直接对整个目录运行 ESLint 会扫描历史 `dist-all` 编译产物而失败；源代码范围检查通过，没有修改生成文件。
 - 沿用现有四小时会话重新出码，未重启桥或轮换凭据；实际 LAN bootstrap 200，日常身份存在，Metro `packager-status:running`。
 - 已提供修正二维码，仍需用户重新扫码确认连接；尚不等于 iPhone 麦克风、转写和发送真机验收通过。

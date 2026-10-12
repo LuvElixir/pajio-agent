@@ -1,7 +1,7 @@
 import {useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore} from 'react';
 import {AppState, Platform} from 'react-native';
 import * as Crypto from 'expo-crypto';
-import {scopeOf, WearingApi, type Connection} from './core';
+import {scopeOf, PajioApi, type Connection} from './core';
 import {keepMedia, preview, storage} from './storage';
 import {serviceFetch} from './transport';
 import {createVoiceRecorder} from './voice-recorder';
@@ -24,7 +24,7 @@ export function useVoiceInput({connection, active, onText}: {connection: Connect
   const session = useMemo(() => {
     if (!scope) return null;
     const selected = connection!;
-    const api = new WearingApi(selected, serviceFetch);
+    const api = new PajioApi(selected, serviceFetch);
     return new VoiceSession({
       connection: selected, store: storage,
       recorder: take => createVoiceRecorder(supportsLiveRecognition(selected, Platform.OS)

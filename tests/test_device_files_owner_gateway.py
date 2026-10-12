@@ -7,11 +7,11 @@ import pytest
 from sqlalchemy import update
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
-from wearing.cloud.account_deletion_control import AccountDeletionControl
-from wearing.cloud.control import ControlStore, ControlError, ownership, routes
-from wearing.cloud.gateway import create_gateway_app, load_gateway, forward_worker
-from wearing.cloud.mobile_auth import session_storage_scope
-from wearing.cloud.session_guard import SessionRevoked
+from pajio.cloud.account_deletion_control import AccountDeletionControl
+from pajio.cloud.control import ControlStore, ControlError, ownership, routes
+from pajio.cloud.gateway import create_gateway_app, load_gateway, forward_worker
+from pajio.cloud.mobile_auth import session_storage_scope
+from pajio.cloud.session_guard import SessionRevoked
 from test_gateway import lab, login, ORIGIN, ISSUER
 from test_gateway_voice import Connector, start
 
@@ -61,7 +61,7 @@ async def test_shared_unknown_missing_registry_retains_api_without_file_authorit
                 bootstrap=await client.get('/api/bootstrap',headers={'X-Pajio-Private-Owner-Scope':'a'*64})
                 assert bootstrap.status_code==200
                 assert 'X-Pajio-Private-Owner-Scope' not in workers.requests[-1].headers
-                client.headers['X-Wearing-Token']=bootstrap.json()['token']
+                client.headers['X-Pajio-Token']=bootstrap.json()['token']
                 reply=await client.get('/api/devices/computer_test/files')
                 assert reply.status_code==403 and reply.json()['detail']=='files_private_owner_required'
         finally:
@@ -69,7 +69,7 @@ async def test_shared_unknown_missing_registry_retains_api_without_file_authorit
 
 
 async def test_private_registry_mutation_revokes_inflight_wait_and_route_change(tmp_path):
-    from wearing.cloud.session_guard import checked_wait
+    from pajio.cloud.session_guard import checked_wait
     async with lab(tmp_path) as (root, a, b, control, workers, provider, app):
         operator, owner=register(root,control)
         try:
@@ -102,13 +102,13 @@ async def test_private_owner_change_revokes_existing_voice_and_denies_new_voice(
         try:
             access=control.login(ISSUER,'alice')
             client=TestClient(app,base_url=ORIGIN)
-            with client.websocket_connect('wss://wearing.example/api/voice/stream') as ws:
+            with client.websocket_connect('wss://pajio.example/api/voice/stream') as ws:
                 ws.send_json(start(access)); assert ws.receive_json()['type']=='ready'
                 operator.grant(ISSUER,'charlie','tenant_A')
                 with pytest.raises(WebSocketDisconnect): ws.receive_json()
             assert len(connector.calls)==1 and len(connector.calls[0][2].messages)==1
             access=control.login(ISSUER,'charlie')
-            with client.websocket_connect('wss://wearing.example/api/voice/stream') as ws:
+            with client.websocket_connect('wss://pajio.example/api/voice/stream') as ws:
                 ws.send_json(start(access))
                 with pytest.raises(WebSocketDisconnect): ws.receive_json()
             assert len(connector.calls)==1

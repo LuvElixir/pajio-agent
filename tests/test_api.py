@@ -3,9 +3,9 @@ import json
 import httpx
 import pytest
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.doctor import inspect_host, parse_adb_devices
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.doctor import inspect_host, parse_adb_devices
 
 
 @pytest.fixture
@@ -13,7 +13,7 @@ async def client(tmp_path):
     app = create_app(Settings(tmp_path))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         token = (await client.get("/api/bootstrap")).json()["token"]
-        client.headers["X-Wearing-Token"] = token
+        client.headers["X-Pajio-Token"] = token
         yield client
     await app.state.service.hermes.close()
 
@@ -43,7 +43,7 @@ async def test_offline_conversation_preserves_words_without_fabricated_reply(cli
 
 
 async def test_mutation_requires_local_token_and_origin(client):
-    no_token = await client.post("/api/tasks", headers={"X-Wearing-Token":""}, json={"prompt":"x"})
+    no_token = await client.post("/api/tasks", headers={"X-Pajio-Token":""}, json={"prompt":"x"})
     assert no_token.status_code == 403
     foreign = await client.post("/api/tasks", headers={"Origin":"https://elsewhere.example"}, json={"prompt":"x"})
     assert foreign.status_code == 403
@@ -66,7 +66,7 @@ async def test_input_validation_and_no_secret_echo(client):
 async def test_static_ui_and_portable_doctor(client):
     page = await client.get("/")
     assert page.status_code == 200
-    assert "Wearing" in page.text
+    assert "Pajio" in page.text
     assert "frame-ancestors 'none'" in page.headers["content-security-policy"]
     assert (await client.get("/assets/app.js")).status_code == 200
     report = inspect_host(False)

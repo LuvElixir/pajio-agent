@@ -1,4 +1,4 @@
-import {ApiError, Connection, connectionEndpoint, connectionHeaders, WearingApi} from './core';
+import {ApiError, Connection, connectionEndpoint, connectionHeaders, PajioApi} from './core';
 
 export type MessagingProvider = 'telegram' | 'feishu';
 export type MessagingChannel = {provider: MessagingProvider; name: string; configured: boolean; enabled: boolean; state: 'not_configured' | 'configured' | 'connecting' | 'listening' | 'error'; allowed_users: string[]; can_enable: boolean; uncertain_replies: number; revision: string | null; error: string | null; checked_at: string | null; bot_id?: string};
@@ -28,14 +28,14 @@ export function messagingConfigurationError(provider: MessagingProvider, configu
 }
 
 export class MessagingApi {
-  private authorization: WearingApi;
-  constructor(private connection: Connection, private fetcher: typeof fetch = fetch) {this.authorization = new WearingApi(connection, fetcher);}
+  private authorization: PajioApi;
+  constructor(private connection: Connection, private fetcher: typeof fetch = fetch) {this.authorization = new PajioApi(connection, fetcher);}
   private async request(path: string, method = 'GET', body?: unknown) {
     const token = method === 'GET' ? undefined : await this.authorization.voiceAuthorization();
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 45000);
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method, redirect: 'error', signal: controller.signal,
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(token ? {'X-Wearing-Token': token, 'Content-Type': 'application/json'} : {})},
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(token ? {'X-Pajio-Token': token, 'Content-Type': 'application/json'} : {})},
         ...(body === undefined ? {} : {body: JSON.stringify(body)})});
       const data = await response.json();
       if (!response.ok) throw new ApiError(response.status === 401 ? '连接已到期，请重新连接。' : typeof data.detail === 'string' && data.detail.length < 200 ? data.detail : '这次操作没有完成，请稍后重试。', response.status);

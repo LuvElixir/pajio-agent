@@ -2,11 +2,11 @@
 import httpx
 import pytest
 
-from wearing.activity import ActivityBook, ActivityError
-from wearing.app import create_app
-from wearing.cloud.worker import TenantBoundary
-from wearing.config import Settings
-from wearing.store import Store
+from pajio.activity import ActivityBook, ActivityError
+from pajio.app import create_app
+from pajio.cloud.worker import TenantBoundary
+from pajio.config import Settings
+from pajio.store import Store
 
 A, B = "a" * 64, "b" * 64
 
@@ -31,9 +31,9 @@ async def test_two_accounts_activity_details_and_seen_have_same_visibility(tmp_p
     own_a, own_b, legacy = create_result(store, A), create_result(store, B), create_result(store)
     other_identity = store.save_identity("other fixture")["id"]
     foreign_identity = create_result(store, A, other_identity)
-    headers = {"Authorization": "Bearer fixture-internal", "X-Wearing-Tenant": "fixture"}
+    headers = {"Authorization": "Bearer fixture-internal", "X-Pajio-Tenant": "fixture"}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver", headers=headers) as client:
-        client.headers["X-Wearing-Token"] = (await client.get("/api/bootstrap")).json()["token"]
+        client.headers["X-Pajio-Token"] = (await client.get("/api/bootstrap")).json()["token"]
         client.headers["X-Pajio-Storage-Scope"] = A
         first = (await client.get("/api/activity")).json()
         assert {item["task_id"] for item in first["items"]} == {own_a, legacy}
@@ -70,10 +70,10 @@ async def test_cloud_requires_trusted_owner_not_raw_header_or_query(tmp_path, bo
     headers = {"X-Pajio-Storage-Scope": A}
     if boundary:
         app.add_middleware(TenantBoundary, tenant_id="fixture", gateway_key="fixture-internal")
-        headers = {"Authorization": "Bearer fixture-internal", "X-Wearing-Tenant": "fixture"}
+        headers = {"Authorization": "Bearer fixture-internal", "X-Pajio-Tenant": "fixture"}
     legacy = create_result(app.state.activity.store)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver", headers=headers) as client:
-        client.headers["X-Wearing-Token"] = (await client.get("/api/bootstrap")).json()["token"]
+        client.headers["X-Pajio-Token"] = (await client.get("/api/bootstrap")).json()["token"]
         assert (await client.get("/api/activity", params={"owner_scope": A})).status_code == 401
         assert (await client.post("/api/activity/seen", json={"items": [{"task_id": legacy, "version": "c" * 64}]})).status_code == 401
     await app.state.service.hermes.close()
@@ -136,9 +136,9 @@ async def test_http_task_detail_returns_exact_rendered_receipt(tmp_path):
     app = create_app(Settings(tmp_path), engine_autostart=False, local_devices=False)
     app.add_middleware(TenantBoundary, tenant_id='fixture', gateway_key='fixture-key')
     task = create_result(app.state.store, A)
-    headers = {'Authorization': 'Bearer fixture-key', 'X-Wearing-Tenant': 'fixture', 'X-Pajio-Storage-Scope': A}
+    headers = {'Authorization': 'Bearer fixture-key', 'X-Pajio-Tenant': 'fixture', 'X-Pajio-Storage-Scope': A}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers=headers) as client:
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         response = await client.get('/api/tasks/' + task)
         assert response.status_code == 200
         value = response.json()

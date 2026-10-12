@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {ActivitySnapshot, activitySnapshot, activitySummary, ApiError, boxKey, endpoint, makeDraft, Outbox, Pending, RecordItem, Store, Transport, WearingApi} from './core';
+import {ActivitySnapshot, activitySnapshot, activitySummary, ApiError, boxKey, endpoint, makeDraft, Outbox, Pending, RecordItem, Store, Transport, PajioApi} from './core';
 import {allowsConversationNavigation, conversationLink, nativeConversationLink} from './conversationLink';
 class Memory implements Store {
   data = new Map<string, unknown>();
@@ -71,54 +71,54 @@ test('queue creation and clearing its composer use one atomic storage commit', a
 });
 test('session renewal does not change the key or persist a token in local state', async () => {
   let writes = 0; const keys: string[] = [];
-  const api = new WearingApi({endpoint: 'http://127.0.0.1:8765/', identity: 'daily'}, (async (url: string, init: RequestInit) => {
+  const api = new PajioApi({endpoint: 'http://127.0.0.1:8765/', identity: 'daily'}, (async (url: string, init: RequestInit) => {
     if (new URL(url).pathname === '/api/bootstrap') return Response.json({version: '0.2.0', deployment: 'local', token: 'synthetic-token', identities: [{id: 'daily'}]});
     keys.push(JSON.parse(init.body as string).request_key); return writes++ === 0 ? Response.json({detail: 'expired'}, {status: 403}) : Response.json(record);
   }) as typeof fetch);
   await api.create(entry()); assert.deepEqual(keys, ['one', 'one']);
 });
-test('a non-Wearing or missing-identity service is rejected before uploads', async () => {
+test('a non-Pajio or missing-identity service is rejected before uploads', async () => {
   const fake = (value: unknown) => (async () => Response.json(value)) as typeof fetch;
-  await assert.rejects(new WearingApi({endpoint: 'https://example.com/', identity: 'daily'}, fake({token: 'x'})).bootstrap());
-  await assert.rejects(new WearingApi({endpoint: 'https://example.com/', identity: 'other'}, fake({version: '0.2.0', deployment: 'cloud', token: 'x', identities: [{id: 'daily'}]})).bootstrap());
+  await assert.rejects(new PajioApi({endpoint: 'https://example.com/', identity: 'daily'}, fake({token: 'x'})).bootstrap());
+  await assert.rejects(new PajioApi({endpoint: 'https://example.com/', identity: 'other'}, fake({version: '0.2.0', deployment: 'cloud', token: 'x', identities: [{id: 'daily'}]})).bootstrap());
 });
 test('a network error never promises unsaved edits will synchronize automatically', async () => {
-  const api = new WearingApi({endpoint: 'http://127.0.0.1:8765/', identity: 'daily'}, (async () => {throw new Error('offline');}) as typeof fetch);
+  const api = new PajioApi({endpoint: 'http://127.0.0.1:8765/', identity: 'daily'}, (async () => {throw new Error('offline');}) as typeof fetch);
   await assert.rejects(api.update(record, {content: 'unsaved edit'}), error => error instanceof ApiError && !/已保存|恢复连接后再同步/.test(error.message));
 });
 test('record conversation links carry identity and revision without note text in the URL', () => {
   const url = new URL(conversationLink('http://127.0.0.1:8787/', 'overseas', {...record, title: 'private title', content: 'private content'}, 'http://127.0.0.1:8787'));
-  assert.equal(url.pathname, '/wearing'); assert.equal(url.searchParams.get('identity'), 'overseas');
+  assert.equal(url.pathname, '/pajio'); assert.equal(url.searchParams.get('identity'), 'overseas');
   assert.equal(url.searchParams.get('life_record'), record.id); assert.equal(url.searchParams.get('life_revision'), '1'); assert.ok(!url.toString().includes('private'));
 });
 
 
 test('native conversation uses App chrome without changing ordinary web links or record scope', () => {
-  const native = new URL(nativeConversationLink('https://wearing.example/', 'daily', record));
+  const native = new URL(nativeConversationLink('https://pajio.example/', 'daily', record));
   assert.equal(native.searchParams.get('host'), 'mobile');
   assert.equal(native.searchParams.get('identity'), 'daily');
   assert.equal(native.searchParams.get('life_record'), record.id);
   assert.equal(native.searchParams.get('life_revision'), String(record.revision));
   assert.equal(native.hash, '#conversation-main');
-  assert.equal(new URL(conversationLink('https://wearing.example/', 'daily')).searchParams.has('host'), false);
+  assert.equal(new URL(conversationLink('https://pajio.example/', 'daily')).searchParams.has('host'), false);
 });
 test('activity preview links preserve identity and the exact task without leaking record content', () => {
   const request = {id: 1, target: 'activity' as const, taskId: 'task_123'};
   const local = new URL(conversationLink('http://127.0.0.1:8787/', 'overseas', record, 'http://127.0.0.1:8787', request));
-  assert.equal(local.pathname, '/wearing'); assert.equal(local.searchParams.get('identity'), 'overseas');
+  assert.equal(local.pathname, '/pajio'); assert.equal(local.searchParams.get('identity'), 'overseas');
   assert.equal(local.searchParams.get('activity_task'), 'task_123'); assert.equal(local.searchParams.has('life_record'), false);
   assert.deepEqual([...local.searchParams.keys()], ['identity', 'activity_task']);
-  const remote = new URL(conversationLink('https://wearing.example/', 'daily', null, 'http://127.0.0.1:8787', request));
-  assert.equal(remote.origin, 'https://wearing.example'); assert.equal(remote.pathname, '/');
+  const remote = new URL(conversationLink('https://pajio.example/', 'daily', null, 'http://127.0.0.1:8787', request));
+  assert.equal(remote.origin, 'https://pajio.example'); assert.equal(remote.pathname, '/');
   assert.equal(remote.searchParams.get('activity_task'), 'task_123');
-  assert.throws(() => conversationLink('https://wearing.example/', 'daily', null, undefined, {...request, taskId: '../foreign'}));
+  assert.throws(() => conversationLink('https://pajio.example/', 'daily', null, undefined, {...request, taskId: '../foreign'}));
 });
 test('embedded conversation never delegates external or privileged schemes to the operating system', () => {
-  const source = nativeConversationLink('https://wearing.example/', 'daily');
+  const source = nativeConversationLink('https://pajio.example/', 'daily');
   assert.equal(allowsConversationNavigation(source, source), true);
-  assert.equal(allowsConversationNavigation('https://wearing.example/api/artifacts/art_1/preview?identity=daily', source), true);
+  assert.equal(allowsConversationNavigation('https://pajio.example/api/artifacts/art_1/preview?identity=daily', source), true);
   assert.equal(allowsConversationNavigation('about:blank', source), true);
-  for (const url of ['https://other.example/', 'http://wearing.example/', 'https://wearing.example.evil/', 'https://user:secret@wearing.example/', 'file:///tmp/private', 'javascript:alert(1)', 'intent://app', 'tel:123', 'malformed']) {
+  for (const url of ['https://other.example/', 'http://pajio.example/', 'https://pajio.example.evil/', 'https://user:secret@pajio.example/', 'file:///tmp/private', 'javascript:alert(1)', 'intent://app', 'tel:123', 'malformed']) {
     assert.equal(allowsConversationNavigation(url, source), false, url);
   }
 });
@@ -126,19 +126,19 @@ test('embedded conversation never delegates external or privileged schemes to th
 test('voice transcription is identity scoped input with no note or conversation write', async () => {
   const requests: {path:string; init:RequestInit}[]=[];
   const asset='asset_'+'a'.repeat(32);
-  const api=new WearingApi({endpoint:'http://127.0.0.1:8765/',identity:'daily'},(async (url:string,init:RequestInit)=>{
+  const api=new PajioApi({endpoint:'http://127.0.0.1:8765/',identity:'daily'},(async (url:string,init:RequestInit)=>{
     const path=new URL(url).pathname; requests.push({path,init});
     if(path==='/api/bootstrap')return Response.json({version:'0.2.0',deployment:'local',token:'synthetic',identities:[{id:'daily'}]});
     return Response.json({asset_id:asset,text:'周末想出去走走。'});
   }) as typeof fetch);
   assert.equal((await api.transcribe(asset)).text,'周末想出去走走。');
   assert.deepEqual(requests.map(r=>r.path),['/api/bootstrap',`/api/life/assets/${asset}/transcribe`]);
-  assert.equal((requests[1].init.headers as Record<string,string>)['X-Wearing-Identity'],'daily');
+  assert.equal((requests[1].init.headers as Record<string,string>)['X-Pajio-Identity'],'daily');
 });
 test('mismatched or empty transcription never enters native input', async()=>{
   const asset='asset_'+'a'.repeat(32);
   for(const transcript of [{asset_id:asset,text:''},{asset_id:'other',text:'wrong voice'},{asset_id:asset,text:12}]){
-    const api=new WearingApi({endpoint:'http://127.0.0.1:8765/',identity:'daily'},(async(url:string)=>new URL(url).pathname==='/api/bootstrap'?Response.json({version:'0.2.0',deployment:'local',token:'synthetic',identities:[{id:'daily'}]}):Response.json(transcript)) as typeof fetch);
+    const api=new PajioApi({endpoint:'http://127.0.0.1:8765/',identity:'daily'},(async(url:string)=>new URL(url).pathname==='/api/bootstrap'?Response.json({version:'0.2.0',deployment:'local',token:'synthetic',identities:[{id:'daily'}]}):Response.json(transcript)) as typeof fetch);
     await assert.rejects(api.transcribe(asset));
   }
 });
@@ -156,7 +156,7 @@ function queuedActivityFixture(): ActivitySnapshot {
 }
 test('activity decodes queued work as waiting without counting it as active or attention', async () => {
   const expected = queuedActivityFixture();
-  const api = new WearingApi({endpoint: 'https://wearing.example/', identity: 'daily'}, (async () => Response.json(expected)) as typeof fetch);
+  const api = new PajioApi({endpoint: 'https://pajio.example/', identity: 'daily'}, (async () => Response.json(expected)) as typeof fetch);
   const received = await api.activity();
   assert.deepEqual(received, expected);
   assert.equal(received.counts.attention, 0); assert.equal(received.counts.active, 1); assert.equal(received.counts.waiting, 2);
@@ -193,29 +193,29 @@ test('blocked work stays attention and real new results retain summary priority 
 test('activity reads persisted progress with the selected identity and no write', async () => {
   const calls: {path: string; init: RequestInit}[] = [];
   const expected = activityFixture();
-  const api = new WearingApi({endpoint: 'https://wearing.example/', identity: 'daily'}, (async (url: string, init: RequestInit) => {calls.push({path: new URL(url).pathname, init}); return Response.json(expected);}) as typeof fetch);
+  const api = new PajioApi({endpoint: 'https://pajio.example/', identity: 'daily'}, (async (url: string, init: RequestInit) => {calls.push({path: new URL(url).pathname, init}); return Response.json(expected);}) as typeof fetch);
   assert.deepEqual(await api.activity(), expected);
   assert.deepEqual(calls.map(call => [call.path, call.init.method]), [['/api/activity', 'GET']]);
-  assert.equal((calls[0].init.headers as Record<string, string>)['X-Wearing-Identity'], 'daily');
+  assert.equal((calls[0].init.headers as Record<string, string>)['X-Pajio-Identity'], 'daily');
   assert.equal(calls[0].init.body, undefined);
 });
 test('invalid or unavailable activity cannot become an empty or fabricated successful snapshot', async () => {
   const valid = activityFixture();
   const invalid: unknown[] = [null, {}, {...valid, checked_at: 'not-a-date'}, {...valid, unread: 2}, {...valid, counts: {...valid.counts, active: 1}}, {...valid, items: []}, {...valid, items: [{...valid.items[0], version: 1}]}, {...valid, items: [{...valid.items[0], bucket: 'running'}]}, {...valid, items: [{...valid.items[0], task_id: '../other'}]}, {...valid, total: 2, unread: 2, counts: {...valid.counts, results: 2}, items: [valid.items[0], valid.items[0]]}];
   for (const body of invalid) {
-    const api = new WearingApi({endpoint: 'https://wearing.example/', identity: 'daily'}, (async () => Response.json(body)) as typeof fetch);
+    const api = new PajioApi({endpoint: 'https://pajio.example/', identity: 'daily'}, (async () => Response.json(body)) as typeof fetch);
     await assert.rejects(api.activity(), error => error instanceof ApiError && error.status === 422);
   }
-  const offline = new WearingApi({endpoint: 'https://wearing.example/', identity: 'daily'}, (async () => {throw new Error('offline');}) as typeof fetch);
+  const offline = new PajioApi({endpoint: 'https://pajio.example/', identity: 'daily'}, (async () => {throw new Error('offline');}) as typeof fetch);
   await assert.rejects(offline.activity(), error => error instanceof ApiError && error.status === 0);
   const partial = {...valid, total: 3, unread: 2, counts: {...valid.counts, results: 3}, has_more: true};
-  const paged = new WearingApi({endpoint: 'https://wearing.example/', identity: 'daily'}, (async () => Response.json(partial)) as typeof fetch);
+  const paged = new PajioApi({endpoint: 'https://pajio.example/', identity: 'daily'}, (async () => Response.json(partial)) as typeof fetch);
   assert.deepEqual(await paged.activity(), partial);
 });
 test('read receipts send only the displayed task version and preserve it through token renewal', async () => {
   const calls: {path: string; init: RequestInit}[] = [];
   const snapshot = activityFixture(); let receipts = 0;
-  const api = new WearingApi({endpoint: 'https://wearing.example/', identity: 'daily'}, (async (url: string, init: RequestInit) => {
+  const api = new PajioApi({endpoint: 'https://pajio.example/', identity: 'daily'}, (async (url: string, init: RequestInit) => {
     const path = new URL(url).pathname; calls.push({path, init});
     if (path === '/api/bootstrap') return Response.json({version: '0.2.0', deployment: 'cloud', token: 'synthetic', identities: [{id: 'daily'}]});
     if (receipts++ === 0) return Response.json({detail: 'expired'}, {status: 403});
@@ -229,12 +229,12 @@ test('read receipts send only the displayed task version and preserve it through
   assert.equal(writes.length, 2);
   for (const call of writes) {
     assert.deepEqual(JSON.parse(call.init.body as string), {items: [{task_id: snapshot.items[0].task_id, version: snapshot.items[0].version}]});
-    assert.equal((call.init.headers as Record<string, string>)['X-Wearing-Identity'], 'daily');
+    assert.equal((call.init.headers as Record<string, string>)['X-Pajio-Identity'], 'daily');
   }
 });
 test('malformed read receipts fail before network access and cannot acknowledge a different task', async () => {
   let calls = 0; const item = activityFixture().items[0];
-  const api = new WearingApi({endpoint: 'https://wearing.example/', identity: 'daily'}, (async () => {calls++; throw new Error('must not request');}) as typeof fetch);
+  const api = new PajioApi({endpoint: 'https://pajio.example/', identity: 'daily'}, (async () => {calls++; throw new Error('must not request');}) as typeof fetch);
   for (const items of [[], [{task_id: '../foreign', version: item.version}], [{task_id: item.task_id, version: ''}], [item, item], Array.from({length: 101}, (_, index) => ({task_id: `task_${index}`, version: item.version}))]) await assert.rejects(api.activitySeen(items), error => error instanceof ApiError && error.status === 422);
   assert.equal(calls, 0);
 });
@@ -243,7 +243,7 @@ test('activity pagination carries identity-scoped cursor and accepts a final par
   const base = activityFixture();
   const finalPage = {...base, total: 3, counts: {...base.counts, results: 3}, filtered_total: 3, next_cursor: null, revision: 'd'.repeat(64), changed_since: false};
   let called: URL | undefined;
-  const api = new WearingApi({endpoint: 'https://wearing.example/', identity: 'daily'}, (async (url: string) => {called = new URL(url); return Response.json(finalPage);}) as typeof fetch);
+  const api = new PajioApi({endpoint: 'https://pajio.example/', identity: 'daily'}, (async (url: string) => {called = new URL(url); return Response.json(finalPage);}) as typeof fetch);
   assert.deepEqual(await api.activity({limit: 20, cursor: 'opaque+/token=', bucket: 'results', since: 'e'.repeat(64)}), finalPage);
   assert.equal(called?.searchParams.get('cursor'), 'opaque+/token=');
   assert.equal(called?.searchParams.get('since'), 'e'.repeat(64));
@@ -265,7 +265,7 @@ test('incomplete pagination never changes corruption into a valid partial snapsh
 
 test('cursor invalidation remains an explicit refresh error and invalid queries never reach the service', async () => {
   let calls = 0;
-  const api = new WearingApi({endpoint: 'https://wearing.example/', identity: 'daily'}, (async () => {calls++; return Response.json({detail: '进展列表已更新，请刷新后继续查看。'}, {status: 409});}) as typeof fetch);
+  const api = new PajioApi({endpoint: 'https://pajio.example/', identity: 'daily'}, (async () => {calls++; return Response.json({detail: '进展列表已更新，请刷新后继续查看。'}, {status: 409});}) as typeof fetch);
   await assert.rejects(api.activity({cursor: 'old-cursor'}), error => error instanceof ApiError && error.status === 409);
   for (const query of [{limit: 0}, {limit: 101}, {cursor: ''}, {since: 'invalid'}]) await assert.rejects(api.activity(query), error => error instanceof ApiError && error.status === 422);
   assert.equal(calls, 1);

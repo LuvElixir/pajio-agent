@@ -39,6 +39,6 @@ gateway负责新近OIDC验证、CSRF/Origin、确认和预存status-only凭证�
 
 SQLite控制面测试覆盖立即冻结、跨用户状态隔离、shared保留、历史inactive成员、旧计划、幂等、登记竞态、完整计划篡改与重启。
 
-真实PG测试只在新建本机私有Unix-socket QA集群运行，无TCP：`.wearing/qa/account-delete-control-334bbc1153`。覆盖fresh和0001升级、原控制面权限与OIDC、本人申请/跨用户拒绝、普通角色不能伪造completed、冻结后SQL重建session拒绝、grant/login竞态。该目录只含本次合成账号/数据，不升级既有集群。
+真实PG测试只在新建本机私有Unix-socket QA集群运行，无TCP：`.pajio/qa/account-delete-control-334bbc1153`。覆盖fresh和0001升级、原控制面权限与OIDC、本人申请/跨用户拒绝、普通角色不能伪造completed、冻结后SQL重建session拒绝、grant/login竞态。该目录只含本次合成账号/数据，不升级既有集群。
 
 后续operator执行器必须接持久DeletionJobs、固定服务/资源登记、通知/native账户撤销、外部授权撤销、worker/relay停止及tombstone、数据盘/快照/备份与最终回执。本模块只完成控制面冻结，不能把awaiting_operator或frozen显示为已注销完成。

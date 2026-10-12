@@ -6,9 +6,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from wearing.cloud.device_provisioning import VM, Owner, fingerprint, inspect_capacity
-from wearing.cloud.device_retirement import RETENTION_SOURCE
-from wearing.cloud.proxmox_devices import REMOTE
+from pajio.cloud.device_provisioning import VM, Owner, fingerprint, inspect_capacity
+from pajio.cloud.device_retirement import RETENTION_SOURCE
+from pajio.cloud.proxmox_devices import REMOTE
 from test_device_provisioning import NOW, Provider, spec, policy, reserve, setup
 
 
@@ -156,7 +156,7 @@ def test_group_restore_evidence_unsafe_is_never_ignored(archive,fault):
 
 
 def test_real_power_start_trailer_skips_only_trusted_retired_commitments():
-    from wearing.cloud.device_power_ssh import POWER_REMOTE
+    from pajio.cloud.device_power_ssh import POWER_REMOTE
     source=POWER_REMOTE.split("if p['action']=='start':",1)[1]
     source="if p['action']=='start':"+source
     class Refused(Exception):pass
@@ -177,7 +177,7 @@ def test_real_power_start_trailer_skips_only_trusted_retired_commitments():
 
 
 def test_host_and_python_capacity_match_core_staged_running_and_retired():
-    from wearing.cloud.device_provisioning import CorePromise
+    from pajio.cloud.device_provisioning import CorePromise
     p=Provider();retained_vm(p,retired=True)
     p.vms.append(VM(vmid=1401,state='running',vcpus=1,memory_mib=2048,disk_mib=32768,config_sha256='c'*64))
     core=CorePromise(vmid=1401,vcpus=2,memory_mib=4096,disk_mib=32768)

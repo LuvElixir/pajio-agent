@@ -44,8 +44,8 @@ test('selection uses product API with CSRF and fixed credentials; never sends ar
   assert.deepEqual(await api.choose(request), receipt);
   assert.equal(calls[1].url, 'https://choice-tests.invalid/api/artifacts/art_fixture/choices');
   assert.equal(calls[1].headers.get('Authorization'), 'Bearer ' + 's'.repeat(64));
-  assert.equal(calls[1].headers.get('X-Wearing-Identity'), 'daily');
-  assert.equal(calls[1].headers.get('X-Wearing-Token'), 'csrf');
+  assert.equal(calls[1].headers.get('X-Pajio-Identity'), 'daily');
+  assert.equal(calls[1].headers.get('X-Pajio-Token'), 'csrf');
   assert.deepEqual(calls[1].body, request);
 });
 test('network uncertainty preserves same key for explicit retry with no automatic second POST', async () => {

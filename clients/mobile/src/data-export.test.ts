@@ -16,8 +16,8 @@ test('export creation bootstraps CSRF and retries use caller-owned stable reques
   const api = new DataExportApi(connection, fetcher);
   await api.create('stable-request-key'); await api.create('stable-request-key');
   assert.equal(requests[1].init.body, requests[3].init.body);
-  assert.equal((requests[1].init.headers as Record<string, string>)['X-Wearing-Token'], 'csrf-fixture');
-  assert.equal((requests[1].init.headers as Record<string, string>)['X-Wearing-Identity'], 'daily');
+  assert.equal((requests[1].init.headers as Record<string, string>)['X-Pajio-Token'], 'csrf-fixture');
+  assert.equal((requests[1].init.headers as Record<string, string>)['X-Pajio-Identity'], 'daily');
   assert.equal(requests[1].init.redirect, 'error');
   assert.equal(requests[1].url, connection.endpoint + 'api/data-exports');
 });

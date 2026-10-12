@@ -51,7 +51,7 @@ export class TaskDetailApi {
   private async request(path: string, token?: string, body: unknown = {}) {
     this.check(); const generation = this.generation, check = () => {this.check(); if (generation !== this.generation) throw new ApiError('页面已重新打开，请重新读取。',409);}; const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 25000); this.requests.add(controller);
     try {
-      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method: token === undefined ? 'GET' : 'POST', redirect: 'error', signal: controller.signal, headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(token === undefined ? {} : {'X-Wearing-Token': token, 'Content-Type': 'application/json'})}, ...(token === undefined ? {} : {body: JSON.stringify(body)})});
+      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method: token === undefined ? 'GET' : 'POST', redirect: 'error', signal: controller.signal, headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(token === undefined ? {} : {'X-Pajio-Token': token, 'Content-Type': 'application/json'})}, ...(token === undefined ? {} : {body: JSON.stringify(body)})});
       check();
       if (!response.ok) throw new ApiError(response.status === 404 ? '当前账户或身份没有这项任务。' : response.status === 401 ? '登录已到期，请重新连接。' : response.status === 409 ? '任务状态已有变化，请重新查看。' : '暂时无法读取或处理任务，请重新查看。', response.status);
       if (!response.headers.get('Content-Type')?.includes('application/json') || Number(response.headers.get('Content-Length') || 0) > 2097152) throw bad();

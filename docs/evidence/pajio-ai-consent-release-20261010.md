@@ -6,7 +6,7 @@ The personal Core now enforces explicit DeepSeek consent before new model reques
 
 The reviewed overlay changed exactly 11 Core modules: `ai_consent.py`, `ai_consent_api.py`, `usage_guard.py`, `runtime.py`, `engine_runner.py`, `app.py`, `service.py`, `capture.py`, `capture_api.py`, `capture_worker.py`, and `capture_bridge.py`.
 
-Only `wearing-tenant.service` restarted, once. Its PID changed from **4778 to 7288**, and the managed Hermes engine reported the capability **`wearing.ai_consent_guard = deepseek-v1`**. Relay PID 5295 and nginx PID 4603 stayed unchanged; post-release checks matched 286 protected source/static files and 16 configuration references to their preimages. Control services, activation plans, device runtime artifacts, SSH command pins, and account/invitation data were outside this overlay.
+Only `pajio-tenant.service` restarted, once. Its PID changed from **4778 to 7288**, and the managed Hermes engine reported the capability **`pajio.ai_consent_guard = deepseek-v1`**. Relay PID 5295 and nginx PID 4603 stayed unchanged; post-release checks matched 286 protected source/static files and 16 configuration references to their preimages. Control services, activation plans, device runtime artifacts, SSH command pins, and account/invitation data were outside this overlay.
 
 The installed base wheel and this overlay together identify the running Core. The old wheel hash alone does not prove the current source version.
 

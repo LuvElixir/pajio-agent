@@ -19,7 +19,7 @@ import React, {ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState}
 import {ActivityIndicator, StyleSheet, Text, TextInput, View} from 'react-native';
 import {router, useLocalSearchParams} from 'expo-router';
 import {BookOpen, CalendarDays, Camera, ChevronLeft, ChevronRight, FileText, Folder, Layers, Link2, MapPin, MessageCircle, Monitor, RefreshCw, Search, Share2, ShieldCheck, SlidersHorizontal, Smartphone} from 'lucide-react-native';
-import {Connection, MemorySnapshot, scopeOf, WearingApi} from './core';
+import {Connection, MemorySnapshot, scopeOf, PajioApi} from './core';
 import {Entrance, TactilePressable} from './experience/primitives';
 import {HubRuntime, memoryCollection, memoryObservationLabel, mergeWorkspacePages, PersonalHubApi, safeWorkspacePath, textPreviewAllowed, WorkspaceFile, WorkspacePage, WorkspaceSnapshot, workspaceFileDraft, workspaceProgress, workspaceSearch, WORKSPACE_ORIGINAL_LIMIT} from './personal-hub';
 import {shareWorkspaceFile} from './workspace-share';
@@ -63,7 +63,7 @@ function MemoryLibraryContent({connection, onFiles, onChat, onConnect, onSources
   const s = useThemedStyles(makeStyles);
 
   const api = useMemo(() => new PersonalHubApi(connection, serviceFetch), [connection]);
-  const memoryApi = useMemo(() => new WearingApi(connection, serviceFetch), [connection]);
+  const memoryApi = useMemo(() => new PajioApi(connection, serviceFetch), [connection]);
   const params = useLocalSearchParams<{memoryPath?: string; memoryFile?: string; memorySection?: string; memoryQuery?: string}>();
   const directory = value(params.memoryPath), selectedPath = value(params.memoryFile), section = value(params.memorySection);
   const [data, setData] = useState<MemorySnapshot | null>(null), [workspace, setWorkspace] = useState<WorkspaceSnapshot | null>(null);

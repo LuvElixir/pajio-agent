@@ -1,7 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 import pytest
-from wearing.goals import GoalBook, GoalError
-from wearing.store import Store
+from pajio.goals import GoalBook, GoalError
+from pajio.store import Store
 
 
 def test_app_request_is_durable_scoped_and_does_not_resume(tmp_path):

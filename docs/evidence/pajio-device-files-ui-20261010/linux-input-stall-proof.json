@@ -101,7 +101,7 @@
     "seconds": 3.62
   },
   "candidate_files": {
-    "src/wearing/private_media_sources.py": "68224908ba6aee571facf46c6bb6eb48b98e86e1312ac5e1123cabfcc4ee7f8c",
+    "src/pajio/private_media_sources.py": "68224908ba6aee571facf46c6bb6eb48b98e86e1312ac5e1123cabfcc4ee7f8c",
     "tests/test_private_media_x11_pointer.py": "87517f26f23ff1fa5da805a0fa02f307c79463541bbad51a896c507e2f543ba3"
   },
   "deployed_baseline_source_sha256": "198c66cd2b029d309c0d36993685d791ba49dd175c4ed4a358b332ca9d7a48c2",

@@ -2,9 +2,9 @@ import httpx
 import json
 import pytest
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.hermes import HermesClient, HermesError
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.hermes import HermesClient, HermesError
 
 
 def snapshot():
@@ -25,10 +25,10 @@ async def test_memory_read_stays_in_requested_identity_and_does_not_start_engine
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
             daily = (await client.get("/api/memory")).json()
             assert daily["identity_id"] == "daily" and daily["targets"]["user"]["entries"] == ["本身份的偏好"]
-            hidden = (await client.get("/api/memory", headers={"X-Wearing-Identity": other})).json()
+            hidden = (await client.get("/api/memory", headers={"X-Pajio-Identity": other})).json()
             assert hidden["available"] is False and "targets" not in hidden
-            assert calls == ["/v1/wearing/memory"]
-            assert (await client.get("/api/memory", headers={"X-Wearing-Identity": "unknown"})).status_code == 404
+            assert calls == ["/v1/pajio/memory"]
+            assert (await client.get("/api/memory", headers={"X-Pajio-Identity": "unknown"})).status_code == 404
             assert (await client.get("/api/memory", headers={"Origin": "https://foreign.example"})).status_code == 403
     finally:
         await hermes.close()
@@ -60,7 +60,7 @@ async def test_unavailable_engine_keeps_memory_unavailable(tmp_path):
 async def test_memory_patch_routes_valid_write_and_rejects_invalid_json(tmp_path):
     calls = []
     def handler(request):
-        assert request.method == 'PATCH' and request.url.path == '/v1/wearing/memory'
+        assert request.method == 'PATCH' and request.url.path == '/v1/pajio/memory'
         calls.append(json.loads(request.content))
         return httpx.Response(200, json=snapshot())
     hermes = HermesClient(Settings(tmp_path, hermes_key='test'), httpx.MockTransport(handler))
@@ -68,7 +68,7 @@ async def test_memory_patch_routes_valid_write_and_rejects_invalid_json(tmp_path
     try:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
             token = (await client.get('/api/bootstrap')).json()['token']
-            client.headers['X-Wearing-Token'] = token
+            client.headers['X-Pajio-Token'] = token
             change = {'target': 'user', 'action': 'add', 'revision': '0' * 64, 'content': '合成偏好'}
             saved = await client.patch('/api/memory', json=change)
             assert saved.status_code == 200 and saved.json()['identity_id'] == 'daily'

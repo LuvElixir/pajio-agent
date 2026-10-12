@@ -41,12 +41,12 @@ test('register and disable are exact identity-scoped mutations with verified rec
   assert.equal((await api.register(token, project, 'ios')).enabled, true); assert.equal((await api.disable()).enabled, false);
   assert.equal(calls[1].url.pathname, '/api/notifications/register'); assert.equal(calls[1].method, 'POST');
   assert.deepEqual(calls[1].body, {installation_id: install, expo_push_token: token, project_id: project, platform: 'ios'});
-  for (const call of calls) {assert.equal(call.headers.get('X-Wearing-Identity'), 'daily'); assert.equal(call.redirect, 'error');}
-  assert.equal(calls[1].headers.get('X-Wearing-Token'), 'csrf-test');
+  for (const call of calls) {assert.equal(call.headers.get('X-Pajio-Identity'), 'daily'); assert.equal(call.redirect, 'error');}
+  assert.equal(calls[1].headers.get('X-Pajio-Token'), 'csrf-test');
 });
 test('one CSRF refresh is allowed; bootstrap must contain current identity', async () => {
   const {api, calls} = harness([() => response(bootstrap), () => response({}, 403), () => response({...bootstrap, token: 'fresh'}), () => response(status())]);
-  await api.register(token, project, 'android'); assert.equal(calls.length, 4); assert.equal(calls[3].headers.get('X-Wearing-Token'), 'fresh');
+  await api.register(token, project, 'android'); assert.equal(calls.length, 4); assert.equal(calls[3].headers.get('X-Pajio-Token'), 'fresh');
   const bad = harness([() => response({...bootstrap, identities: [{id: 'work'}]})]);
   await assert.rejects(bad.api.register(token, project, 'ios'), (e: unknown) => e instanceof ApiError && e.status === 422); assert.equal(bad.calls.length, 1);
 });
@@ -59,7 +59,7 @@ test('malformed success and network uncertainty are not reported as enabled or r
 test('bearer and identity are fixed to constructor snapshot', async () => {
   const c: Connection = {...connection, session: {accessToken: 's'.repeat(64), expiresAt: new Date(Date.now() + 60000).toISOString(), userId: 'user_' + 'a'.repeat(32), tenantId: 't', credentialId: 'c'.repeat(32)}};
   const h = harness([() => response(status())], c); c.identity = 'work'; c.session!.accessToken = 'changed';
-  await h.api.status(); assert.equal(h.calls[0].headers.get('Authorization'), 'Bearer ' + 's'.repeat(64)); assert.equal(h.calls[0].headers.get('X-Wearing-Identity'), 'daily');
+  await h.api.status(); assert.equal(h.calls[0].headers.get('Authorization'), 'Bearer ' + 's'.repeat(64)); assert.equal(h.calls[0].headers.get('X-Pajio-Identity'), 'daily');
 });
 test('tap resolution verifies identity, server, task and event before navigation', async () => {
   const h = harness([() => response({...target, kind: 'approval'})]);

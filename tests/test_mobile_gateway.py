@@ -5,7 +5,7 @@ from urllib.parse import urlparse, parse_qs
 import httpx
 import pytest
 from sqlalchemy import select, update
-from wearing.cloud.control import states, sessions
+from pajio.cloud.control import states, sessions
 from test_gateway import lab, login, ORIGIN
 
 VERIFIER = 'v' * 64
@@ -40,8 +40,8 @@ async def test_native_pkce_handoff_rejects_wrong_state_verifier_replay_and_token
             client.headers['Authorization'] = 'Bearer ' + data['access_token']
             assert (await client.get('/auth/session')).json()['tenant_id'] == 'tenant_A'
             boot = (await client.get('/api/bootstrap')).json()
-            assert (await client.post('/api/conversation', headers={'X-Wearing-Token':boot['token']}, json={'content':'native-only test'})).status_code == 201
-            assert (await client.post('/api/conversation', headers={'X-Wearing-Token':boot['token'], 'Origin':'https://bad.example'},json={'content':'denied'})).status_code == 403
+            assert (await client.post('/api/conversation', headers={'X-Pajio-Token':boot['token']}, json={'content':'native-only test'})).status_code == 201
+            assert (await client.post('/api/conversation', headers={'X-Pajio-Token':boot['token'], 'Origin':'https://bad.example'},json={'content':'denied'})).status_code == 403
             assert (await client.post('/auth/tenant', json={'tenant_id':'tenant_B'})).status_code == 403
             assert (await client.post('/auth/logout')).json()['logged_out']
             assert (await client.get('/api/bootstrap')).status_code == 401
@@ -93,7 +93,7 @@ async def test_gateway_replaces_client_notification_lease_with_verified_session_
             forwarded=workers.requests[-1].headers
             expiry=float(forwarded['x-pajio-session-expires'])
             assert time.time()<expiry<=time.time()+30*86400
-            assert forwarded['x-wearing-tenant']=='tenant_A'
+            assert forwarded['x-pajio-tenant']=='tenant_A'
             assert forwarded['authorization']!='Bearer '+data['access_token']
             assert '999999999999' not in response.text
 
@@ -109,7 +109,7 @@ async def test_native_and_embedded_sessions_cannot_drift_to_another_tenant(tmp_p
             assert (await client.get('/',headers=headers)).status_code==200
             assert (await client.post('/auth/tenant',headers=headers,json={'tenant_id':'tenant_B'})).status_code==403
             account=(await client.get('/auth/session')).json()
-            assert (await client.post('/auth/tenant',headers={'Origin':ORIGIN,'X-Wearing-Csrf':account['csrf']},json={'tenant_id':'tenant_B'})).status_code==403
+            assert (await client.post('/auth/tenant',headers={'Origin':ORIGIN,'X-Pajio-Csrf':account['csrf']},json={'tenant_id':'tenant_B'})).status_code==403
             # Even an operator-side mutation of this SID cannot send an old App
             # draft to a new tenant or return that tenant's private data.
             control.switch(token,'tenant_B')

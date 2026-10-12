@@ -2,8 +2,8 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),vm=require('node:vm');
 const window={};
-vm.runInNewContext(fs.readFileSync('src/wearing/web/conversation-submissions.js','utf8'),{window});
-const create=window.WearingSubmissions.create;
+vm.runInNewContext(fs.readFileSync('src/pajio/web/conversation-submissions.js','utf8'),{window});
+const create=window.PajioSubmissions.create;
 function fixture(){const values=new Map();let n=0;const storage={getItem:k=>values.get(k)||null,setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)};return {storage,make:()=>create(()=>storage,()=>{},()=>`request-${String(++n).padStart(16,'0')}`)};}
 test('lost response retries with the same key after page recreation',()=>{
   const h=fixture(),id=h.make().prepare('daily','帮我整理周末计划');
@@ -56,7 +56,7 @@ function composerHarness(storage=fixture().storage, cryptoSource){
       closest:()=>null,replaceChildren(){},focus(){},scrollIntoView(){},listeners};
     elements.set(name,node);return node;
   }
-  const window={addEventListener(){},WearingLife:{renderContext(){}},WearingActivity:{load(){}}};
+  const window={addEventListener(){},PajioLife:{renderContext(){}},PajioActivity:{load(){}}};
   const context={window,localStorage:storage,Event,
     document:{getElementById:element,querySelector:()=>element('dock'),addEventListener(){},dispatchEvent(){}},
     matchMedia:()=>({matches:false}),
@@ -65,10 +65,10 @@ function composerHarness(storage=fixture().storage, cryptoSource){
     updateCompanion(){},renderGoalContext(){},loadConversation:async()=>{loads++;},scrollToLatest:()=>{scrolls++;},
     fetch:(path,options)=>new Promise((resolve,reject)=>requests.push({path,options,resolve,reject})),
   };
-  context.window.WearingStore=context.window.WearingStore||(()=>{const b=context.localStorage||{getItem:()=>null,setItem:()=>{},removeItem:()=>{}};return {mode:'local',scope:null,backend:b,key:name=>name,getItem:k=>b.getItem(k),setItem:(k,v)=>b.setItem(k,v),removeItem:k=>b.removeItem(k)};})();
+  context.window.PajioStore=context.window.PajioStore||(()=>{const b=context.localStorage||{getItem:()=>null,setItem:()=>{},removeItem:()=>{}};return {mode:'local',scope:null,backend:b,key:name=>name,getItem:k=>b.getItem(k),setItem:(k,v)=>b.setItem(k,v),removeItem:k=>b.removeItem(k)};})();
   vm.createContext(context);
-  for(const file of ['request-id.js','conversation-drafts.js','conversation-submissions.js'])vm.runInContext(fs.readFileSync('src/wearing/web/'+file,'utf8'),context);
-  const app=fs.readFileSync('src/wearing/web/app.js','utf8');
+  for(const file of ['request-id.js','conversation-drafts.js','conversation-submissions.js'])vm.runInContext(fs.readFileSync('src/pajio/web/'+file,'utf8'),context);
+  const app=fs.readFileSync('src/pajio/web/app.js','utf8');
   const helpers=app.slice(0,app.indexOf('function nearBottom()'));
   const drafts=app.slice(app.indexOf('let composerReady=false'),app.indexOf('function turnActions('));
   const handler=app.slice(app.indexOf('$("conversation-form").addEventListener("submit"'),app.indexOf('$("message-input").addEventListener("keydown"'));
@@ -79,8 +79,8 @@ function composerHarness(storage=fixture().storage, cryptoSource){
     write(value){input.value=value;input.dispatchEvent(new Event('input'));},
     submit:()=>element('conversation-form').listeners.get('submit')[0]({preventDefault(){}}),
     reply(index,data={delivery:'queued',task:{id:'synthetic-task'}},status=200){requests[index].resolve({ok:status>=200&&status<300,status,json:async()=>data});},
-    persisted(c={identity:'daily'}){return window.WearingDrafts.create(()=>storage).read(c);},
-    nonce(content,identity='daily'){return window.WearingSubmissions.create(()=>storage,()=>{},()=>`request-${String(++id).padStart(16,'0')}`).prepare(identity,content);},
+    persisted(c={identity:'daily'}){return window.PajioDrafts.create(()=>storage).read(c);},
+    nonce(content,identity='daily'){return window.PajioSubmissions.create(()=>storage,()=>{},()=>`request-${String(++id).padStart(16,'0')}`).prepare(identity,content);},
   };
 }
 
@@ -169,7 +169,7 @@ test('a late response clears only the submitted context and preserves an active 
 
 test('an identity epoch change prevents old success from clearing either identity input',async()=>{
   const h=composerHarness();h.write('日常身份的输入');const pending=h.submit();
-  assert.equal(h.requests[0].options.headers['X-Wearing-Identity'],'daily');
+  assert.equal(h.requests[0].options.headers['X-Pajio-Identity'],'daily');
   const firstId=JSON.parse(h.requests[0].options.body).request_id;
   // Force a host-level identity transition to verify the defensive API epoch guard.
   h.h.state.identityId='overseas';h.h.state.identityEpoch++;h.h.activateComposer({identity:'overseas'});h.write('另一个身份的新输入');

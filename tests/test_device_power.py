@@ -3,9 +3,9 @@ import subprocess
 
 import pytest
 
-from wearing.cloud.device_power import DevicePower
-from wearing.cloud.device_power_ssh import NATIVE_REMOTE, TENANT_REMOTE, POWER_REMOTE, SSHPowerAdapter
-from wearing.cloud.device_provisioning import ProvisionError
+from pajio.cloud.device_power import DevicePower
+from pajio.cloud.device_power_ssh import NATIVE_REMOTE, TENANT_REMOTE, POWER_REMOTE, SSHPowerAdapter
+from pajio.cloud.device_provisioning import ProvisionError
 from test_device_provisioning import setup, reserve, spec
 
 OP='c'*32

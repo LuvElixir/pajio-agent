@@ -1,8 +1,8 @@
 """Lost HTTP acknowledgements must not cause an offline edit to be reapplied."""
 from concurrent.futures import ThreadPoolExecutor
 import pytest
-from wearing.life import LifeBook, LifeDraft, LifeError
-from wearing.store import Store
+from pajio.life import LifeBook, LifeDraft, LifeError
+from pajio.store import Store
 
 @pytest.fixture
 def book(tmp_path):
@@ -67,11 +67,11 @@ def test_identity_scope_and_failed_cas_do_not_leak_receipts_or_consume_key(book)
 @pytest.mark.asyncio
 async def test_http_replay_after_discarded_response_uses_same_receipt_and_revision(tmp_path):
     import httpx
-    from wearing.app import create_app
-    from wearing.config import Settings
+    from pajio.app import create_app
+    from pajio.config import Settings
     app = create_app(Settings(tmp_path))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         created = (await client.post('/api/life', json={'record': {'kind': 'task', 'title': '合成待办'}, 'request_key': 'create-one'})).json()
         path = '/api/life/' + created['id']
         request = {'revision': 1, 'patch': {'completed': True}, 'request_key': 'lost-http-ack'}

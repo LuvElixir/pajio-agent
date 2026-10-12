@@ -46,20 +46,20 @@ Pajio owns the product identity, personal context, goal lifecycle, and interface
 Python 3.11+ and uv are required.
 
 ```bash
-git clone https://github.com/LuvElixir/wearing.git
-cd wearing
+git clone https://github.com/LuvElixir/pajio.git
+cd pajio
 uv sync --extra dev
-uv run wearing serve
+uv run pajio serve
 ```
 
 Open **http://127.0.0.1:8765**. Follow the connection panel to install the local engine and configure a model. You can also use the CLI.
 
 ```bash
-uv run wearing engine install
-uv run wearing engine model
+uv run pajio engine install
+uv run pajio engine model
 ```
 
-Messages can be saved before a model is connected. Real agent responses and execution require a working engine and model connection. Local state is stored in the private `.wearing/` directory and is excluded from Git.
+Messages can be saved before a model is connected. Real agent responses and execution require a working engine and model connection. Local state is stored in the private `.pajio/` directory and is excluded from Git.
 
 ## Development status
 

@@ -129,7 +129,7 @@ Web / Desktop 代码由 ZCode 实施，root 与独立复核者负责检查和补
 ```
 
 - 68,174,658 字节；实际重新计算 SHA-256：`0ce1a572ca4fff91e3f8dbd2c643999c85d8ec1dba728897ba2d1801b65fca76`。
-- Pajio 0.2.0，versionCode 1；保留包名 `io.luckyloading.wearing.mobile` 以保持现有安装与数据兼容。
+- Pajio 0.2.0，versionCode 1；保留包名 `io.luckyloading.pajio.mobile` 以保持现有安装与数据兼容。
 - ARM64，最低 Android API 24、target API 36；Release 构建使用 Android Debug 测试签名，不是正式商店分发签名。
 - APK v2 签名验证通过；ZIP 16 KB 对齐通过，25 个原生库的 ELF 装载段对齐检查通过。
 - 内置 Hermes JavaScript 运行时 bundle，与 Gradle 输出一致，不依赖 Metro。Agent 服务仍需要后端连接。

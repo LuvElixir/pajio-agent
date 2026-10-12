@@ -4,12 +4,12 @@ import json
 import zipfile
 import httpx
 import pytest
-from wearing.app import create_app
-from wearing.artifacts import ArtifactDraft
-from wearing.cloud.worker import TenantBoundary
-from wearing.config import Settings
-from wearing.identity_export import IdentityExports, ExportError
-from wearing.service import ACTIVE
+from pajio.app import create_app
+from pajio.artifacts import ArtifactDraft
+from pajio.cloud.worker import TenantBoundary
+from pajio.config import Settings
+from pajio.identity_export import IdentityExports, ExportError
+from pajio.service import ACTIVE
 
 A, B = 'a' * 64, 'b' * 64
 
@@ -32,9 +32,9 @@ async def test_same_identity_owner_reads_search_results_and_export(tmp_path):
     aa, bb, legacy = fixture(app, A, 'A'), fixture(app, B, 'B'), fixture(app, None, 'legacy')
     other = app.state.store.save_identity('Other')['id']
     foreign = fixture(app, A, 'foreign', other)
-    headers = {'Authorization': 'Bearer fixture-key', 'X-Wearing-Tenant': 'fixture', 'X-Pajio-Storage-Scope': A}
+    headers = {'Authorization': 'Bearer fixture-key', 'X-Pajio-Tenant': 'fixture', 'X-Pajio-Storage-Scope': A}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers=headers) as client:
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         cursor = (await client.get('/api/search', params={'q': 'synthetic', 'limit': 1})).json()['next_cursor']
         for owner, own, denied, label, secret in [(A, aa, bb, 'A', 'B'), (B, bb, aa, 'B', 'A')]:
             client.headers['X-Pajio-Storage-Scope'] = owner
@@ -74,7 +74,7 @@ async def test_cloud_missing_trusted_scope_fails_closed(tmp_path, boundary):
     headers = {'X-Pajio-Storage-Scope': A}
     if boundary:
         app.add_middleware(TenantBoundary, tenant_id='fixture', gateway_key='fixture-key')
-        headers = {'Authorization': 'Bearer fixture-key', 'X-Wearing-Tenant': 'fixture'}
+        headers = {'Authorization': 'Bearer fixture-key', 'X-Pajio-Tenant': 'fixture'}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers=headers) as client:
         for url in ['/api/tasks', '/api/conversation', '/api/search?q=synthetic', '/api/artifacts', '/api/data-exports', f'/api/tasks/{legacy[0]}', f'/api/artifacts/{legacy[1]}/download']:
             assert (await client.get(url)).status_code == 401, url
@@ -95,11 +95,11 @@ def test_pre_projection_archive_receipt_is_not_reused_or_downloadable(tmp_path):
 
 
 async def test_owned_background_reports_never_enter_other_owners_model_or_views(tmp_path):
-    from wearing.goals import GoalBook, GoalError
-    from wearing.schedules import ScheduleBook, ScheduleDraft
-    from wearing.life import LifeBook
-    from wearing.life_proxy import dispatch
-    from wearing.store import now
+    from pajio.goals import GoalBook, GoalError
+    from pajio.schedules import ScheduleBook, ScheduleDraft
+    from pajio.life import LifeBook
+    from pajio.life_proxy import dispatch
+    from pajio.store import now
     app = create_app(Settings(tmp_path), engine_autostart=False, local_devices=False)
     app.add_middleware(TenantBoundary, tenant_id='fixture', gateway_key='fixture-key')
     store = app.state.store
@@ -125,9 +125,9 @@ async def test_owned_background_reports_never_enter_other_owners_model_or_views(
     assert ga['id'] not in str(dispatch(LifeBook(store), 'daily', 'goal_list', {}))
     assert sa['id'] not in str(dispatch(LifeBook(store), 'daily', 'schedule_list', {}))
     with pytest.raises(GoalError): dispatch(LifeBook(store), 'daily', 'goal_list', {'goal_id': ga['id']})
-    headers = {'Authorization': 'Bearer fixture-key', 'X-Wearing-Tenant': 'fixture', 'X-Pajio-Storage-Scope': B}
+    headers = {'Authorization': 'Bearer fixture-key', 'X-Pajio-Tenant': 'fixture', 'X-Pajio-Storage-Scope': B}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers=headers) as client:
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         for url in ['/api/goals', '/api/goal-updates', '/api/schedules', '/api/conversation']:
             response = await client.get(url)
             assert response.status_code == 200 and 'synthetic-private-goal-A' not in response.text and ga['id'] not in response.text

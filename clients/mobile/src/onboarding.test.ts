@@ -28,7 +28,7 @@ test('unknown, duplicate and over-limit choices cannot become initial context; n
 });
 test('opening onboarding reads only its snapshot, without bootstrap, permissions or mutations',async()=>{
   const calls:string[]=[];
-  const api=new OnboardingApi(connection,(async(url,init)=>{calls.push(String(url));assert.equal(init?.method,'GET');assert.equal(init?.redirect,'error');assert.equal(new Headers(init?.headers).get('X-Wearing-Identity'),'daily');return Response.json(snapshot());}) as typeof fetch);
+  const api=new OnboardingApi(connection,(async(url,init)=>{calls.push(String(url));assert.equal(init?.method,'GET');assert.equal(init?.redirect,'error');assert.equal(new Headers(init?.headers).get('X-Pajio-Identity'),'daily');return Response.json(snapshot());}) as typeof fetch);
   assert.equal((await api.load()).revision,0);assert.deepEqual(calls,['https://pajio.example/api/onboarding']);
 });
 test('lost response retains the exact request and a restarted client retries before accepting latest state',async()=>{

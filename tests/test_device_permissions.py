@@ -7,23 +7,23 @@ import httpx
 import pytest
 from filelock import FileLock, Timeout
 
-from wearing.cloud.device_permissions import (ApplyPermission, ChangePermission, PermissionBundle,
+from pajio.cloud.device_permissions import (ApplyPermission, ChangePermission, PermissionBundle,
     create_permission, apply_permission, read_permission, bundle_digest)
-from wearing.cloud.device_setup import PairDevices, create_pairing
-from wearing.cloud.relay import (RelayError, PairRequest, ConnectionRequest, PollRequest,
+from pajio.cloud.device_setup import PairDevices, create_pairing
+from pajio.cloud.relay import (RelayError, PairRequest, ConnectionRequest, PollRequest,
     ClaimRequest, create_relay_app)
-from wearing.cloud.worker import create_tenant_app
-from wearing.config import write_private_json
-from wearing.connectors.remote.client import Connector, read_bundle
-from wearing.connectors.remote.permissions import update_permissions, require_settled
-from wearing.connectors.remote.adapter import NativeAdapter
+from pajio.cloud.worker import create_tenant_app
+from pajio.config import write_private_json
+from pajio.connectors.remote.client import Connector, read_bundle
+from pajio.connectors.remote.permissions import update_permissions, require_settled
+from pajio.connectors.remote.adapter import NativeAdapter
 from test_device_setup import prepare, TOKEN, SPEC, ORIGIN
 
 PC={'resource_id':'computer_test','name':'我的电脑','kind':'computer','methods':['computer.status','computer.observe']}
 
 
 def test_owned_download_is_privatized_but_symlink_is_rejected(tmp_path):
-    file=tmp_path/'wearing-permissions.json';file.write_text('{"download":true}');file.chmod(0o644)
+    file=tmp_path/'pajio-permissions.json';file.write_text('{"download":true}');file.chmod(0o644)
     assert read_bundle(file)=='{"download":true}' and file.stat().st_mode & 0o777==0o600
     link=tmp_path/'link';link.symlink_to(file)
     with pytest.raises(ValueError):read_bundle(link)
@@ -55,13 +55,13 @@ def test_two_sided_update_preserves_phone_and_invalidates_old_connection(tmp_pat
     PermissionBundle.model_validate(b)
     assert change(root,s)==b and commit(s,b,True)['policy_revision']==2
     assert s.inventory('daily')==before  # generation/download/preflight never expands a grant
-    assert 'wearing_computer_request_input' not in {t['name'] for t in s.schemas('daily')}
+    assert 'pajio_computer_request_input' not in {t['name'] for t in s.schemas('daily')}
     result=commit(s,b)
     assert result==commit(s,b) and result['policy_revision']==2
     after=s.inventory('daily');assert all(r['policy_revision']==2 and not r['connected'] for r in after)
     assert set(next(r for r in after if r['kind']=='android')['methods'])==set(next(r for r in before if r['kind']=='android')['methods'])
     assert all(r['connector_id']==p['connector_id'] for r in after)
-    assert 'wearing_computer_request_input' in {t['name'] for t in s.schemas('daily')}
+    assert 'pajio_computer_request_input' in {t['name'] for t in s.schemas('daily')}
     with pytest.raises(RelayError):s.poll(TOKEN,PollRequest(connection_id=conn))
     with pytest.raises(RelayError):s.connect(TOKEN,ConnectionRequest(previous_connection_id=conn))
     new=s.connect(TOKEN,ConnectionRequest())['connection_id'];assert new!=conn
@@ -88,7 +88,7 @@ def test_identity_tampering_expiry_and_parallel_changes_are_fenced(tmp_path):
     assert sorted(values,key=str)==[2,'conflict']
     assert {r['policy_revision'] for r in s.inventory('daily')}=={2}
     downgrade=change(root,s,'observe','d'*32);commit(s,downgrade)
-    assert 'wearing_computer_request_input' not in {t['name'] for t in s.schemas('daily')}
+    assert 'pajio_computer_request_input' not in {t['name'] for t in s.schemas('daily')}
     with pytest.raises(RelayError):commit(s,b)
     expired=change(root,s,'input','e'*32)
     with s.tx() as db:db.execute('UPDATE permission_updates SET expires=0 WHERE id=?',(expired['request_id'],))
@@ -124,8 +124,8 @@ async def test_paired_daemon_delivers_explicit_change_without_download_or_restar
     app=create_relay_app(root)
     def client(config,local):
         return httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='https://relay.example',headers={'Authorization':'Bearer '+config['token']})
-    import wearing.connectors.remote.client as module
-    import wearing.connectors.remote.permissions as permissions
+    import pajio.connectors.remote.client as module
+    import pajio.connectors.remote.permissions as permissions
     monkeypatch.setattr(module,'client_for',client);monkeypatch.setattr(permissions,'client_for',client)
     original=module.response
     original_permission=permissions.response
@@ -178,7 +178,7 @@ async def test_local_crash_after_cloud_commit_retries_without_replay(tmp_path,mo
     def client(config,local):
         return httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='https://relay.example',
             headers={'Authorization':'Bearer '+config['token']})
-    import wearing.connectors.remote.permissions as module
+    import pajio.connectors.remote.permissions as module
     monkeypatch.setattr(module,'client_for',client)
     original=module.response
     async def lost(client,path,payload):
@@ -232,7 +232,7 @@ async def test_expired_uncommitted_stage_restores_only_authenticated_old_grant(t
     write_private_json(local/'connector.json',config)
     path=tmp_path/'update.json';write_private_json(path,b)
     app=create_relay_app(root)
-    import wearing.connectors.remote.permissions as module
+    import pajio.connectors.remote.permissions as module
     monkeypatch.setattr(module,'client_for',lambda config,local:httpx.AsyncClient(
         transport=httpx.ASGITransport(app=app),base_url='https://relay.example',headers={'Authorization':'Bearer '+TOKEN}))
     original=module.response
@@ -257,9 +257,9 @@ async def test_browser_permission_routes_are_private_identity_bound_and_csrf_pro
     async with app.router.lifespan_context(app),httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url=ORIGIN) as c:
         body={'request_id':'b'*32,'resource_id':PC['resource_id'],'revision':s.inventory('daily')[0]['permission_revision'],'mode':'input'}
         assert (await c.post('/api/devices/permissions',json=body)).status_code==401
-        c.headers.update({'Authorization':'Bearer '+(root/'gateway.key').read_text().strip(),'X-Wearing-Tenant':'tenant_A'})
+        c.headers.update({'Authorization':'Bearer '+(root/'gateway.key').read_text().strip(),'X-Pajio-Tenant':'tenant_A'})
         assert (await c.post('/api/devices/permissions',json=body)).status_code==403
-        c.headers.update({'X-Wearing-Token':(await c.get('/api/bootstrap')).json()['token'],'Origin':ORIGIN})
+        c.headers.update({'X-Pajio-Token':(await c.get('/api/bootstrap')).json()['token'],'Origin':ORIGIN})
         response=await c.post('/api/devices/permissions',json=body);assert response.status_code==200
         assert 'code' not in response.json()
         path='/api/devices/permissions/'+'b'*32
@@ -269,6 +269,6 @@ async def test_browser_permission_routes_are_private_identity_bound_and_csrf_pro
         PermissionBundle.model_validate(download.json())
         assert s.inventory('daily')[0]['policy_revision']==1
         other=(await c.post('/api/identities',json={'name':'海外','region':'international','description':''})).json()
-        assert (await c.get(path+'/download',headers={'X-Wearing-Identity':other['id']})).status_code==404
+        assert (await c.get(path+'/download',headers={'X-Pajio-Identity':other['id']})).status_code==404
         c.headers.pop('Authorization')
         assert (await c.get(path+'/download')).status_code==401

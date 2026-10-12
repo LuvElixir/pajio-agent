@@ -1,11 +1,11 @@
 """Room to finish tasks without changing stopped goals or inventing monetary limits."""
 import httpx
 import pytest
-from wearing.app import NewGoal, create_app
-from wearing.config import Settings
-from wearing.goals import GoalBook, GoalError, DEFAULT_GOAL_STEPS, MAX_GOAL_STEPS
-from wearing.hermes import HermesClient
-from wearing.store import Store
+from pajio.app import NewGoal, create_app
+from pajio.config import Settings
+from pajio.goals import GoalBook, GoalError, DEFAULT_GOAL_STEPS, MAX_GOAL_STEPS
+from pajio.hermes import HermesClient
+from pajio.store import Store
 from pydantic import ValidationError
 from test_goals import GoalWire, report
 
@@ -15,7 +15,7 @@ def test_generous_default_and_continuation_beyond_old_ten_round_limit(tmp_path,m
     goal=book.create('daily','核对研究资料','只用测试资料','形成可核对的报告')
     assert goal['max_steps']==DEFAULT_GOAL_STEPS==100 and goal['status']=='paused'
     book.control(goal['id'],1,'resume')
-    monkeypatch.setattr('wearing.goals.after',lambda seconds:'2000-01-01T00:00:00+00:00')
+    monkeypatch.setattr('pajio.goals.after',lambda seconds:'2000-01-01T00:00:00+00:00')
     for index in range(12):
         task=book.claim(goal['id']); assert task
         book.store.update(task['id'],status='completed_unverified',output=report(summary=f'核对了第 {index+1} 项新资料',decision='continue'))
@@ -50,7 +50,7 @@ async def test_api_default_policy_and_large_goal_are_persisted_without_starting(
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://testserver') as c:
         boot=(await c.get('/api/bootstrap')).json()
         assert boot['goal_policy']=={'default_steps':100,'max_steps':1000,'extension_steps':100}
-        c.headers['X-Wearing-Token']=boot['token']
+        c.headers['X-Pajio-Token']=boot['token']
         body={'objective':'验证资料','boundaries':'只使用测试资料','success_criteria':'有核对依据'}
         default=(await c.post('/api/goals',json=body)).json()
         assert default['max_steps']==100 and default['status']=='paused'

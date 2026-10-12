@@ -1,10 +1,10 @@
-# Wearing 手机客户端设计记录
+# Pajio 手机客户端设计记录
 
-2026-10-04。范围为既有 Wearing 随手输入和生活记录的 React Native / Expo 适配。品牌规范以 [根 DESIGN.md](../DESIGN.md) 为准；本记录描述手机表面，不建立新品牌或批准稿。方向依据为 [surface.md](../clients/mobile/docs/surface.md)，实际源码为 `clients/mobile/src/Mobile.tsx`、`brand.ts`、`Conversation.tsx`、`Conversation.web.tsx`、`TimeField.tsx` 及 `TimeField.web.tsx`。
+2026-10-04。范围为既有 Pajio 随手输入和生活记录的 React Native / Expo 适配。品牌规范以 [根 DESIGN.md](../DESIGN.md) 为准；本记录描述手机表面，不建立新品牌或批准稿。方向依据为 [surface.md](../clients/mobile/docs/surface.md)，实际源码为 `clients/mobile/src/Mobile.tsx`、`brand.ts`、`Conversation.tsx`、`Conversation.web.tsx`、`TimeField.tsx` 及 `TimeField.web.tsx`。
 
 ## Overview
 
-沿用近白页面、钴蓝动作、卷袖角色 PNG 和描边字标 SVG。先接住文字、图片和录音，再明确显示它留在本机、正在同步或已进入 Wearing 的哪一阶段。页面延续自然中文，记录与原对话保持同一身份和上下文。
+沿用近白页面、钴蓝动作、卷袖角色 PNG 和描边字标 SVG。先接住文字、图片和录音，再明确显示它留在本机、正在同步或已进入 Pajio 的哪一阶段。页面延续自然中文，记录与原对话保持同一身份和上下文。
 
 当前 finish reviewer 最终结论为 `ship`，原三项问题已解决：记录继续对话的上下文、编辑失败的真实反馈、空待办清单的说明与入口。此结论针对当前适配和截图复核，不等于正式分发或全部原生能力验收。
 
@@ -16,7 +16,7 @@
 
 记录标题为 17，元信息为 13 / 21，摘要为 15 / 24；快记输入为 17 / 27。数值均为 RN 逻辑单位。正文使用 Paper 的平台阅读字体；品牌字标继续使用矢量轮廓，宽 112、高 30。
 
-当前页面大标题直接使用 Paper `headlineLarge`（32 / 40，并覆盖字重 600），章节用 `titleLarge`（22 / 28），分组用 `titleMedium`（16 / 24），记录详情标题用 `headlineSmall`（24 / 32）。这些是当前组件库实现事实；系统默认展示标题不提升为 Wearing 的品牌展示字体规则，根文档既有问候字体继续有效。
+当前页面大标题直接使用 Paper `headlineLarge`（32 / 40，并覆盖字重 600），章节用 `titleLarge`（22 / 28），分组用 `titleMedium`（16 / 24），记录详情标题用 `headlineSmall`（24 / 32）。这些是当前组件库实现事实；系统默认展示标题不提升为 Pajio 的品牌展示字体规则，根文档既有问候字体继续有效。
 
 ## Layout
 
@@ -41,7 +41,7 @@
 
 ### 快记与原件
 
-文字、拍一下、说一句和选图属于同一输入区域；笔记／待办／日程使用三段选择。日程显示开始和结束；原生分别调用系统日期与时间选择器，网页使用 `datetime-local` 字段。原件行显示名称、图片缩略图或麦克风图标，以及「原件已留在本机」。媒体存在时显示是否让 Wearing 整理原件的开关。
+文字、拍一下、说一句和选图属于同一输入区域；笔记／待办／日程使用三段选择。日程显示开始和结束；原生分别调用系统日期与时间选择器，网页使用 `datetime-local` 字段。原件行显示名称、图片缩略图或麦克风图标，以及「原件已留在本机」。媒体存在时显示是否让 Pajio 整理原件的开关。
 
 ### 本机队列与真实反馈
 
@@ -49,7 +49,7 @@
 
 ### 记录与对话
 
-记录标题可打开详情，下方保留时间或整理阶段，摘要最多两行。任务同时有勾选和完成划线。详情保留可编辑正文、原话与原件，以及继续对话入口。原生 WebView 加载现有 Wearing 对话；网页预览的入口显示「接着聊：」与当前记录标题。两个平台共用 `conversationLink`，传入当前身份和记录上下文，不重新建立手机专属 Agent 身份。
+记录标题可打开详情，下方保留时间或整理阶段，摘要最多两行。任务同时有勾选和完成划线。详情保留可编辑正文、原话与原件，以及继续对话入口。原生 WebView 加载现有 Pajio 对话；网页预览的入口显示「接着聊：」与当前记录标题。两个平台共用 `conversationLink`，传入当前身份和记录上下文，不重新建立手机专属 Agent 身份。
 
 ### Sidecar 样例
 

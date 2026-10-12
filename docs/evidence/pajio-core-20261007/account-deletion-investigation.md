@@ -38,7 +38,7 @@ App“日常/出海”等 `identity_id` 属于一个租户的工作身份，不�
 | IdentityExports | 实际可读数据包、有遗漏清单 | 不含所有原件/密钥/日志/备份，不是完整备份，也不证明删除覆盖 |
 | SearchBook/WorkspacePager | 当前搜索读同库、游标进程内 | 停worker可清当前游标；未来外置向量索引/对象存储必须纳入登记，不能默认为没有副本 |
 
-Postgres 当前 `wearing_web` 对 users/tenants/memberships/routes 没有 INSERT/UPDATE/DELETE，只有 sessions/oidc_states 的限定读写。复用这一边界，在新迁移中给 web **仅创建/读取自己的删除请求**，operator 消费作业。不能为了注销给 web 原有管理表写权限。迁移须同时更新 postgres 的表/版本/权限断言；SQLite 合成测试通过不能替代 Postgres RLS 测试。
+Postgres 当前 `pajio_web` 对 users/tenants/memberships/routes 没有 INSERT/UPDATE/DELETE，只有 sessions/oidc_states 的限定读写。复用这一边界，在新迁移中给 web **仅创建/读取自己的删除请求**，operator 消费作业。不能为了注销给 web 原有管理表写权限。迁移须同时更新 postgres 的表/版本/权限断言；SQLite 合成测试通过不能替代 Postgres RLS 测试。
 
 ## 最小可交付流程
 

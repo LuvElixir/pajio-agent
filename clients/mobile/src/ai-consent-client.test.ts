@@ -56,7 +56,7 @@ test('read is only the authenticated fixed-path GET, without bootstrap, body, co
   const client=new AIConsentClient(a,async(url,init)=>{calls.push({url:String(url),init});return Response.json(snapshot());});
   assert.equal((await client.read(signal())).accepted,false);assert.equal(calls.length,1);
   assert.equal(calls[0].url,PUBLIC_PAJIO_ENDPOINT+'api/ai-consent');assert.equal(calls[0].init?.method,'GET');assert.equal(calls[0].init?.body,undefined);
-  assert.deepEqual(calls[0].init?.headers,{Authorization:'Bearer '+a.session!.accessToken,'X-Pajio-Expected-Tenant':a.session!.tenantId,'X-Wearing-Identity':'daily'});
+  assert.deepEqual(calls[0].init?.headers,{Authorization:'Bearer '+a.session!.accessToken,'X-Pajio-Expected-Tenant':a.session!.tenantId,'X-Pajio-Identity':'daily'});
   assert.equal(calls[0].init?.credentials,'omit');assert.equal(calls[0].init?.redirect,'error');assert.equal(calls[0].init?.cache,'no-store');
   assert.equal(calls[0].url.includes(a.session!.accessToken!),false);
 });
@@ -67,7 +67,7 @@ test('explicit accept uses current bootstrap CSRF and one revision-bound POST wi
   const result=await client.change('accept',snapshot(),requestId,signal());assert.equal(result.accepted,true);
   assert.deepEqual(calls.map(c=>[new URL(c.url).pathname,c.init?.method]),[['/api/bootstrap','GET'],['/api/ai-consent','POST']]);
   assert.deepEqual(JSON.parse(String(calls[1].init?.body)),{action:'accept',policy_version:'2026-10-10',expected_revision:0,request_id:requestId});
-  assert.equal((calls[1].init?.headers as Record<string,string>)['X-Wearing-Token'],'synthetic-csrf');
+  assert.equal((calls[1].init?.headers as Record<string,string>)['X-Pajio-Token'],'synthetic-csrf');
   assert.equal(calls[1].init?.credentials,'omit');assert.equal(calls[1].init?.redirect,'error');
 });
 

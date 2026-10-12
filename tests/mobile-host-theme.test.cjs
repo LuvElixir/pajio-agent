@@ -2,7 +2,7 @@ const {test}=require('node:test');
 const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
-const css=fs.readFileSync('src/wearing/web/mobile-host.css','utf8');
+const css=fs.readFileSync('src/pajio/web/mobile-host.css','utf8');
 const canonical=JSON.parse(fs.readFileSync('design/brand/pajio/interaction-tokens.json','utf8'));
 function rules(text=css){return [...text.replace(/\/\*[\s\S]*?\*\//g,'').matchAll(/([^{}]+)\{([^{}]*)\}/g)].map(([,selector,body])=>({selector:selector.trim(),values:Object.fromEntries(body.split(';').filter(x=>x.includes(':')).map(x=>{const i=x.indexOf(':');return [x.slice(0,i).trim(),x.slice(i+1).trim()];}))}));}
 function declarations(selector,text=css){const matches=rules(text).filter(r=>r.selector===selector);assert.ok(matches.length,'selector exists: '+selector);return Object.assign({},...matches.map(r=>r.values));}
@@ -25,7 +25,7 @@ test('native theme bridge selects the mirrored scope without navigation, storage
   assert.equal(document.documentElement.dataset.appTheme,mode==='day'?'day':'night');
  }
  vm.runInNewContext(bridge('night'),{document:{documentElement:null}});
- const host=fs.readFileSync('src/wearing/web/mobile-host.js','utf8');
+ const host=fs.readFileSync('src/pajio/web/mobile-host.js','utf8');
  assert.match(host,/classList\.add\('mobile-host'\)/);assert.match(host,/classList\.add\('native-composer-host'\)/);
 });
 test('embedded focus remains independent from current search and checked choices',()=>{
@@ -44,7 +44,7 @@ function contrast(a,b){
  const values=[luminance(a),luminance(b)].sort((x,y)=>y-x);return (values[0]+.05)/(values[1]+.05);
 }
 test('embedded review tabs override the real light parent surface in night mode, including readable inactive text',()=>{
- const now=fs.readFileSync('src/wearing/web/now.css','utf8');
+ const now=fs.readFileSync('src/pajio/web/now.css','utf8');
  assert.equal(declarations('.review-switcher',now).background,'#f0f2f7','regression precondition: inherited parent is light');
  const container=declarations('html.mobile-host :is(.review-switcher,.life-calendar-views)');
  assert.equal(container.background,'var(--canvas)');
@@ -76,8 +76,8 @@ test('all added palette/control selectors are host scoped and preserve gesture/a
 });
 
 test('standalone Web and authentication aliases match the same canonical contract',()=>{
- const web=fs.readFileSync('src/wearing/web/pajio.css','utf8');
- const auth=fs.readFileSync('src/wearing/web/auth/auth.css','utf8').split('@media(prefers-color-scheme:dark)');
+ const web=fs.readFileSync('src/pajio/web/pajio.css','utf8');
+ const auth=fs.readFileSync('src/pajio/web/auth/auth.css','utf8').split('@media(prefers-color-scheme:dark)');
  const aliases={bg:'canvas',card:'surface',field:'surface',ink:'ink',muted:'muted',line:'line','focus-ring':'focusRing',button:'action','button-pressed':'actionPressed','button-ink':'onAction','selection-surface':'selectionSurface','selection-ink':'selectionInk','selection-border':'selectionBorder','selection-indicator':'selectionIndicator','pressed-surface':'pressedSurface','disabled-surface':'disabledSurface','disabled-ink':'disabledInk'};
  for(const [index,mode] of ['day','night'].entries()){
   const values=declarations('html:not(.mobile-host)'+(mode==='night'?'[data-app-theme="night"]':''),web);

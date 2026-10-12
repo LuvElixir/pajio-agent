@@ -4,7 +4,7 @@ App 文件夹使用新服务端分页接口。超过 200 份文件可以继续�
 
 ## 接口与语义
 
-- `install_workspace_page_routes(app, store, runtime_for)`：新独立模块 `src/wearing/workspace_api.py`，返回 `WorkspacePager`，在主 App 生命周期退出时 close。旧 `/api/workspace` 与 list_files 保留兼容。
+- `install_workspace_page_routes(app, store, runtime_for)`：新独立模块 `src/pajio/workspace_api.py`，返回 `WorkspacePager`，在主 App 生命周期退出时 close。旧 `/api/workspace` 与 list_files 保留兼容。
 - `GET /api/workspace/page?directory=&query=&cursor=&limit=200`：每页最多 200 份文件。返回 `files,truncated,complete,scan_id,page_cursor,next_cursor,directory,query,scanned,phase`。`phase=checking/scanning` 都不代表搜索完毕。
 - `GET /api/workspace/metadata?path=…`：直接读取选定路径的元数据，不再从前 200 项中寻找文件。后续预览/打开原件维持认证读取。
 - 搜索仅比较文件名，大小写不敏感并兼容 NFC/NFD Unicode 名称，不读取文件内容。原有“按内容查找”入口明确交给 Agent 阅读。

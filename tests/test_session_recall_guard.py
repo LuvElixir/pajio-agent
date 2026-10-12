@@ -6,9 +6,9 @@ import textwrap
 
 import pytest
 
-from wearing.service import ACTIVE
-from wearing.session_recall_guard import RecallConfig, RecallGuard
-from wearing.store import Store
+from pajio.service import ACTIVE
+from pajio.session_recall_guard import RecallConfig, RecallGuard
+from pajio.store import Store
 
 
 A, B = 'a' * 64, 'b' * 64
@@ -23,7 +23,7 @@ def admit(store, request, owner, *, run=None, identity='daily'):
 
 @pytest.fixture
 def case(tmp_path):
-    store = Store(tmp_path / 'wearing.sqlite3')
+    store = Store(tmp_path / 'pajio.sqlite3')
     old = admit(store, 'old-a', A)
     with store.connection() as db:
         db.execute('UPDATE owner_conversations SET session_id=? WHERE owner_scope=?', ('current-a', A))
@@ -151,7 +151,7 @@ def test_standalone_server_minted_session_is_allowed(case):
 
 
 def test_host_paths_and_missing_ledger_fail_closed(tmp_path):
-    from wearing.session_recall_guard import install_session_recall_guard, RecallDenied
+    from pajio.session_recall_guard import install_session_recall_guard, RecallDenied
     with pytest.raises(RecallDenied):
         install_session_recall_guard(RecallConfig(tmp_path, 'daily'))
     with pytest.raises(ValueError):
@@ -199,18 +199,18 @@ def test_bounds_and_literal_cjk_fallback(case):
 
 def test_pinned_inline_and_registry_share_enforced_boundary(tmp_path):
     root = Path(__file__).parents[1]
-    marker = root / '.wearing/runtime/installed.json'
+    marker = root / '.pajio/runtime/installed.json'
     if not marker.exists(): pytest.skip('Pinned runtime unavailable')
     meta = json.loads(marker.read_text())
-    source = root / '.wearing/runtime' / ('hermes-agent-' + meta['revision'])
+    source = root / '.pajio/runtime' / ('hermes-agent-' + meta['revision'])
     code = r'''
 import os,sys,json
 from pathlib import Path
 from types import SimpleNamespace
 home=Path(sys.argv[3]);os.environ['HERMES_HOME']=str(home/'hermes')
 sys.path.insert(0,sys.argv[1]);sys.path.insert(1,sys.argv[2]);sys.path.insert(2,sys.argv[4])
-from wearing.store import Store
-from wearing.session_recall_guard import RecallConfig,install_session_recall_guard
+from pajio.store import Store
+from pajio.session_recall_guard import RecallConfig,install_session_recall_guard
 from hermes_state import SessionDB
 from tools.approval_context import set_current_session_key,reset_current_session_key
 from agent.inline_tool_executors import INLINE_TOOL_EXECUTORS
@@ -222,7 +222,7 @@ def admit(store,request,owner,run=None):
  assert store.reserve_start(task['id'],{'session_id':task['session_id']},request,ACTIVE)
  store.update(task['id'],status='completed',run_id=run or request)
  return store.get(task['id'])
-store=Store(home/'wearing.sqlite3')
+store=Store(home/'pajio.sqlite3')
 old=admit(store,'old',A)
 with store.connection() as d:d.execute('UPDATE owner_conversations SET session_id=? WHERE owner_scope=?',('current-a',A))
 foreign=admit(store,'foreign',B)

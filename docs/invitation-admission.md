@@ -6,10 +6,10 @@ An invitation admits an authenticated OIDC subject to one new personal space. It
 
 The operator must first provision and verify a **new isolated tenant instance**, using the existing capacity and ownership workflow. Invitations do not create VMs or prove service readiness. Never assign a new person to the existing acceptance A/B spaces.
 
-1. `wearing gateway invite reserve --root <gateway-root> --tenant-id <new-tenant>` creates only an empty control record. Existing or inactive membership and ownership records reject reservation.
-2. `wearing gateway route --root <gateway-root> --tenant-root <new-private-instance> --url <verified-internal-url>` uses the existing immutable route and private credential flow.
-3. `wearing gateway invite issue --root <gateway-root> --tenant-id <new-tenant> --output <private-directory/invite.json> --expires-in 604800` saves the code in a new mode-0600 file inside an owner-only directory before committing its hash to the database. Standard output contains only an issuance receipt. The same command and output path reconcile the same issuance after a failed/unknown database response; they never generate a replacement code. The expiry range is 60 seconds to 30 days.
-4. `wearing gateway invite status --root <gateway-root> --invitation-id <receipt-id>` checks issuance. `... revoke ...` permanently disables further use. Revoking a consumed invitation does not silently remove its user's existing membership; use the separate explicit member revocation flow.
+1. `pajio gateway invite reserve --root <gateway-root> --tenant-id <new-tenant>` creates only an empty control record. Existing or inactive membership and ownership records reject reservation.
+2. `pajio gateway route --root <gateway-root> --tenant-root <new-private-instance> --url <verified-internal-url>` uses the existing immutable route and private credential flow.
+3. `pajio gateway invite issue --root <gateway-root> --tenant-id <new-tenant> --output <private-directory/invite.json> --expires-in 604800` saves the code in a new mode-0600 file inside an owner-only directory before committing its hash to the database. Standard output contains only an issuance receipt. The same command and output path reconcile the same issuance after a failed/unknown database response; they never generate a replacement code. The expiry range is 60 seconds to 30 days.
+4. `pajio gateway invite status --root <gateway-root> --invitation-id <receipt-id>` checks issuance. `... revoke ...` permanently disables further use. Revoking a consumed invitation does not silently remove its user's existing membership; use the separate explicit member revocation flow.
 
 A tenant has at most one retained invitation. Expired/revoked registrations are not automatically reset or reassigned. A membership/route change after checking a code invalidates admission; no fallback assigns an existing space.
 
@@ -28,7 +28,7 @@ Redemption atomically writes the new user (when necessary), active membership, v
 
 The identity provider's global self-registration stays disabled. A separate broker may create a new identity only after invitation validation; it must not hold general realm administration authority in the gateway process.
 
-Construct its database store with `ControlStore(registration_database_url, registration=True)`. This login has only the `wearing_registration` NOLOGIN privilege group. It must not inherit `wearing_web`, `wearing_operator` or the migration owner. `InvitationStore` provides these broker-only operations:
+Construct its database store with `ControlStore(registration_database_url, registration=True)`. This login has only the `pajio_registration` NOLOGIN privilege group. It must not inherit `pajio_web`, `pajio_operator` or the migration owner. `InvitationStore` provides these broker-only operations:
 
 - `reserve_registration(hash, issuer=..., registration_id=<uuid hex>, username_hash=<SHA256 of broker-canonical username>)` atomically fixes the intent and username hash. A retry for the same username returns the **original** registration ID, even if the caller proposes a different ID. A different username fails closed while an intent is reserved.
 - `get_registration(hash, issuer=...)` returns the current fixed `{registration_id, username_hash, subject, expires_at}`.
@@ -39,7 +39,7 @@ Before any IdP create call, the broker durably records the fixed intent. After a
 
 ## PostgreSQL migration and boundary
 
-Apply `deploy/control/postgres-roles.sql` with the existing DBA procedure to add the non-login `wearing_registration` and `wearing_cleanup` groups, then run the independent migration owner through `wearing gateway database upgrade`. Revision `wearing_control_0003` adds the invitation table, six fixed invitation `SECURITY DEFINER` functions and one fixed expired-state cleanup function, with a fixed `pg_catalog,wearing_control` search path. The migration is transactional and repeatable, and preserves existing users, memberships and sessions. It has no destructive automatic downgrade.
+Apply `deploy/control/postgres-roles.sql` with the existing DBA procedure to add the non-login `pajio_registration` and `pajio_cleanup` groups, then run the independent migration owner through `pajio gateway database upgrade`. Revision `pajio_control_0003` adds the invitation table, six fixed invitation `SECURITY DEFINER` functions and one fixed expired-state cleanup function, with a fixed `pg_catalog,pajio_control` search path. The migration is transactional and repeatable, and preserves existing users, memberships and sessions. It has no destructive automatic downgrade.
 
 The web role still cannot directly insert or update membership, route, ownership or invitation rows. The registration role has no platform-table read/write access and cannot create login sessions or redeem an invitation. PostgreSQL startup checks function bodies, owner, grants, search path and owner-only RLS policies. `PUBLIC` has no execution grant. The migration owner remains separate from all runtime roles. Shared transaction locking orders invitation redemption with operator membership changes and deletion admission.
 
@@ -51,7 +51,7 @@ SQLite is a development-only equivalent with `BEGIN IMMEDIATE` and explicit appl
 
 Passwords are validated as 12–128 Unicode code points; C0/C1 controls, DEL and lone surrogate code points are rejected. Oversized request bodies retain their 413 response. The journal is fsynced before creation and stores only a keyed request fingerprint and immutable intent/subject metadata. After an unknown outcome, retries inspect the original IdP intent. A reservation whose local receipt is absent also inspects only: missing local evidence cannot justify another create request.
 
-`pajio-expired-states.timer` invokes a separate maintenance OS/database identity every ten minutes. That login belongs only to `wearing_cleanup` and has no platform-table or invitation-function access. It can execute only `delete_expired_states()`, which accepts no arguments, uses the database timestamp and removes at most 5,000 expired OIDC-state rows per call. The expiry index bounds scanning; locked rows are skipped. Unexpired form/OIDC state, sessions, invitations and all identity accounts remain outside this cleanup operation. The web role's existing scoped DELETE/INSERT grants are unchanged.
+`pajio-expired-states.timer` invokes a separate maintenance OS/database identity every ten minutes. That login belongs only to `pajio_cleanup` and has no platform-table or invitation-function access. It can execute only `delete_expired_states()`, which accepts no arguments, uses the database timestamp and removes at most 5,000 expired OIDC-state rows per call. The expiry index bounds scanning; locked rows are skipped. Unexpired form/OIDC state, sessions, invitations and all identity accounts remain outside this cleanup operation. The web role's existing scoped DELETE/INSERT grants are unchanged.
 
 Before migration, a source rollback may return to 0002. After migration, an old `ControlStore`/PostgreSQL boundary cannot run against 0003. Recovery must retain the 0003-compatible metadata layer or use a separately reviewed database snapshot restore with ingress closed and all subsequent admissions accounted for; no automated downgrade discards receipts.
 

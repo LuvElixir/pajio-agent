@@ -12,7 +12,7 @@ import secrets
 import stat
 import subprocess
 
-from wearing.device_files_io import InboxOutbox, directory_fd
+from pajio.device_files_io import InboxOutbox, directory_fd
 
 
 METADATA_LIMIT = 131072
@@ -135,7 +135,7 @@ User=root
 Group=pajio-phone
 RuntimeDirectory=pajio-device-files
 RuntimeDirectoryMode=0750
-ExecStart=/opt/pajio-native/venv/bin/python -I -m wearing.device_files_broker
+ExecStart=/opt/pajio-native/venv/bin/python -I -m pajio.device_files_broker
 Restart=on-failure
 RestartSec=3
 UMask=0077

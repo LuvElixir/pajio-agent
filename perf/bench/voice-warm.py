@@ -2,7 +2,7 @@
 
 Use synthetic/public fixture audio only: the output includes its transcript.
 Example from repo root:
-.venv/bin/python perf/bench/voice-warm.py --audio /tmp/wearing-voice-bench/sample.aiff --output perf/bench/voice-warm-20261007.json
+.venv/bin/python perf/bench/voice-warm.py --audio /tmp/pajio-voice-bench/sample.aiff --output perf/bench/voice-warm-20261007.json
 """
 import argparse
 import asyncio
@@ -17,10 +17,10 @@ import sys
 import tempfile
 from time import perf_counter
 
-from wearing.capture import CaptureBook
-from wearing.capture_worker import CaptureWorker
-from wearing.life import LifeBook
-from wearing.store import Store
+from pajio.capture import CaptureBook
+from pajio.capture_worker import CaptureWorker
+from pajio.life import LifeBook
+from pajio.store import Store
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -40,16 +40,16 @@ def distribution(values):
 async def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--audio',type=Path,required=True)
-    parser.add_argument('--model',type=Path,default=ROOT/'.wearing/runtime/capture-models/small')
+    parser.add_argument('--model',type=Path,default=ROOT/'.pajio/runtime/capture-models/small')
     parser.add_argument('--pairs',type=int,default=10)
     parser.add_argument('--output',type=Path,required=True)
     args=parser.parse_args()
     if args.pairs<10:parser.error('Use at least 10 pairs.')
     audio,model=args.audio.resolve(),args.model.resolve()
     baseline=Path(__file__).with_name('voice-cold-baseline.py')
-    revised=ROOT/'src/wearing/capture_stt.py'
-    with tempfile.TemporaryDirectory(prefix='wearing-voice-bench-') as directory:
-        worker=CaptureWorker(CaptureBook(LifeBook(Store(Path(directory)/'wearing.sqlite3'))))
+    revised=ROOT/'src/pajio/capture_stt.py'
+    with tempfile.TemporaryDirectory(prefix='pajio-voice-bench-') as directory:
+        worker=CaptureWorker(CaptureBook(LifeBook(Store(Path(directory)/'pajio.sqlite3'))))
         async def measure(kind):
             start=perf_counter()
             if kind=='warm':
@@ -82,8 +82,8 @@ async def main():
             'fixture_script':'明天下午三点提醒我拿快递，周末想找一个人少一点的地方走走，预算五百块。',
             'hardware':{'machine':platform.machine(),'system':platform.platform()},
             'packages':{n:importlib.metadata.version(n) for n in ('faster-whisper','ctranslate2','av')},
-            'model_manifest_sha256':digest(model/'wearing-model.json'),
-            'sources':{str(p.relative_to(ROOT)):digest(p) for p in (baseline,revised,ROOT/'src/wearing/capture_worker.py')},
+            'model_manifest_sha256':digest(model/'pajio-model.json'),
+            'sources':{str(p.relative_to(ROOT)):digest(p) for p in (baseline,revised,ROOT/'src/pajio/capture_worker.py')},
             'method':'10 sequential pairs, alternating order. First warm-worker request reported separately; p95 is nearest-rank. Same local small/int8, 4 threads, beam=5, VAD and prompt. No remote provider, no accuracy claim.',
             'first_warm_worker_request':first_request,'cold':cold,'warm':warm,
             'p50_reduction_percent':round((1-warm['p50_seconds']/cold['p50_seconds'])*100,1),

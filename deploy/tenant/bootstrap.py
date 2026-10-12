@@ -39,18 +39,18 @@ def main():
         raise RuntimeError("Invalid fixed deployment identity")
     if hashlib.sha256(args.wheel.read_bytes()).hexdigest() != context["wheel_sha256"]:
         raise RuntimeError("Release checksum mismatch")
-    state = Path("/etc/wearing/trial-context.json")
+    state = Path("/etc/pajio/trial-context.json")
     if state.exists():
         if json.loads(state.read_text()) != context:
             raise RuntimeError("Existing VM belongs to a different deployment")
-        if Path("/var/lib/wearing/instance/instance.json").exists():
+        if Path("/var/lib/pajio/instance/instance.json").exists():
             raise RuntimeError("Already provisioned: inspect service/data, do not replay bootstrap")
     else:
-        if Path("/opt/wearing/venv").exists() or Path("/var/lib/wearing").exists():
+        if Path("/opt/pajio/venv").exists() or Path("/var/lib/pajio").exists():
             raise RuntimeError("Refusing to adopt an unrelated existing installation")
         state.parent.mkdir(mode=0o700, exist_ok=True)
         state.write_text(json.dumps(context, indent=2)); state.chmod(0o600)
-    status = Path("/etc/wearing/bootstrap-status.json")
+    status = Path("/etc/pajio/bootstrap-status.json")
     def phase(name, **fields):
         status.write_text(json.dumps({"phase": name, **fields}, indent=2)); status.chmod(0o600)
     phase("validating_data_volume")
@@ -64,52 +64,52 @@ def main():
     probe = subprocess.run(["blkid", "-p", device], capture_output=True, text=True)
     if probe.returncode != 2 or probe.stdout.strip():
         raise RuntimeError("Refusing to format an existing or ambiguous filesystem")
-    run("mkfs.ext4", "-q", "-m", "0", "-L", "wearing" + context["deployment_id"][:8], device)
+    run("mkfs.ext4", "-q", "-m", "0", "-L", "pajio" + context["deployment_id"][:8], device)
     fsuuid = run("blkid", "-s", "UUID", "-o", "value", device)
-    home = Path("/var/lib/wearing"); home.mkdir(mode=0o700)
+    home = Path("/var/lib/pajio"); home.mkdir(mode=0o700)
     fstab = Path("/etc/fstab")
-    if any("/var/lib/wearing" in line and not line.lstrip().startswith("#") for line in fstab.read_text().splitlines()):
+    if any("/var/lib/pajio" in line and not line.lstrip().startswith("#") for line in fstab.read_text().splitlines()):
         raise RuntimeError("Existing mount configuration must be inspected")
     with fstab.open("a") as stream:
-        stream.write("\nUUID=" + fsuuid + " /var/lib/wearing ext4 defaults,nodev,nosuid 0 2\n")
-    run("mount", "/var/lib/wearing")
+        stream.write("\nUUID=" + fsuuid + " /var/lib/pajio ext4 defaults,nodev,nosuid 0 2\n")
+    run("mount", "/var/lib/pajio")
     if run("findmnt", "-n", "-o", "UUID", "--target", str(home)) != fsuuid:
         raise RuntimeError("Mounted volume does not match data filesystem")
-    phase("installing_wearing", data_volume_mounted=True)
+    phase("installing_pajio", data_volume_mounted=True)
     os.environ["DEBIAN_FRONTEND"] = "noninteractive"
     run("apt-get", "update", "-qq")
     run("apt-get", "install", "-y", "-qq", "python3-venv", "ca-certificates", "curl", "git")
-    try: user = pwd.getpwnam("wearing")
+    try: user = pwd.getpwnam("pajio")
     except KeyError:
-        run("useradd", "--system", "--home-dir", str(home), "--shell", "/usr/sbin/nologin", "wearing")
-        user = pwd.getpwnam("wearing")
+        run("useradd", "--system", "--home-dir", str(home), "--shell", "/usr/sbin/nologin", "pajio")
+        user = pwd.getpwnam("pajio")
     if user.pw_dir != str(home): raise RuntimeError("Existing service user has an unrelated home")
     os.chown(home, user.pw_uid, user.pw_gid); home.chmod(0o700)
-    run("python3", "-m", "venv", "/opt/wearing/venv")
-    python = "/opt/wearing/venv/bin/python"
+    run("python3", "-m", "venv", "/opt/pajio/venv")
+    python = "/opt/pajio/venv/bin/python"
     run(python, "-m", "pip", "install", "--disable-pip-version-check", str(args.wheel.resolve()))
     # Bootstrap runs with umask 077. Code remains root-owned, but the service
     # group needs to traverse/read the venv and execute its entry points.
-    run("chgrp", "-R", "wearing", "/opt/wearing/venv")
-    run("chmod", "-R", "g+rX", "/opt/wearing/venv")
-    cli = "/opt/wearing/venv/bin/wearing"
-    run("runuser", "-u", "wearing", "--", cli, "tenant", "init", "--root", str(home / "instance"),
+    run("chgrp", "-R", "pajio", "/opt/pajio/venv")
+    run("chmod", "-R", "g+rX", "/opt/pajio/venv")
+    cli = "/opt/pajio/venv/bin/pajio"
+    run("runuser", "-u", "pajio", "--", cli, "tenant", "init", "--root", str(home / "instance"),
         "--tenant-id", context["tenant_id"], "--origin", context["origin"])
-    shutil.copyfile(args.service, "/etc/systemd/system/wearing-tenant.service")
+    shutil.copyfile(args.service, "/etc/systemd/system/pajio-tenant.service")
     run("systemctl", "daemon-reload")
-    run("systemctl", "enable", "--now", "wearing-tenant.service")
-    phase("installing_hermes", data_volume_mounted=True, wearing_service_active=True)
-    run("runuser", "-u", "wearing", "--", cli, "engine", "install", "--data-dir", str(home / "instance/data"))
-    phase("installing_file_tools", data_volume_mounted=True, wearing_service_active=True)
-    run("runuser", "-u", "wearing", "--", python, "-c",
-        "import asyncio; from pathlib import Path; from wearing.runtime import HermesRuntime; "
-        "r=HermesRuntime(Path('/var/lib/wearing/instance/data'),local_devices=False); "
+    run("systemctl", "enable", "--now", "pajio-tenant.service")
+    phase("installing_hermes", data_volume_mounted=True, pajio_service_active=True)
+    run("runuser", "-u", "pajio", "--", cli, "engine", "install", "--data-dir", str(home / "instance/data"))
+    phase("installing_file_tools", data_volume_mounted=True, pajio_service_active=True)
+    run("runuser", "-u", "pajio", "--", python, "-c",
+        "import asyncio; from pathlib import Path; from pajio.runtime import HermesRuntime; "
+        "r=HermesRuntime(Path('/var/lib/pajio/instance/data'),local_devices=False); "
         "asyncio.run(r.install_filesystem()); assert r.files_phase=='ready',r.files_error")
-    run("systemctl", "restart", "wearing-tenant.service")
-    phase("installed_needs_model", data_volume_mounted=True, wearing_service_active=True,
+    run("systemctl", "restart", "pajio-tenant.service")
+    phase("installed_needs_model", data_volume_mounted=True, pajio_service_active=True,
           model_credentials_copied=False, hardware_isolation_verified=False)
     print(json.dumps({"phase": "installed_needs_model", "data_volume_mounted": True,
-                      "wearing_service_active": run("systemctl", "is-active", "wearing-tenant.service") == "active"}))
+                      "pajio_service_active": run("systemctl", "is-active", "pajio-tenant.service") == "active"}))
 
 
 if __name__ == "__main__":
@@ -118,7 +118,7 @@ if __name__ == "__main__":
         # Detailed diagnostic stays in a root-owned log. No automatic formatting
         # retries or cleanup after a partial failure; inspect the recorded stage.
         import traceback
-        Path('/etc/wearing').mkdir(mode=0o700, exist_ok=True)
-        with Path("/etc/wearing/bootstrap-error.log").open("a") as log: traceback.print_exc(file=log)
-        Path("/etc/wearing/bootstrap-error.log").chmod(0o600)
+        Path('/etc/pajio').mkdir(mode=0o700, exist_ok=True)
+        with Path("/etc/pajio/bootstrap-error.log").open("a") as log: traceback.print_exc(file=log)
+        Path("/etc/pajio/bootstrap-error.log").chmod(0o600)
         raise SystemExit("Bootstrap stopped. Inspect private status/error; do not rerun formatting.")

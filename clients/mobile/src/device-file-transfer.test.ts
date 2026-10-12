@@ -82,8 +82,8 @@ test('snapshot and transfer use authenticated fixed routes, never browser downlo
   ]);
   assert.deepEqual(f.calls[1].body, {path: 'documents/合成.pdf'});
   assert.deepEqual(f.calls[2].body, request);
-  assert.equal(f.calls[2].headers.get('X-Wearing-Token'), 'synthetic-csrf');
-  for (const call of f.calls) {assert.equal(call.headers.get('Authorization'), 'Bearer ' + 'a'.repeat(64)); assert.equal(call.headers.get('X-Wearing-Identity'), 'daily'); assert.equal(call.url.search, '');}
+  assert.equal(f.calls[2].headers.get('X-Pajio-Token'), 'synthetic-csrf');
+  for (const call of f.calls) {assert.equal(call.headers.get('Authorization'), 'Bearer ' + 'a'.repeat(64)); assert.equal(call.headers.get('X-Pajio-Identity'), 'daily'); assert.equal(call.url.search, '');}
 });
 
 test('caller session changes during bootstrap cannot switch the mutation to a different account', async () => {

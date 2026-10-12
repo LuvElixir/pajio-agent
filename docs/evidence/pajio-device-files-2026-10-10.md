@@ -11,10 +11,10 @@ A/B 两个独立测试账户的 Linux 电脑与 Android 云手机已接通工作
 | 关键文件 | 已部署/使用 SHA-256 |
 |---|---|
 | `deploy/on-prem/install-device-files.py` | `bd816c3def37b98ac89e0c93aa674a0cd14fa1e55f9074c47f6e74d1c9b8fa98` |
-| `src/wearing/cloud/device_files.py` | `63f9cfb6a0cb4f2fcf8b25e81ca209370005f6075d4154af3cf8792fabd93f63` |
-| `src/wearing/device_files_io.py` | `c4fe86e1d34c52138528ed6eee979ebb55e96b767922809a806802b8e0ba4ff8` |
-| `src/wearing/device_files_native.py` | `2a9f6c94fefa56f843d154566bffdae5f1c130d93736c1f51a886e01741fd7ee` |
-| `src/wearing/device_files_broker.py` | `3857525823179485883422bd35fe1987a5c69db9bcc59dcd316bdea7bcdc6ac0` |
+| `src/pajio/cloud/device_files.py` | `63f9cfb6a0cb4f2fcf8b25e81ca209370005f6075d4154af3cf8792fabd93f63` |
+| `src/pajio/device_files_io.py` | `c4fe86e1d34c52138528ed6eee979ebb55e96b767922809a806802b8e0ba4ff8` |
+| `src/pajio/device_files_native.py` | `2a9f6c94fefa56f843d154566bffdae5f1c130d93736c1f51a886e01741fd7ee` |
+| `src/pajio/device_files_broker.py` | `3857525823179485883422bd35fe1987a5c69db9bcc59dcd316bdea7bcdc6ac0` |
 
 installer v2 使用自含的受限元数据读写函数，支持没有 enrollment 模块的历史纳管设备。它校验真实本地配对范围后安装固定 Inbox/Outbox；安装回执明确 `relay_permission_granted=false`，文件授权仍需独立核对，不能把安装成功当作权限已经开放。
 
@@ -86,7 +86,7 @@ A/B 均记录 5 次 502，集中在 Core/relay 与公共 gateway 激活时段，
 
 ## 证据索引
 
-私有根目录：`.wearing/on-prem/20261009/personal-compute/device-files-20261010/`。可提交文档只引用文件名与摘要，不复制私有会话、owner 资料、mutation journal 或样本内容。
+私有根目录：`.pajio/on-prem/20261009/personal-compute/device-files-20261010/`。可提交文档只引用文件名与摘要，不复制私有会话、owner 资料、mutation journal 或样本内容。
 
 - `source-manifest-v2.json`：角色清单、installer v2 及回归记录。
 - `*-deploy.json`、`*-attempt2-{inspect,deploy}.json`：原像、备份位置、激活/回滚与源码摘要。

@@ -5,7 +5,7 @@ set -euo pipefail
 source /etc/os-release
 [[ ${ID:-} == ubuntu && ${VERSION_ID:-} == 24.04 ]] || { echo 'Ubuntu 24.04 required.' >&2; exit 1; }
 systemd-detect-virt --vm --quiet || { echo 'A dedicated execution VM is required.' >&2; exit 1; }
-if [[ -d /etc/pve || -d /var/lib/wearing/instance ]]; then
+if [[ -d /etc/pve || -d /var/lib/pajio/instance ]]; then
     echo 'Refusing to install a desktop on a hypervisor or Agent core VM.' >&2
     exit 1
 fi

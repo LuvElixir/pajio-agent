@@ -4,9 +4,9 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const tokens = JSON.parse(fs.readFileSync('design/brand/pajio/interaction-tokens.json', 'utf8'));
 const read = p => fs.readFileSync(p, 'utf8');
-const css = read('src/wearing/web/pajio.css');
+const css = read('src/pajio/web/pajio.css');
 const desktop = read('clients/desktop/frontend/connection.css');
-const views = read('src/wearing/web/views.js');
+const views = read('src/pajio/web/views.js');
 const names = {canvas:'page',selectionSurface:'selection-surface',selectionInk:'selection-ink',selectionBorder:'selection-border',selectionIndicator:'selection-indicator',focusRing:'focus-ring',pressedSurface:'pressed-surface',disabledSurface:'disabled-surface',disabledInk:'disabled-ink'};
 for (const theme of ['day','night']) test(`${theme} Web and desktop tokens match canonical contract`,()=> {
   for (const [key,value] of Object.entries(tokens[theme])) {

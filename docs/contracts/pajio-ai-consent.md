@@ -73,7 +73,7 @@ Existing authentication failures can return 401/403 before this handler. No acto
 
 Hosted `HermesRuntime` enables the guard independently of trial pricing. Authority is captured before editable provider dotenv is read. Both synchronous and asynchronous OpenAI-compatible dispatches reread the ledger, including auxiliary and child-agent clients. Only DeepSeek's exact HTTPS origin is supported. Existing redirect, unsupported transport, retry, and provider-fallback restrictions remain. A no-content DeepSeek models-list GET is the only SDK metadata exception; arbitrary GET bodies/queries cannot bypass consent. A completed withdrawal during a waiting usage reservation is rechecked before dispatch; that known unsent attempt records zero tokens rather than a fabricated provider receipt.
 
-The Core task gate also verifies the stored task principal and the engine's `wearing.ai_consent_guard == "deepseek-v1"` capability before sending a task to Hermes. This prevents a newly protected Core from dispatching work through an old, unprotected engine. Capture organization stores the verified owner separately and uses the same protected managed interpreter. Existing ownerless organization jobs stop with originals retained.
+The Core task gate also verifies the stored task principal and the engine's `pajio.ai_consent_guard == "deepseek-v1"` capability before sending a task to Hermes. This prevents a newly protected Core from dispatching work through an old, unprotected engine. Capture organization stores the verified owner separately and uses the same protected managed interpreter. Existing ownerless organization jobs stop with originals retained.
 
 | Trigger | Enforcement |
 | --- | --- |

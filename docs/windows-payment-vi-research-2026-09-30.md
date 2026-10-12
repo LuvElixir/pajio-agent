@@ -8,7 +8,7 @@
 
 - 云电脑候选 VPS Mart Basic：4 核、8 GB，按月付 18.99 美元。采用该连接路线时，需先检验持续桌面会话与 Agent 驱动。
 - 支付优先核实 UPay Premier 446614。已找到具体卡种、费用与申请流程，仍需确认大陆常住地址和真实证件适用性。
-- 当前产品名称已确定为 Wearing，视觉已选第 1 个钴蓝卷袖角色；小标志继续简化。工程路线以[落地总方案](implementation-blueprint.md)为准。
+- 当前产品名称已确定为 Pajio，视觉已选第 1 个钴蓝卷袖角色；小标志继续简化。工程路线以[落地总方案](implementation-blueprint.md)为准。
 
 ## Windows 的真实月付成本
 
@@ -70,4 +70,4 @@ Infini 资料：[KYC/KYB 限制列表](https://help.infini.money/en/articles/162
 
 ## 产品定义当前状态
 
-核心关系已明确：属于用户的行动者，同时也是用户向外延伸的另一个自己。需求、产品结构与推进建议见[产品定义](product-definition.md)。产品名称为 Wearing，视觉已选第 1 个钴蓝卷袖角色；详见[VI 工作区](../design/vi/README.md)和[落地总方案](implementation-blueprint.md)。
+核心关系已明确：属于用户的行动者，同时也是用户向外延伸的另一个自己。需求、产品结构与推进建议见[产品定义](product-definition.md)。产品名称为 Pajio，视觉已选第 1 个钴蓝卷袖角色；详见[VI 工作区](../design/vi/README.md)和[落地总方案](implementation-blueprint.md)。

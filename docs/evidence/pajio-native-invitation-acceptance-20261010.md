@@ -22,7 +22,7 @@ device access. Those require the capacity-backed invitation and live activation
 acceptance.
 
 The private source manifest is in
-`.wearing/on-prem/20261009/native-provisioning-20261010/source-manifest.json`,
+`.pajio/on-prem/20261009/native-provisioning-20261010/source-manifest.json`,
 SHA-256 `fe4c47f645dc3f4257e4191d288cff701fc5a1ac49c92ca1b828062e1dab8c29`.
 The twelve runtime source files were verified against the staged native build.
 
@@ -34,7 +34,7 @@ Its embedded distribution profile has `get-task-allow=false`,
 `beta-reports-active=true`, and no registered-device list or enterprise grant.
 
 The first upload attempt stopped before transfer because App Store Connect had
-no app record for `io.luckyloading.wearing.mobile`. After the owner signed in,
+no app record for `io.luckyloading.pajio.mobile`. After the owner signed in,
 the Pajio iOS record was created (Apple ID `6821325213`, SKU `pajio-ios`).
 A second upload completed at 19:33:54 Asia/Shanghai with `Upload succeeded`
 and `EXPORT SUCCEEDED`; Apple acknowledged that the package was processing.
@@ -79,7 +79,7 @@ Pajio 0.2.0 build 2 passed `codesign --verify --deep --strict`. Its physical-dev
 installation and launch both succeeded, and Device Hub showed the updated native
 invitation welcome screen on the owner's connected iPhone. Private receipts are
 `build-result.json`, `device-install-v2-result.json`, and `device-launch-result.json`
-under `.wearing/on-prem/20261009/native-personal-beta2-20261010/`.
+under `.pajio/on-prem/20261009/native-personal-beta2-20261010/`.
 
 This checkpoint does not extend the earlier build 1 TestFlight receipt to build 2.
 Real invitation redemption, account creation, a confirmed three-environment

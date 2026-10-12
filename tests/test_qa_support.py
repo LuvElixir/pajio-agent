@@ -30,7 +30,7 @@ async def test_diagnostics_and_search_use_real_scoped_routes_without_external_ca
     assert {item['kind'] for item in search.json()['items']} == {'record','message'}
     message = await client.get('/api/search/messages/' + str(manifest['search']['message_id']))
     assert message.status_code == 200 and message.json()['task_id'] == manifest['search']['task_id']
-    assert (await client.get('/api/search?q=搜索验收', headers={'X-Wearing-Identity':'daily'})).status_code == 404
+    assert (await client.get('/api/search?q=搜索验收', headers={'X-Pajio-Identity':'daily'})).status_code == 404
     foreign = app.state.search.page('daily', '搜索验收')
     assert len(foreign['items']) == 1 and foreign['items'][0]['id'] == manifest['search']['foreign_record_id']
 
@@ -43,7 +43,7 @@ async def rig(tmp_path, monkeypatch):
     app, manifest = qa.build_app(root)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
         token = (await client.get('/api/bootstrap')).json()['token']
-        client.headers.update({'X-Wearing-Token': token, 'X-Wearing-Identity': 'qa'})
+        client.headers.update({'X-Pajio-Token': token, 'X-Pajio-Identity': 'qa'})
         yield app, client, root, manifest
     await app.state.qa_support.close()
 
@@ -78,7 +78,7 @@ async def test_bookmarks_are_mounted_and_share_the_real_record_lifecycle(rig):
     assert removed.status_code == 200
     assert (await client.get('/api/bookmarks')).json()['items'] == []
     assert (await client.get('/api/bookmarks?archived=true')).json()['items'][0]['id'] == record['id']
-    assert (await client.get('/api/bookmarks', headers={'X-Wearing-Identity': 'daily'})).status_code == 404
+    assert (await client.get('/api/bookmarks', headers={'X-Pajio-Identity': 'daily'})).status_code == 404
 
 
 async def test_conversation_source_mount_never_adopts_unproven_old_fixture_tasks(rig):
@@ -92,7 +92,7 @@ async def test_conversation_source_mount_never_adopts_unproven_old_fixture_tasks
         'source_id': 'source_' + 'a' * 64, 'source_revision': 'b' * 64,
         'revision': 0, 'request_key': 'qa-source-forged-owner', 'owner_scope': 'local'})
     assert invalid.status_code == 422
-    assert (await client.get('/api/conversation-sources', headers={'X-Wearing-Identity': 'daily'})).status_code == 404
+    assert (await client.get('/api/conversation-sources', headers={'X-Pajio-Identity': 'daily'})).status_code == 404
 
 async def test_memory_controls_revision_add_replace_remove_and_restart_persistence(rig):
     app, client, root, _ = rig
@@ -200,10 +200,10 @@ async def test_push_mock_real_registration_event_ticket_receipt_disable(rig):
 
 async def test_every_new_route_keeps_fixture_identity_csrf_and_no_secret_audit(rig):
     _, client, root, _ = rig
-    assert (await client.get('/api/skills', headers={'X-Wearing-Identity': 'daily'})).status_code == 404
-    assert (await client.get('/api/memory', headers={'X-Wearing-Identity': 'daily'})).status_code == 404
-    assert (await client.patch('/api/memory', json={'target': 'user'}, headers={'X-Wearing-Token': 'bad'})).status_code == 403
-    assert (await client.post('/_qa/notifications/receipts', headers={'X-Wearing-Token': 'bad'})).status_code == 403
+    assert (await client.get('/api/skills', headers={'X-Pajio-Identity': 'daily'})).status_code == 404
+    assert (await client.get('/api/memory', headers={'X-Pajio-Identity': 'daily'})).status_code == 404
+    assert (await client.patch('/api/memory', json={'target': 'user'}, headers={'X-Pajio-Token': 'bad'})).status_code == 403
+    assert (await client.post('/_qa/notifications/receipts', headers={'X-Pajio-Token': 'bad'})).status_code == 403
     assert SECRET not in (root / 'requests.jsonl').read_text()
 
 async def test_real_confirmation_resume_keeps_old_action_unapproved_and_is_idempotent(rig):
@@ -215,8 +215,8 @@ async def test_real_confirmation_resume_keeps_old_action_unapproved_and_is_idemp
     path = '/api/confirmations/' + row['id'] + '/resume'
     body = {'revision': row['revision'], 'request_key': 'qa-confirmation-request-001'}
     assert (await client.post(path, json={**body, 'revision': 1})).status_code == 409
-    assert (await client.post(path, json=body, headers={'X-Wearing-Identity': 'daily'})).status_code == 404
-    assert (await client.post(path, json=body, headers={'X-Wearing-Token': 'bad'})).status_code == 403
+    assert (await client.post(path, json=body, headers={'X-Pajio-Identity': 'daily'})).status_code == 404
+    assert (await client.post(path, json=body, headers={'X-Pajio-Token': 'bad'})).status_code == 403
     result = await client.post(path, json=body)
     assert result.status_code == 200, result.text
     result = result.json()
@@ -240,7 +240,7 @@ async def test_qa_workspace_pages_and_usage_are_real_isolated_routes(rig):
     assert metadata.status_code == 200 and metadata.json() == file
     filtered = await client.get('/api/workspace/page', params={'query': '偏好'})
     assert filtered.status_code == 200 and [f['path'] for f in filtered.json()['files']] == ['关于你/偏好.md']
-    assert (await client.get('/api/workspace/page', headers={'X-Wearing-Identity': 'daily'})).status_code == 404
+    assert (await client.get('/api/workspace/page', headers={'X-Pajio-Identity': 'daily'})).status_code == 404
     usage = await client.get('/api/usage')
     assert usage.status_code == 200 and usage.json()['mode'] == 'not_enabled' and usage.json()['cost'] is None
     assert not app.state.qa_support.mock.calls
@@ -259,7 +259,7 @@ async def test_qa_data_export_creates_real_synthetic_archive_without_credentials
     with zipfile.ZipFile(io.BytesIO(blob.content)) as archive:
         contents = b'\n'.join(archive.read(name) for name in archive.namelist())
     assert SECRET.encode() not in contents and BOT_TOKEN.encode() not in contents
-    assert (await client.get('/api/data-exports/' + receipt['id'] + '/file', headers={'X-Wearing-Identity': 'daily'})).status_code == 404
+    assert (await client.get('/api/data-exports/' + receipt['id'] + '/file', headers={'X-Pajio-Identity': 'daily'})).status_code == 404
     assert not app.state.qa_support.mock.calls
 
 async def test_resume_preserves_synthetic_state_and_cloud_disconnect():
@@ -268,7 +268,7 @@ async def test_resume_preserves_synthetic_state_and_cloud_disconnect():
         first, _ = qa.build_app(root)
         support = first.state.qa_support
         rev = support.memory.snapshot()['targets']['user']['revision']
-        from wearing.memory_controls import mutate_memory
+        from pajio.memory_controls import mutate_memory
         assert mutate_memory(support.memory, {'target': 'user', 'action': 'add', 'content': 'QA 持久记录', 'revision': rev}, lambda _: False, '\n§\n')['success']
         await support.cloud.disconnect('qa', support.cloud.snapshot('qa')['revision'])
         await support.close()
@@ -279,7 +279,7 @@ async def test_resume_preserves_synthetic_state_and_cloud_disconnect():
 
 async def test_task_detail_returns_exact_queue_and_artifacts_and_cancels_without_dispatch(rig):
     app, client, _, manifest = rig
-    from wearing.service import ACTIVE
+    from pajio.service import ACTIVE
     queued, _ = app.state.store.accept_message('QA 可撤回的合成排队消息', 'qa', 'qa-task-detail-cancel-001', ACTIVE)
     path = '/api/tasks/' + queued['id']
     detail = (await client.get(path)).json()
@@ -294,13 +294,13 @@ async def test_task_detail_returns_exact_queue_and_artifacts_and_cancels_without
     assert any(item['id'] == manifest['artifact'] for item in source['artifacts'])
     assert source['activity_receipt']['task_id'] == source['id']
     assert re.fullmatch(r'[a-f0-9]{64}', source['activity_receipt']['version'])
-    assert (await client.get(path, headers={'X-Wearing-Identity': 'daily'})).status_code == 404
+    assert (await client.get(path, headers={'X-Pajio-Identity': 'daily'})).status_code == 404
     assert not app.state.qa_support.mock.calls
 
 async def test_brief_automation_and_record_reminder_routes_keep_real_receipts_without_sending(rig):
     app, client, _, _ = rig
     from datetime import datetime, timedelta, timezone
-    from wearing.life import LifeBook, LifeDraft
+    from pajio.life import LifeBook, LifeDraft
     preferences = (await client.get('/api/briefings/preferences')).json()['preferences']
     state = (await client.get('/api/briefing-automation')).json()
     body = {'revision': state['revision'], 'request_key': 'qa-daily-brief-settings-001',
@@ -325,6 +325,6 @@ async def test_brief_automation_and_record_reminder_routes_keep_real_receipts_wi
     life.update('qa', source['id'], source['revision'], patch={'completed': True})
     assert (await client.get(path)).json()['enabled'] is False
     for url in ['/api/briefing-automation', path]:
-        assert (await client.get(url, headers={'X-Wearing-Identity': 'daily'})).status_code == 404
-        assert (await client.post(url, json=body, headers={'X-Wearing-Token': 'bad'})).status_code == 403
+        assert (await client.get(url, headers={'X-Pajio-Identity': 'daily'})).status_code == 404
+        assert (await client.post(url, json=body, headers={'X-Pajio-Token': 'bad'})).status_code == 403
     assert not app.state.qa_support.mock.calls

@@ -34,42 +34,42 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from qa_support import FixtureSupport
 
-from wearing.activity import ActivityBook
-from wearing.activity_api import install_activity_routes
-from wearing.app import public_task
-from wearing.artifact_api import install_artifact_routes
-from wearing.artifacts import ArtifactBook, ArtifactDraft
-from wearing.capture import CaptureBook, CaptureDraft, OrganizedNote
-from wearing.capture_api import install_capture_routes
-from wearing.confirmation_api import install_confirmation_routes
-from wearing.briefing_api import install_briefing_routes
-from wearing.goals import GoalBook, GoalError
-from wearing.life import LifeBook, LifeDraft, LifeError
-from wearing.life_api import install_life_routes
-from wearing.task_lists import install_task_list_routes
-from wearing.schedule_api import install_schedule_routes
-from wearing.schedules import ScheduleBook, ScheduleDraft
-from wearing.store import Store, now
-from wearing.service import TaskService, TaskError
-from wearing.workspace import WorkspaceError, list_files, workspace_file
-from wearing.workspace_upload import install_workspace_import_routes
-from wearing.workspace_api import install_workspace_page_routes
-from wearing.workspace_text import install_workspace_text_routes
-from wearing.native_sync import NativeSyncBook
-from wearing.native_sync_api import install_native_sync_routes
-from wearing.health_history import HealthHistory, HealthMonitor
-from wearing.health_history_api import install_health_history_routes
-from wearing.identity_export import IdentityExports
-from wearing.identity_export_api import install_identity_export_routes
-from wearing.usage import UsageBook
-from wearing.usage_api import install_usage_routes
-from wearing.diagnostics_api import install_diagnostic_routes
-from wearing.search import SearchBook
-from wearing.search_api import install_search_routes
-from wearing.native_actions import NativeActions
-from wearing.native_actions_api import install_native_action_routes
-from wearing.onboarding import OnboardingBook
-from wearing.onboarding_api import install_onboarding_routes
+from pajio.activity import ActivityBook
+from pajio.activity_api import install_activity_routes
+from pajio.app import public_task
+from pajio.artifact_api import install_artifact_routes
+from pajio.artifacts import ArtifactBook, ArtifactDraft
+from pajio.capture import CaptureBook, CaptureDraft, OrganizedNote
+from pajio.capture_api import install_capture_routes
+from pajio.confirmation_api import install_confirmation_routes
+from pajio.briefing_api import install_briefing_routes
+from pajio.goals import GoalBook, GoalError
+from pajio.life import LifeBook, LifeDraft, LifeError
+from pajio.life_api import install_life_routes
+from pajio.task_lists import install_task_list_routes
+from pajio.schedule_api import install_schedule_routes
+from pajio.schedules import ScheduleBook, ScheduleDraft
+from pajio.store import Store, now
+from pajio.service import TaskService, TaskError
+from pajio.workspace import WorkspaceError, list_files, workspace_file
+from pajio.workspace_upload import install_workspace_import_routes
+from pajio.workspace_api import install_workspace_page_routes
+from pajio.workspace_text import install_workspace_text_routes
+from pajio.native_sync import NativeSyncBook
+from pajio.native_sync_api import install_native_sync_routes
+from pajio.health_history import HealthHistory, HealthMonitor
+from pajio.health_history_api import install_health_history_routes
+from pajio.identity_export import IdentityExports
+from pajio.identity_export_api import install_identity_export_routes
+from pajio.usage import UsageBook
+from pajio.usage_api import install_usage_routes
+from pajio.diagnostics_api import install_diagnostic_routes
+from pajio.search import SearchBook
+from pajio.search_api import install_search_routes
+from pajio.native_actions import NativeActions
+from pajio.native_actions_api import install_native_action_routes
+from pajio.onboarding import OnboardingBook
+from pajio.onboarding_api import install_onboarding_routes
 
 QA = 'qa'
 REPO = Path(__file__).resolve().parents[3]
@@ -105,7 +105,7 @@ class FixtureCaptureWorker:
 class FixtureBriefClient:
     """Wire-contract implementation, not a real model; cannot open a connection."""
     async def probe(self): return {'state': 'reachable', 'message': 'QA synthetic task client',
-        'wearing': {'confirmation_guard': 'durable-v1', 'session_recall_guard': 'sources-v1'}, 'qa': True}
+        'pajio': {'confirmation_guard': 'durable-v1', 'session_recall_guard': 'sources-v1'}, 'qa': True}
     async def start(self, payload, request_key): return {'run_id': 'qa-brief-' + secrets.token_hex(8)}
 
 
@@ -178,7 +178,7 @@ def build_app(root: Path, resume=False):
     audit = root / 'requests.jsonl'
     qa_service = TaskService(store, FixtureBriefClient())
     support = FixtureSupport(app, root, store, qa_service, manifest)
-    from wearing.record_reminders_api import install_record_reminder_routes
+    from pajio.record_reminders_api import install_record_reminder_routes
     install_record_reminder_routes(app, support.notifications.reminders)
     install_confirmation_routes(app, qa_service, lambda task: public_task(task, store=store, local_devices=True))
     support.seed_confirmation(qa_service, manifest)
@@ -199,7 +199,7 @@ def build_app(root: Path, resume=False):
     async def guard_and_audit(request: Request, call_next):
         started = datetime.now(timezone.utc)
         path = request.url.path
-        identity = request.headers.get('x-wearing-identity') or request.query_params.get('identity') or QA
+        identity = request.headers.get('x-pajio-identity') or request.query_params.get('identity') or QA
         request.state.identity_id = QA
         safe_body = {}
         if request.headers.get('content-type', '').startswith('application/json'):
@@ -211,7 +211,7 @@ def build_app(root: Path, resume=False):
                 pass
         if path.startswith('/api/') and path != '/api/bootstrap' and identity != QA:
             response = JSONResponse({'detail': 'QA 服务只有合成验收身份。'}, status_code=404)
-        elif request.method not in {'GET', 'HEAD', 'OPTIONS'} and request.headers.get('x-wearing-token') != token:
+        elif request.method not in {'GET', 'HEAD', 'OPTIONS'} and request.headers.get('x-pajio-token') != token:
             response = JSONResponse({'detail': 'QA 页面会话已失效，请刷新。'}, status_code=403)
         else:
             response = await call_next(request)
@@ -249,11 +249,11 @@ def build_app(root: Path, resume=False):
 
     # These are the real production record, capture, schedule and activity routers.
     install_life_routes(app, life)
-    from wearing.bookmark_api import install_bookmark_routes
+    from pajio.bookmark_api import install_bookmark_routes
     install_bookmark_routes(app, life)
     install_task_list_routes(app, life)
-    from wearing.calendar_series import CalendarSeriesBook
-    from wearing.calendar_series_api import install_calendar_series_routes
+    from pajio.calendar_series import CalendarSeriesBook
+    from pajio.calendar_series_api import install_calendar_series_routes
     install_calendar_series_routes(app, CalendarSeriesBook(store))
     install_capture_routes(app, captures, FixtureCaptureWorker())
     install_schedule_routes(app, schedules)
@@ -267,8 +267,8 @@ def build_app(root: Path, resume=False):
     install_identity_export_routes(app, IdentityExports(store))
     install_usage_routes(app, UsageBook(root, enabled=False))
     install_search_routes(app, SearchBook(store))
-    from wearing.conversation_sources import ConversationSources
-    from wearing.conversation_sources_api import install_conversation_source_routes
+    from pajio.conversation_sources import ConversationSources
+    from pajio.conversation_sources_api import install_conversation_source_routes
     install_conversation_source_routes(app, ConversationSources(store))
     # Configuration/history only in UI QA: no Agent enqueues device commands.
     install_native_action_routes(app, NativeActions(store))
@@ -309,7 +309,7 @@ def build_app(root: Path, resume=False):
             db.execute('INSERT INTO settings(key,value) VALUES(?,?)', ('qa_search_seed', json.dumps(search_seed)))
     manifest['search'] = search_seed
     briefings = install_briefing_routes(app, store, qa_service, artifacts, cloud_apps=support.cloud)
-    from wearing.briefing_automation_api import install_briefing_automation_routes
+    from pajio.briefing_automation_api import install_briefing_automation_routes
     install_briefing_automation_routes(app, store, briefings, schedules)
 
     @app.get('/_qa/manifest')
@@ -321,7 +321,7 @@ def build_app(root: Path, resume=False):
                 'configured': True, 'deployment': 'local', 'goal_policy': {'default_steps': 100, 'max_steps': 1000, 'extension_steps': 100}, 'qa': True}
 
     @app.get('/api/status')
-    async def status(): return {'hermes': {'state': 'ready', 'message': 'QA 合成环境，不运行模型', 'wearing': {'web_tools': []}}, 'other_active': [], 'device_report': None, 'qa': True}
+    async def status(): return {'hermes': {'state': 'ready', 'message': 'QA 合成环境，不运行模型', 'pajio': {'web_tools': []}}, 'other_active': [], 'device_report': None, 'qa': True}
 
     @app.get('/api/runtime')
     async def runtime(): return {'running': False, 'installed': False, 'phase': 'idle', 'error': 'QA 环境不运行模型', 'product': {'applied': False}, 'model': {'state': 'not_configured', 'provider': None}, 'files': {'active': True}, 'phone': {'active': False}, 'computer': {'active': False}, 'qa': True}
@@ -387,7 +387,7 @@ def build_app(root: Path, resume=False):
     async def conversation():
         results = artifacts.for_conversation(QA)
         messages = [{**row, 'turn': {**task_data(store.get(row['task_id'])), 'artifacts': results.get(row['task_id'], []), 'confirmations': []}} for row in store.conversation(QA)]
-        from wearing.task_presentation import present_messages
+        from pajio.task_presentation import present_messages
         messages = present_messages(store, messages)
         for row in messages: row.update(store.message_receipt(row['task_id']))
         for goal in goals.list(QA):
@@ -407,10 +407,10 @@ def build_app(root: Path, resume=False):
     @app.get('/api/computer')
     async def computer(): return {'connected': False, 'control': {'holder': 'human'}, 'qa': True}
 
-    app.mount('/assets', StaticFiles(directory=REPO / 'src/wearing/web'), name='assets')
+    app.mount('/assets', StaticFiles(directory=REPO / 'src/pajio/web'), name='assets')
 
     @app.get('/')
-    async def index(): return FileResponse(REPO / 'src/wearing/web/index.html')
+    async def index(): return FileResponse(REPO / 'src/pajio/web/index.html')
 
     @app.api_route('/api/{path:path}', methods=['GET', 'POST', 'PATCH', 'DELETE'])
     async def unavailable(path: str): raise HTTPException(409, 'QA 合成环境未启用此能力，不会调用外部服务。')

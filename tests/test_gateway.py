@@ -14,16 +14,16 @@ import pytest
 from sqlalchemy import select, update
 from starlette.requests import Request
 
-from wearing.cloud.control import ControlStore, routes, sessions, states
-from wearing.cloud.gateway import (GatewayError, create_gateway_app, initialize_gateway,
+from pajio.cloud.control import ControlStore, routes, sessions, states
+from pajio.cloud.gateway import (GatewayError, create_gateway_app, initialize_gateway,
                                    load_gateway, register_route)
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.join import callback_error
-from wearing.cloud.worker import create_tenant_app
-from wearing.config import write_private_json
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.join import callback_error
+from pajio.cloud.worker import create_tenant_app
+from pajio.config import write_private_json
 
 
-ORIGIN = "https://wearing.example"
+ORIGIN = "https://pajio.example"
 ISSUER = "https://identity.example"
 KEY = RSAKey.generate_key(2048, parameters={"kid": "test-key"})
 
@@ -57,7 +57,7 @@ class Provider:
         challenge = base64.urlsafe_b64encode(hashlib.sha256(values["code_verifier"].encode()).digest()).rstrip(b"=").decode()
         assert challenge == params["code_challenge"]
         assert values["redirect_uri"] == ORIGIN + "/auth/callback"
-        claims = {"iss": ISSUER, "sub": subject, "aud": "wearing-test", "iat": int(time.time()),
+        claims = {"iss": ISSUER, "sub": subject, "aud": "pajio-test", "iat": int(time.time()),
                   "exp": int(time.time()) + 300, "nonce": params["nonce"], **overrides}
         if claims.get("nonce") is None:
             claims.pop("nonce", None)
@@ -89,7 +89,7 @@ async def lab(tmp_path):
 @asynccontextmanager
 async def _lab(tmp_path):
     gateway_root, a, b = tmp_path / "entry", tmp_path / "A", tmp_path / "B"
-    initialize_gateway(gateway_root, ORIGIN, ISSUER, "wearing-test", development=True)
+    initialize_gateway(gateway_root, ORIGIN, ISSUER, "pajio-test", development=True)
     initialize_instance(a, "tenant_A", ORIGIN)
     initialize_instance(b, "tenant_B", ORIGIN)
     control = ControlStore(load_gateway(gateway_root).database_url.get_secret_value())
@@ -119,7 +119,7 @@ async def test_portal_tenant_body_is_bounded_and_invalid_json_is_not_service_fai
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url=ORIGIN) as client:
             assert (await login(client, provider)).status_code == 303
             current = (await client.get('/auth/session')).json()
-            headers = {'Origin': ORIGIN, 'X-Wearing-CSRF': current['csrf'], 'Content-Type': 'application/json'}
+            headers = {'Origin': ORIGIN, 'X-Pajio-CSRF': current['csrf'], 'Content-Type': 'application/json'}
             assert (await client.post('/auth/tenant', content=b'x' * 4097, headers=headers)).status_code == 413
             assert (await client.post('/auth/tenant', content=b'{', headers=headers)).status_code == 422
             assert (await client.post('/auth/tenant', json={'tenant_id': 'tenant_A'}, headers=headers)).status_code == 200
@@ -135,8 +135,8 @@ async def test_oidc_login_routes_only_own_worker_and_drops_untrusted_credentials
             result = await login(alice, provider)
             assert result.status_code == 303
             cookie = result.headers["set-cookie"]
-            assert "__Host-wearing-session=" in cookie and "httponly" in cookie and "secure" in cookie and "samesite=lax" in cookie
-            decoded = json.loads(base64.b64decode(alice.cookies.get("__Host-wearing-session").split(".")[0]))
+            assert "__Host-pajio-session=" in cookie and "httponly" in cookie and "secure" in cookie and "samesite=lax" in cookie
+            decoded = json.loads(base64.b64decode(alice.cookies.get("__Host-pajio-session").split(".")[0]))
             assert set(decoded) == {"sid"}
             assert (await login(bob, provider, "bob")).status_code == 303
             assert (await alice.get("/auth/session")).json()["tenant_id"] == "tenant_A"
@@ -150,21 +150,21 @@ async def test_oidc_login_routes_only_own_worker_and_drops_untrusted_credentials
             # Native bearer auth is authoritative: an invalid bearer never falls
             # back to a different account's browser cookie.
             assert (await alice.get("/api/bootstrap", headers={"Authorization": "Bearer attacker"})).status_code == 401
-            posted = await alice.post("/api/conversation", headers={"Origin": ORIGIN, "X-Wearing-Token": bootstrap["token"],
-                                                                    "X-Wearing-Tenant": "tenant_B"},
+            posted = await alice.post("/api/conversation", headers={"Origin": ORIGIN, "X-Pajio-Token": bootstrap["token"],
+                                                                    "X-Pajio-Tenant": "tenant_B"},
                                       json={"content": "Alice-only idea"})
             assert posted.status_code == 201
             assert "Alice-only idea" in (await alice.get("/api/conversation")).text
             assert (await bob.get("/api/conversation")).json() == []
             assert (await bob.get("/api/tasks/" + posted.json()["task"]["id"])).status_code == 404
             sent = next(r for r in workers.requests if r.method == "POST")
-            assert sent.headers["x-wearing-tenant"] == "tenant_A"
+            assert sent.headers["x-pajio-tenant"] == "tenant_A"
             assert sent.headers["authorization"] == "Bearer " + (a / "gateway.key").read_text().strip()
             assert "cookie" not in sent.headers
             assert (await alice.get("/internal/runtime")).status_code == 404
             assert (await alice.post("/api/conversation", json={"content": "missing origin"})).status_code == 403
             assert (await alice.post("/api/conversation", headers={"Origin": "https://foreign.example"}, json={"content": "foreign"})).status_code == 403
-            assert (await alice.get("/auth/session", headers={"Host": "wearing.example:444"})).status_code == 400
+            assert (await alice.get("/auth/session", headers={"Host": "pajio.example:444"})).status_code == 400
             control.grant(ISSUER, "alice", "tenant_A", active=False)
             assert (await alice.get("/api/conversation")).status_code == 401
             assert (await bob.get("/api/bootstrap")).status_code == 200
@@ -192,9 +192,9 @@ async def test_wrong_signature_uninvited_user_and_state_from_another_browser(tmp
             previous_calls = provider.token_calls
             assert (await stranger.get("/auth/callback", params=params)).status_code == 400
             assert provider.token_calls == previous_calls
-            old_cookie = first.cookies.get("__Host-wearing-session")
+            old_cookie = first.cookies.get("__Host-pajio-session")
             assert (await first.get("/auth/callback", params=params)).status_code == 303
-            stranger.cookies.set("__Host-wearing-session", old_cookie)
+            stranger.cookies.set("__Host-pajio-session", old_cookie)
             assert (await stranger.get("/auth/callback", params=params)).status_code == 400
             assert provider.token_calls == previous_calls + 1
 
@@ -204,18 +204,18 @@ async def test_logout_switch_expiry_and_server_session_restart(tmp_path):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url=ORIGIN) as client:
             assert (await login(client, provider)).status_code == 303
             account = (await client.get("/auth/session")).json()
-            mutation = {"Origin": ORIGIN, "X-Wearing-CSRF": account["csrf"]}
+            mutation = {"Origin": ORIGIN, "X-Pajio-CSRF": account["csrf"]}
             assert (await client.post("/auth/tenant", headers=mutation, json={"tenant_id": "tenant_B"})).status_code == 403
             assert (await client.post("/auth/logout", headers={"Origin": ORIGIN})).status_code == 403
-            saved_cookie = client.cookies.get("__Host-wearing-session")
+            saved_cookie = client.cookies.get("__Host-pajio-session")
             second = create_gateway_app(root, oidc_transport=httpx.MockTransport(provider.handle), worker_transport=workers)
-            async with second.router.lifespan_context(second), httpx.AsyncClient(transport=httpx.ASGITransport(app=second), base_url=ORIGIN, cookies={"__Host-wearing-session": saved_cookie}) as restarted:
+            async with second.router.lifespan_context(second), httpx.AsyncClient(transport=httpx.ASGITransport(app=second), base_url=ORIGIN, cookies={"__Host-pajio-session": saved_cookie}) as restarted:
                 assert (await restarted.get("/api/bootstrap")).status_code == 200
                 control.grant(ISSUER, "alice", "tenant_B")
                 assert (await restarted.post("/auth/tenant", headers=mutation, json={"tenant_id": "tenant_B"})).status_code == 200
                 assert (await restarted.get("/auth/session")).json()["tenant_id"] == "tenant_B"
                 assert (await restarted.post("/auth/logout", headers=mutation)).status_code == 200
-                restarted.cookies.set("__Host-wearing-session", saved_cookie)
+                restarted.cookies.set("__Host-pajio-session", saved_cookie)
                 assert (await restarted.get("/api/bootstrap")).status_code == 401
             assert (await login(client, provider)).status_code == 303
             with control.engine.begin() as db:
@@ -228,11 +228,11 @@ async def test_pending_oidc_flow_survives_restart_and_expires(tmp_path):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url=ORIGIN) as first:
             redirect = await first.get("/auth/login")
             params = provider.authorize(redirect.headers["location"])
-            cookie = first.cookies.get("__Host-wearing-session")
+            cookie = first.cookies.get("__Host-pajio-session")
             payload = json.loads(base64.b64decode(cookie.split(".")[0]))
             assert len(payload) == 1 and set(next(iter(payload.values()))) == {"exp"}
             second = create_gateway_app(root, oidc_transport=httpx.MockTransport(provider.handle), worker_transport=workers)
-            async with second.router.lifespan_context(second), httpx.AsyncClient(transport=httpx.ASGITransport(app=second), base_url=ORIGIN, cookies={"__Host-wearing-session": cookie}) as restarted:
+            async with second.router.lifespan_context(second), httpx.AsyncClient(transport=httpx.ASGITransport(app=second), base_url=ORIGIN, cookies={"__Host-pajio-session": cookie}) as restarted:
                 assert (await restarted.get("/auth/callback", params=params)).status_code == 303
                 redirect = await restarted.get("/auth/login")
                 params = provider.authorize(redirect.headers["location"])
@@ -331,7 +331,7 @@ async def test_wrong_route_credential_unavailable_worker_and_bounded_body(tmp_pa
             assert (await login(client, provider)).status_code == 303
             assert (await client.post("/api/conversation", headers={"Origin": ORIGIN}, content=b"x" * 1048577)).status_code == 413
             account = (await client.get("/auth/session")).json()
-            route = control.route(control.session(json.loads(base64.b64decode(client.cookies.get("__Host-wearing-session").split(".")[0]))["sid"]))
+            route = control.route(control.session(json.loads(base64.b64decode(client.cookies.get("__Host-pajio-session").split(".")[0]))["sid"]))
             path = root / "credentials" / route["credential_ref"]
             write_private_json(path, {"tenant_id": "tenant_B", "instance_id": route["instance_id"], "key": (b / "gateway.key").read_text().strip()})
             count = len(workers.requests)
@@ -394,7 +394,7 @@ async def test_unavailable_worker_and_wrong_discovery_do_not_expose_private_erro
 def test_configuration_enrollment_and_route_rebind_are_bounded(tmp_path):
     root = tmp_path / "entry"
     with pytest.raises(GatewayError):
-        initialize_gateway(root, "http://wearing.public", ISSUER, "app", development=True)
+        initialize_gateway(root, "http://pajio.public", ISSUER, "app", development=True)
     assert not root.exists()
     initialize_gateway(root, ORIGIN, ISSUER, "app", development=True)
     with pytest.raises(GatewayError):

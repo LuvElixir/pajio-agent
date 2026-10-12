@@ -13,7 +13,7 @@ function deferred() {
   const promise = new Promise<void>(done => {resolve = done;});
   return {promise, resolve};
 }
-const scope = 'native-conversation-draft:https://wearing.example/|daily';
+const scope = 'native-conversation-draft:https://pajio.example/|daily';
 const contextKey = JSON.stringify({identity: 'daily', goal: null, life: null});
 const draft = (text: string) => ({text, contextKey});
 function fixture() {
@@ -64,7 +64,7 @@ test('independent identities do not block each other behind a pending write', as
   const f = fixture(), gate = deferred(), started = deferred(), put = f.store.put.bind(f.store);
   f.store.put = async (key, value) => {if (key === scope) {started.resolve(); await gate.promise;} await put(key, value);};
   const daily = f.create().save(draft('日常')); await started.promise;
-  const foreign = f.create('native-conversation-draft:https://wearing.example/|overseas');
+  const foreign = f.create('native-conversation-draft:https://pajio.example/|overseas');
   const other = await foreign.save({text: '另一身份', contextKey: JSON.stringify({identity: 'overseas'})});
   assert.deepEqual(await foreign.load(), other); gate.resolve(); await daily;
 });

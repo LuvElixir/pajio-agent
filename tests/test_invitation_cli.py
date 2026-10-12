@@ -3,13 +3,13 @@ import sys
 
 import pytest
 
-from wearing.cli import main
-from wearing.cloud.control import ControlStore
-from wearing.cloud.gateway import initialize_gateway, load_gateway
+from pajio.cli import main
+from pajio.cloud.control import ControlStore
+from pajio.cloud.gateway import initialize_gateway, load_gateway
 
 
 def run(monkeypatch, capsys, *args):
-    monkeypatch.setattr(sys, 'argv', ['wearing', 'gateway', 'invite', *args])
+    monkeypatch.setattr(sys, 'argv', ['pajio', 'gateway', 'invite', *args])
     main()
     return json.loads(capsys.readouterr().out)
 
@@ -19,7 +19,7 @@ def test_cli_reserve_issue_retry_status_revoke_without_printing_code(tmp_path, m
     initialize_gateway(root, 'https://pajio.example', 'https://identity.example', 'test', development=True)
     # Runtime factory remains gateway-owned; the CLI always requests its operator
     # factory and never obtains privileged credentials from argv.
-    monkeypatch.setattr('wearing.cloud.gateway.operator_store', lambda config: ControlStore(config.database_url.get_secret_value(), operator=True))
+    monkeypatch.setattr('pajio.cloud.gateway.operator_store', lambda config: ControlStore(config.database_url.get_secret_value(), operator=True))
     common = ['--root', str(root)]
     assert run(monkeypatch, capsys, 'reserve', *common, '--tenant-id', 'new')['status'] == 'reserved'
     ops = ControlStore(load_gateway(root).database_url.get_secret_value(), operator=True)

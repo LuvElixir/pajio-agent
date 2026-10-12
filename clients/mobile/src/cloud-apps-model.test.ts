@@ -24,8 +24,8 @@ test('OAuth setup and poll use current identity, CSRF and request body without U
   await api.poll('b'.repeat(32));
   const configure = calls.find(call => call.init?.method === 'PUT')!;
   assert.ok(!configure.url.includes('private-secret-test'));
-  assert.equal(new Headers(configure.init?.headers).get('X-Wearing-Identity'), 'daily');
-  assert.equal(new Headers(configure.init?.headers).get('X-Wearing-Token'), 'csrf-test');
+  assert.equal(new Headers(configure.init?.headers).get('X-Pajio-Identity'), 'daily');
+  assert.equal(new Headers(configure.init?.headers).get('X-Pajio-Token'), 'csrf-test');
   assert.equal(configure.init?.redirect, 'error');
   assert.equal(JSON.parse(String(configure.init?.body)).secret, 'private-secret-test');
   assert.equal(JSON.parse(String(calls.at(-1)?.init?.body)).authorization_id, 'b'.repeat(32));

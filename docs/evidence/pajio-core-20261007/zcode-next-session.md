@@ -67,7 +67,7 @@ onboarding Web/桌面已交付至修复终版（独立复核两批共 12 项问�
 
 ## 第十八轮明确未完成（本轮用户点名要做的）
 
-1. **calendar-series-contract.md 完整 UI**——重复日程创建/系列列表/单次例外（override/cancel/reset）/系列修改（update/archive/restore）。后端单入口 `POST /api/calendar-series`，SeriesCommand 严格闭集（action + 精确字段，多余字段 422）：list{after,include_deleted} / get{series_id,occurrence_key} / query{start,end,timezone,series_id?} / create{request_key,draft} / update{series_id,revision,request_key,draft} / archive·restore{series_id,revision,request_key} / override·cancel·reset{series_id,revision,request_key,occurrence_key,template?}。QA 当前该路由 409（root 正在加载），重启后先 `curl POST {"action":"list"}` 探活再接 UI。系列实例 ID `recurrence_<uuid>_<YYYYMMDD>`。UI 放日历视图（月/周/议程已就绪，见 life.js renderCalendarViews）；「补充日程」入口加「重复日程」；实例点开提供仅这一次/整个系列选择。request_key 经 WearingStore 持久幂等 + revision CAS 409 保留输入。
+1. **calendar-series-contract.md 完整 UI**——重复日程创建/系列列表/单次例外（override/cancel/reset）/系列修改（update/archive/restore）。后端单入口 `POST /api/calendar-series`，SeriesCommand 严格闭集（action + 精确字段，多余字段 422）：list{after,include_deleted} / get{series_id,occurrence_key} / query{start,end,timezone,series_id?} / create{request_key,draft} / update{series_id,revision,request_key,draft} / archive·restore{series_id,revision,request_key} / override·cancel·reset{series_id,revision,request_key,occurrence_key,template?}。QA 当前该路由 409（root 正在加载），重启后先 `curl POST {"action":"list"}` 探活再接 UI。系列实例 ID `recurrence_<uuid>_<YYYYMMDD>`。UI 放日历视图（月/周/议程已就绪，见 life.js renderCalendarViews）；「补充日程」入口加「重复日程」；实例点开提供仅这一次/整个系列选择。request_key 经 PajioStore 持久幂等 + revision CAS 409 保留输入。
 2. **offline-record-lifecycle-contract.md 归档恢复**——Web 现有「移到最近移除/恢复」是同步操作（PATCH action=archive/restore）；合同的离线队列（record-mutations 本机队列）明确「不涉及 Web/Desktop 本机存储」。**需要做的**：给 archive/restore 补 request_key 幂等（life.js 的 change() 已有 request_key 通道，POST 用了 createKey，PATCH 未带——按合同 PATCH body 加 `request_key`，同 key 重放取原回执）+ 操作确认文案（先说明范围）。409 双选择已有。
 3. **task-detail-contract.md 同快照 activity_receipt 精确已读**——activity.js 的 openTask 已在打开 results bucket 时 POST /api/activity/seen；任务列表行的「精确已读」需在任务页行点击时也标记已读（当前只在 activity 面板点击时）。GET /api/tasks/{id} 新增 queued/queue_state/delivery/events/artifacts——root 说任务 GET 同快照 activity_receipt 源码已加、下次 QA 重启生效，「不拿新 version 确认旧结果」。做法：任务页行点击（data-activity-task）后除 openTask 外，若 item.unread 则 POST /api/activity/seen 标记该条已读。
 4. **briefing-automation-contract.md**（新增冻结）——GET/POST `/api/briefing-automation`；AutomationSave{revision,request_key,enabled,local_time"HH:MM",timezone,grace_minutes 1-360 默认120,preferences_revision}。挂在简报偏好下方：「每天自动准备简报」时间选择+补做窗口+显式保存；显示自动安排使用的偏好版本 X；最近回执≤7 条（本地日期/状态/briefing 摘要）；关闭不要求偏好版本相同。QA 重启后探活。
@@ -76,17 +76,17 @@ onboarding Web/桌面已交付至修复终版（独立复核两批共 12 项问�
 ## QA 8891 约定
 
 - 合成凭据在 `/_qa/manifest`（feishu cli_QASYNTHETIC / QA_SYNTHETIC_SECRET_001 / telegram token / expo push）。所有写操作只用合成数据；root 会用 App 停掉剩余合成任务，届时文件编辑（423→可保存）与技能移除（423→成功链）可在无活动任务状态做真实成功路径验收——**这两项成功链验收仍未做，等 root 通知后立即补**。
-- 探活模板：`TOKEN=$(curl -s http://127.0.0.1:8891/api/bootstrap -H 'X-Wearing-Identity: qa' | python3 -c 'import json,sys;print(json.load(sys.stdin)["token"])')`，之后带 `-H "X-Wearing-Identity: qa" -H "X-Wearing-Token: $TOKEN"`。
+- 探活模板：`TOKEN=$(curl -s http://127.0.0.1:8891/api/bootstrap -H 'X-Pajio-Identity: qa' | python3 -c 'import json,sys;print(json.load(sys.stdin)["token"])')`，之后带 `-H "X-Pajio-Identity: qa" -H "X-Pajio-Token: $TOKEN"`。
 - QA 重启由 root 执行（保留数据）；重启后新路由：calendar-series、briefing-automation、record-reminders、任务 GET 同快照。
 
 ## 关键架构约束（勿违反）
 
-- 全部新 CSS `html:not(.mobile-host)` 门控；模板字符串禁 `style=`（CSP）与 `onclick=`；动态尺寸走 WearingStore/CSSOM。
-- 个人持久存储（request_key/草稿/凭证）一律经 `window.WearingStore`（scoped-store.js：cloud+scope 前缀 / cloud 无 scope 内存 / local 旧键；已带 Storage 兼容接口）。
-- 身份切换：epoch 校验 + `WearingViews.reset()` + `WearingPajio.identityChanged`。
+- 全部新 CSS `html:not(.mobile-host)` 门控；模板字符串禁 `style=`（CSP）与 `onclick=`；动态尺寸走 PajioStore/CSSOM。
+- 个人持久存储（request_key/草稿/凭证）一律经 `window.PajioStore`（scoped-store.js：cloud+scope 前缀 / cloud 无 scope 内存 / local 旧键；已带 Storage 兼容接口）。
+- 身份切换：epoch 校验 + `PajioViews.reset()` + `PajioBrand.identityChanged`。
 - 二次确认模式：`dataset.confirm` 1→确认文案→4 秒复位（全站一致）。
 - 409 处理模式：保留输入 + 提示读最新 + 不自动重试（参考 life 编辑器双选择、清单 409）。
-- 幂等模式：request_key 经 WearingStore 持久，失败/未知沿用同 key 取回，成功清除；409（同 key 异内容）按服务端真实回执处理。
+- 幂等模式：request_key 经 PajioStore 持久，失败/未知沿用同 key 取回，成功清除；409（同 key 异内容）按服务端真实回执处理。
 - 每轮完成后：`node --test tests/*-ui.test.cjs tests/web-core-closure.test.cjs tests/web-import-goal.test.cjs` 全绿 + QA UI 点击截图（IAB，存 docs/qa-web-desktop-20261007/）+ 矩阵/交付文档追加轮次 + 桌面重启（`kill $(pgrep -f "Pajio.app/Contents/MacOS" | head -1); sleep 2; open clients/desktop/src-tauri/target/release/bundle/macos/Pajio.app`，注意沙箱需 dangerouslyDisableSandbox）。
 
 ## 验证命令汇总
@@ -95,8 +95,8 @@ onboarding Web/桌面已交付至修复终版（独立复核两批共 12 项问�
 # 全套 Web 测试（仓库根）
 node --test tests/*-ui.test.cjs tests/web-core-closure.test.cjs tests/web-import-goal.test.cjs
 # QA 探活
-TOKEN=$(curl -s http://127.0.0.1:8891/api/bootstrap -H 'X-Wearing-Identity: qa' | python3 -c 'import json,sys;print(json.load(sys.stdin)["token"])')
-curl -s -X POST http://127.0.0.1:8891/api/calendar-series -H "X-Wearing-Identity: qa" -H "X-Wearing-Token: $TOKEN" -H "Content-Type: application/json" -d '{"action":"list"}'
+TOKEN=$(curl -s http://127.0.0.1:8891/api/bootstrap -H 'X-Pajio-Identity: qa' | python3 -c 'import json,sys;print(json.load(sys.stdin)["token"])')
+curl -s -X POST http://127.0.0.1:8891/api/calendar-series -H "X-Pajio-Identity: qa" -H "X-Pajio-Token: $TOKEN" -H "Content-Type: application/json" -d '{"action":"list"}'
 # 桌面重启（见上）；浏览器验收用 IAB（browser-use control-browser skill）
 ```
 

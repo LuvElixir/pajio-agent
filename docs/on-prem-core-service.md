@@ -10,15 +10,15 @@
 
 - [网关服务](../deploy/control/pajio-gateway.service)：数据库网页角色、私有客户端证书及固定配置目录；普通用户运行、失败重启和资源限制。
 - [身份服务模板](../deploy/control/pajio-identity.service.in)：Keycloak 生产模式、独立 PostgreSQL 数据库。只有首次初始化使用 realm import 和临时 bootstrap admin；运行期间不保留导入明文账号文件。
-- [租户服务](../deploy/tenant/wearing-tenant.service)：保持现有受管 Hermes 生命周期和每租户数据目录，强制试用调用限制。模型调用次数是接纳上限，不是供应商金额账单。
+- [租户服务](../deploy/tenant/pajio-tenant.service)：保持现有受管 Hermes 生命周期和每租户数据目录，强制试用调用限制。模型调用次数是接纳上限，不是供应商金额账单。
 
 `PAJIO_UPSTREAM_CA_FILE`、`PAJIO_UPSTREAM_CERT_FILE`、`PAJIO_UPSTREAM_KEY_FILE` 必须同时配置。私钥为服务用户所有、权限 0600；缺项、错误格式或宽松私钥权限导致网关启动失败。HTTP 与语音 WebSocket 使用同一个验证上下文；保持服务端证书和名称校验。此信任配置仅供操作者设置，不从用户请求接收。
 
-控制数据库使用独立 web/operator/migration 角色和 Unix socket 的 SCRAM 认证；应用不使用 PostgreSQL 管理员。身份服务使用另一独立数据库和角色。迁移后必须运行 `wearing gateway database check`。
+控制数据库使用独立 web/operator/migration 角色和 Unix socket 的 SCRAM 认证；应用不使用 PostgreSQL 管理员。身份服务使用另一独立数据库和角色。迁移后必须运行 `pajio gateway database check`。
 
 凭据、私有 CA、生产连接串和账号只存在受限部署目录及相应服务器中。Ubuntu 租户需预装 `libatomic1`，否则受管 Node.js 无法通过启动校验。安装包来自 `uv.lock` 固定版本与散列；Hermes 使用运行时固定源码散列。不得将开发 Mac 的整份 `.env`、记忆或会话复制到租户。
 
-Hermes 的受管解释器与主服务的 Python 版本可以不同。桥接只加载 `wearing` 包本身，不能把主服务整个 `site-packages` 插到受管解释器的搜索路径；否则可能误用另一 Python ABI 的扩展模块。
+Hermes 的受管解释器与主服务的 Python 版本可以不同。桥接只加载 `pajio` 包本身，不能把主服务整个 `site-packages` 插到受管解释器的搜索路径；否则可能误用另一 Python ABI 的扩展模块。
 
 ## 上线核对
 

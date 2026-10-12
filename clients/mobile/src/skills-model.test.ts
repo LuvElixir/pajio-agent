@@ -25,8 +25,8 @@ test('changing enabled state bootstraps a CSRF token and binds current identity'
   await api.enabled(sample.id, false, revision);
   assert.equal(calls.length, 2);
   assert.equal(calls[1].init?.method, 'PATCH');
-  assert.equal(new Headers(calls[1].init?.headers).get('X-Wearing-Token'), 'csrf-test');
-  assert.equal(new Headers(calls[1].init?.headers).get('X-Wearing-Identity'), 'default');
+  assert.equal(new Headers(calls[1].init?.headers).get('X-Pajio-Token'), 'csrf-test');
+  assert.equal(new Headers(calls[1].init?.headers).get('X-Pajio-Identity'), 'default');
   assert.equal(calls[1].init?.redirect, 'error');
   assert.deepEqual(JSON.parse(String(calls[1].init?.body)), {id: sample.id, enabled: false, revision});
 });
@@ -54,8 +54,8 @@ test('removal preview never mutates and confirm binds whole package, operation a
   assert.deepEqual(await api.remove(preview), removed);
   assert.deepEqual(JSON.parse(String(calls[2].init?.body)), {id: sample.id, revision, package_revision: removal.package_revision, operation_id: removal.operation_id});
   assert.equal(calls[2].init?.method, 'POST');
-  assert.equal(new Headers(calls[2].init?.headers).get('X-Wearing-Token'), 'csrf-test');
-  assert.equal(new Headers(calls[2].init?.headers).get('X-Wearing-Identity'), 'default');
+  assert.equal(new Headers(calls[2].init?.headers).get('X-Pajio-Token'), 'csrf-test');
+  assert.equal(new Headers(calls[2].init?.headers).get('X-Pajio-Identity'), 'default');
 });
 
 test('removal receipt must prove exact operation and refreshed absence, never optimistic deletion', async () => {

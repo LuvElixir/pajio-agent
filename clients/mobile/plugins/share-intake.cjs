@@ -4,7 +4,7 @@ const plist = require('@expo/plist').default;
 const {withDangerousMod, withMainActivity, withXcodeProject} = require('@expo/config-plugins');
 const withSharing = require('expo-sharing/app.plugin').default;
 
-const APP_GROUP = 'group.io.luckyloading.wearing.mobile.share';
+const APP_GROUP = 'group.io.luckyloading.pajio.mobile.share';
 const MIME_TYPES = ['text/plain', 'image/jpeg', 'image/png', 'image/gif', 'image/heic', 'image/webp', 'application/pdf', 'text/markdown', 'application/zip', 'application/x-zip-compressed'];
 
 module.exports = function withPajioShareIntake(config) {

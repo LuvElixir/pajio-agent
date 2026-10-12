@@ -7,9 +7,9 @@ import {accountFences, assertAccountWritable, upsertState} from './account-clean
 import {managedRecordingUri} from './account-media';
 
 // Fast Refresh can leave old async saves alive. Keep their queue and connection together.
-const runtime = globalThis as typeof globalThis & {__wearingSqliteStateV1?: SqliteState};
-const state = runtime.__wearingSqliteStateV1 ??= createSqliteState();
-const records = createSqliteStore(() => SQLite.openDatabaseAsync('wearing-inbox.db', {useNewConnection: true}), state, async (db, key, encoded) => {
+const runtime = globalThis as typeof globalThis & {__pajioSqliteStateV1?: SqliteState};
+const state = runtime.__pajioSqliteStateV1 ??= createSqliteState();
+const records = createSqliteStore(() => SQLite.openDatabaseAsync('pajio-inbox.db', {useNewConnection: true}), state, async (db, key, encoded) => {
   const fences = await accountFences(db);
   if (fencedWrite(key, JSON.parse(encoded), fences)) throw new Error('此账户正在注销，本机内容已停止保存。');
 });

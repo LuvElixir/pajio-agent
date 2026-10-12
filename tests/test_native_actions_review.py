@@ -3,8 +3,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from wearing.native_actions import NativeActions, NativeActionError
-from wearing.store import Store
+from pajio.native_actions import NativeActions, NativeActionError
+from pajio.store import Store
 
 PHONE, SECRET, SESSION = "a" * 32, "b" * 64, "c" * 32
 
@@ -90,7 +90,7 @@ def test_new_run_cannot_claim_an_old_run_native_request(tmp_path):
 def cloud_api(tmp_path):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
-    from wearing.native_actions_api import install_native_action_routes
+    from pajio.native_actions_api import install_native_action_routes
 
     book = NativeActions(Store(tmp_path / 'synthetic-cloud-native.sqlite3'))
     app = FastAPI()
@@ -141,11 +141,11 @@ def test_same_tenant_identity_other_account_cannot_discover_or_use_phone(cloud_a
 @pytest.mark.parametrize('claim_it,expected_state', [(False, 'cancelled'), (True, 'unknown')])
 async def test_tool_cancellation_retires_request_without_replaying_admitted_write(tmp_path, monkeypatch, claim_it, expected_state):
     import asyncio
-    from wearing.native_actions_tools import dispatch
+    from pajio.native_actions_tools import dispatch
 
     params = {'calendar_id': 'rem', 'title': 'Synthetic cancellation'}
     book, command = admitted(tmp_path, 'reminders.create', params, claim_it=claim_it)
-    monkeypatch.setattr('wearing.native_actions_tools.NativeActions', lambda _store: book)
+    monkeypatch.setattr('pajio.native_actions_tools.NativeActions', lambda _store: book)
     job = asyncio.create_task(dispatch(book.store, 'daily', 'native_request', {
         'installation_id': PHONE, 'method': 'reminders.create', 'params': params, 'request_key': 'synthetic-once',
     }))
@@ -161,7 +161,7 @@ async def test_tool_cancellation_retires_request_without_replaying_admitted_writ
 
 @pytest.fixture
 def owned_cloud(tmp_path):
-    from wearing.native_actions import ACTIVE
+    from pajio.native_actions import ACTIVE
 
     book = NativeActions(Store(tmp_path / 'owned-cloud-review.sqlite3'), require_task_owner=True)
     owner = 'a' * 64
@@ -176,8 +176,8 @@ def owned_cloud(tmp_path):
 
 @pytest.mark.asyncio
 async def test_agent_uses_trusted_task_owner_for_device_discovery_and_receipts(owned_cloud):
-    from wearing.native_actions import ACTIVE
-    from wearing.native_actions_tools import dispatch
+    from pajio.native_actions import ACTIVE
+    from pajio.native_actions_tools import dispatch
 
     book, task, owner = owned_cloud
     assert len((await dispatch(book.store, 'daily', 'native_devices', {}))['items']) == 1
@@ -196,8 +196,8 @@ async def test_agent_uses_trusted_task_owner_for_device_discovery_and_receipts(o
 
 
 def test_message_idempotency_cannot_reassign_existing_task_owner(owned_cloud):
-    from wearing.native_actions import ACTIVE
-    from wearing.store import MessageConflict
+    from pajio.native_actions import ACTIVE
+    from pajio.store import MessageConflict
 
     book, task, owner = owned_cloud
     with pytest.raises(MessageConflict):
@@ -210,7 +210,7 @@ def test_message_idempotency_cannot_reassign_existing_task_owner(owned_cloud):
 
 @pytest.mark.asyncio
 async def test_unknown_cloud_task_owner_remains_closed_after_mcp_reconstruction(owned_cloud):
-    from wearing.native_actions_tools import dispatch
+    from pajio.native_actions_tools import dispatch
 
     book, task, _ = owned_cloud
     with book.store.connection() as db:
@@ -236,7 +236,7 @@ def test_same_identity_other_account_cannot_admit_or_finish_original_command(own
 
 
 def test_legacy_local_device_is_not_inherited_by_cloud_account(tmp_path):
-    from wearing.native_actions import ACTIVE
+    from pajio.native_actions import ACTIVE
 
     store = Store(tmp_path / 'legacy-local-device.sqlite3')
     local = NativeActions(store)
@@ -257,9 +257,9 @@ def test_legacy_local_device_is_not_inherited_by_cloud_account(tmp_path):
 @pytest.mark.asyncio
 async def test_actual_app_binds_chat_owner_and_blocks_other_account_task_controls(tmp_path):
     import httpx
-    from wearing.app import create_app
-    from wearing.config import Settings
-    from wearing.hermes import HermesClient
+    from pajio.app import create_app
+    from pajio.config import Settings
+    from pajio.hermes import HermesClient
 
     wire_calls = []
     def no_engine(request):
@@ -284,10 +284,10 @@ async def test_actual_app_binds_chat_owner_and_blocks_other_account_task_control
     try:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as http:
             token = (await http.get('/api/bootstrap')).json()['token']
-            owner_a = {'X-Wearing-Token': token, 'x-test-authenticated-owner': 'a' * 64}
-            owner_b = {'X-Wearing-Token': token, 'x-test-authenticated-owner': 'f' * 64}
+            owner_a = {'X-Pajio-Token': token, 'x-test-authenticated-owner': 'a' * 64}
+            owner_b = {'X-Pajio-Token': token, 'x-test-authenticated-owner': 'f' * 64}
             body = {'content': 'Synthetic phone task owner A', 'request_id': 'synthetic-owner-request-0001'}
-            missing = await http.post('/api/conversation', json={'content': 'Synthetic private preview', 'request_id': 'synthetic-preview-request-0001'}, headers={'X-Wearing-Token': token})
+            missing = await http.post('/api/conversation', json={'content': 'Synthetic private preview', 'request_id': 'synthetic-preview-request-0001'}, headers={'X-Pajio-Token': token})
             assert missing.status_code == 201
             preview_id = missing.json()['task']['id']
             with app.state.store.connection() as db:
@@ -298,7 +298,7 @@ async def test_actual_app_binds_chat_owner_and_blocks_other_account_task_control
                     NativeActions(app.state.store).task_owner('daily')
             finally:
                 app.state.store.update(preview_id, status='draft', run_id=None)
-            malformed = await http.post('/api/conversation', json={'content': 'Synthetic malformed owner', 'request_id': 'synthetic-malformed-request-0001'}, headers={'X-Wearing-Token': token, 'x-test-authenticated-owner': 'invalid'})
+            malformed = await http.post('/api/conversation', json={'content': 'Synthetic malformed owner', 'request_id': 'synthetic-malformed-request-0001'}, headers={'X-Pajio-Token': token, 'x-test-authenticated-owner': 'invalid'})
             assert malformed.status_code == 401
             created = await http.post('/api/conversation', json=body, headers=owner_a)
             assert created.status_code == 201

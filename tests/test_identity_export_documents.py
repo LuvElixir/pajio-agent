@@ -11,11 +11,11 @@ from fastapi import FastAPI, Request
 import httpx
 import pytest
 
-from wearing.briefing_preferences import BriefingPreferences, SavePreferences
-from wearing.identity_export import IdentityExports, ExportError, MAX_TEXT_BYTES
-from wearing.identity_export_api import install_identity_export_routes
-from wearing.store import Store, now
-from wearing.workspace_text import WorkspaceText, TextSave
+from pajio.briefing_preferences import BriefingPreferences, SavePreferences
+from pajio.identity_export import IdentityExports, ExportError, MAX_TEXT_BYTES
+from pajio.identity_export_api import install_identity_export_routes
+from pajio.store import Store, now
+from pajio.workspace_text import WorkspaceText, TextSave
 
 
 def setup(root):
@@ -144,8 +144,8 @@ def test_recovery_invalid_or_oversized_body_omits_whole_version(tmp_path, raw):
 
 def test_recovery_budgets_are_declared_no_partial_text_or_unbounded_history(tmp_path, monkeypatch):
     book, _, _ = setup(tmp_path)
-    monkeypatch.setattr('wearing.identity_export.MAX_TEXT_VERSIONS', 3)
-    monkeypatch.setattr('wearing.identity_export.MAX_RECOVERY_BYTES', 5)
+    monkeypatch.setattr('pajio.identity_export.MAX_TEXT_VERSIONS', 3)
+    monkeypatch.setattr('pajio.identity_export.MAX_RECOVERY_BYTES', 5)
     for index in range(4):
         fixture_version(book, key=f'document-save-{index:04}', old='中文'.encode())
     data, manifest, _ = unpack(book)
@@ -173,7 +173,7 @@ def test_preferences_are_validated_with_bounded_closed_fields(tmp_path, value):
 def test_new_records_still_obey_global_record_limit(tmp_path, monkeypatch):
     book, prefs, _ = setup(tmp_path)
     preference(prefs)
-    monkeypatch.setattr('wearing.identity_export.MAX_ROWS', 0)
+    monkeypatch.setattr('pajio.identity_export.MAX_ROWS', 0)
     with pytest.raises(ExportError) as error:
         book.create('daily', 'export-documents-001')
     assert error.value.status == 413 and not list(book.root.glob('*.zip'))

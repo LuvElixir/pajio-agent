@@ -42,7 +42,7 @@ export class ConversationSourcesClient{
   private check(){if(!this.current()||this.signal?.aborted)throw new ApiError('当前身份已切换，原操作留在原身份。',0);}
   private async request(path:string,body?:SourceRequest,retry=true):Promise<unknown>{
     this.check();const aborter=new AbortController(),abort=()=>aborter.abort(),timeout=setTimeout(abort,20000);this.signal?.addEventListener('abort',abort,{once:true});
-    try{const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body?'POST':'GET',redirect:'error',signal:aborter.signal,headers:{...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity,...(body?{'Content-Type':'application/json','X-Wearing-Token':this.token}:{})},...(body?{body:JSON.stringify(body)}:{})});this.check();
+    try{const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body?'POST':'GET',redirect:'error',signal:aborter.signal,headers:{...connectionHeaders(this.connection),'X-Pajio-Identity':this.connection.identity,...(body?{'Content-Type':'application/json','X-Pajio-Token':this.token}:{})},...(body?{body:JSON.stringify(body)}:{})});this.check();
       if(body&&response.status===403&&retry){await this.bootstrap();return this.request(path,body,false);}
       const value:unknown=await response.json().catch(()=>{throw bad(body?0:422);});this.check();if(!response.ok)throw new ApiError(object(value)&&typeof value.detail==='string'?value.detail:'对话来源操作未完成。',response.status);return value;
     }catch(error){if(error instanceof ApiError)throw error;throw new ApiError('没有收到来源操作回执，请取回原回执。',0);}finally{clearTimeout(timeout);this.signal?.removeEventListener('abort',abort);}

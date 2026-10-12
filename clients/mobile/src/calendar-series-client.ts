@@ -6,10 +6,10 @@ export class CalendarSeriesClient {
     if(!this.active()||this.signal?.aborted)throw new Error('当前日历连接已停止。');
     const controller=new AbortController(),cancel=()=>controller.abort(),timer=setTimeout(cancel,15000);this.signal?.addEventListener('abort',cancel);if(this.signal?.aborted)cancel();
     try{
-      const base=connectionEndpoint(this.connection),headers={...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity};
+      const base=connectionEndpoint(this.connection),headers={...connectionHeaders(this.connection),'X-Pajio-Identity':this.connection.identity};
       let token='';if(body){const boot=await this.call() as {token?:string;identities?:{id:string}[]};if(!boot.token||!boot.identities?.some(i=>i.id===this.connection.identity))throw new Error('无法核对当前日历身份。');token=boot.token;}
       if(!this.active()||this.signal?.aborted)throw new Error('当前日历连接已停止。');
-      const response=await this.fetcher(new URL(body?'/api/calendar-series':'/api/bootstrap',base).toString(),{method:body?'POST':'GET',redirect:'error',signal:controller.signal,headers:{...headers,...(body?{'Content-Type':'application/json','X-Wearing-Token':token}:{})},...(body?{body:JSON.stringify(body)}:{})});
+      const response=await this.fetcher(new URL(body?'/api/calendar-series':'/api/bootstrap',base).toString(),{method:body?'POST':'GET',redirect:'error',signal:controller.signal,headers:{...headers,...(body?{'Content-Type':'application/json','X-Pajio-Token':token}:{})},...(body?{body:JSON.stringify(body)}:{})});
       const data=await response.json();if(!this.active()||this.signal?.aborted)throw new Error('当前日历连接已停止。');
       if(!response.ok)throw new ApiError(typeof data?.detail==='string'?data.detail:'日历请求未完成，原输入已保留。',response.status);return data;
     }finally{clearTimeout(timer);this.signal?.removeEventListener('abort',cancel);}

@@ -2,7 +2,7 @@ import ssl
 
 import pytest
 
-from wearing.cloud.upstream_tls import upstream_tls_context
+from pajio.cloud.upstream_tls import upstream_tls_context
 
 
 NAMES = ('PAJIO_UPSTREAM_CA_FILE', 'PAJIO_UPSTREAM_CERT_FILE', 'PAJIO_UPSTREAM_KEY_FILE')

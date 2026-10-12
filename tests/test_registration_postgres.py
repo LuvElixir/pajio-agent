@@ -7,9 +7,9 @@ import pytest
 from test_control_postgres import pg
 from test_invitations_postgres import fresh
 from test_registration import KEY,PASSWORD,URL,Provider
-from wearing.cloud.control import ControlStore,ControlError
-from wearing.cloud.invitations import InvitationStore,code_hash
-from wearing.cloud.registration import RegistrationBroker,RegistrationError
+from pajio.cloud.control import ControlStore,ControlError
+from pajio.cloud.invitations import InvitationStore,code_hash
+from pajio.cloud.registration import RegistrationBroker,RegistrationError
 
 
 def test_real_registration_role_recovers_unknown_create_without_admitting_until_oidc(pg,tmp_path):

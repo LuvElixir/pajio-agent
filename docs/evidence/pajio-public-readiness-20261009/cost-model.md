@@ -4,10 +4,10 @@
 
 ## 当前实际接入
 
-- 本机 `.wearing/hermes/config.yaml` 仅提取允许公开的字段，确认 `provider=deepseek`、`model.default=deepseek-flash`、`max_concurrent_runs=1`。未复制密钥、完整配置或用户内容。
-- `src/wearing/model_bridge.py` 支持多供应商，不能把“支持”当成实际已用；本次按已选 DeepSeek 计算。官方现将该 ID 对应到 V4.1-Flash。
+- 本机 `.pajio/hermes/config.yaml` 仅提取允许公开的字段，确认 `provider=deepseek`、`model.default=deepseek-flash`、`max_concurrent_runs=1`。未复制密钥、完整配置或用户内容。
+- `src/pajio/model_bridge.py` 支持多供应商，不能把“支持”当成实际已用；本次按已选 DeepSeek 计算。官方现将该 ID 对应到 V4.1-Flash。
 - 语音源码/验收记录对应 Seed-ASR 2.0 流式小时版资源 `volc.seedasr.sauc.duration`。网页搜索配置为 Exa free；不将该免费层当作公开产品长期免成本的保证。
-- `src/wearing/cloud/placement.py` 当前只接受 `isolation="vm"`；部署示例为腾讯香港 SA2.MEDIUM4（2 vCPU / 4 GiB，系统盘40 GiB+数据盘40 GiB）。这是模板，不能当成当前线上配置或容量验收。
+- `src/pajio/cloud/placement.py` 当前只接受 `isolation="vm"`；部署示例为腾讯香港 SA2.MEDIUM4（2 vCPU / 4 GiB，系统盘40 GiB+数据盘40 GiB）。这是模板，不能当成当前线上配置或容量验收。
 
 ## 模型和语音：按实际调用量估算
 

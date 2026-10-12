@@ -14,10 +14,10 @@ test('generated Android network policy only grants exact loopback HTTP and keeps
     await config.mods.android.manifest({...config, modRequest: {}, modResults: {manifest: {application: [app]}}});
     assert.equal(app.$['android:allowBackup'], 'false');
     assert.equal(app.$['android:usesCleartextTraffic'], 'false');
-    assert.equal(app.$['android:networkSecurityConfig'], '@xml/wearing_network_security');
+    assert.equal(app.$['android:networkSecurityConfig'], '@xml/pajio_network_security');
 
     await config.mods.android.dangerous({...config, modRequest: {projectRoot: path.resolve(__dirname, '..'), platformProjectRoot: directory}});
-    const xml = await fs.readFile(path.join(directory, 'app/src/main/res/xml/wearing_network_security.xml'), 'utf8');
+    const xml = await fs.readFile(path.join(directory, 'app/src/main/res/xml/pajio_network_security.xml'), 'utf8');
     const policy = (await parseStringPromise(xml))['network-security-config'];
     assert.deepEqual(policy['base-config'], [{$: {cleartextTrafficPermitted: 'false'}}]);
     assert.equal(policy['domain-config'].length, 1);

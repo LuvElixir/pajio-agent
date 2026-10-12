@@ -1,7 +1,7 @@
 import anyio
 import httpx
 import pytest
-from wearing.cloud.gateway import WorkerResponse
+from pajio.cloud.gateway import WorkerResponse
 
 class PoolStream(httpx.AsyncByteStream):
     def __init__(self):

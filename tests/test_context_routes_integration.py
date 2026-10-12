@@ -2,12 +2,12 @@
 import httpx
 import pytest
 
-from wearing.account_deletion import digest
-from wearing.cloud.account_deletion_tenant import PATH
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.relay import RelayStore, PairRequest, ConnectionRequest, PollRequest
-from wearing.cloud.worker import create_tenant_app
-from wearing.profile import write_private_text
+from pajio.account_deletion import digest
+from pajio.cloud.account_deletion_tenant import PATH
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.relay import RelayStore, PairRequest, ConnectionRequest, PollRequest
+from pajio.cloud.worker import create_tenant_app
+from pajio.profile import write_private_text
 
 ORIGIN = 'https://fixture.invalid'
 A, B, OPERATOR = 'a' * 64, 'b' * 64, 'x' * 64
@@ -27,7 +27,7 @@ def tenant(tmp_path, monkeypatch):
     relay.poll('c' * 64, PollRequest(connection_id=connection, availability={'phone_test': True}))
     app = create_tenant_app(root, engine_autostart=False)
     headers = {'Authorization': 'Bearer ' + (root / 'gateway.key').read_text().strip(),
-               'X-Wearing-Tenant': instance.tenant_id, 'X-Pajio-Storage-Scope': A}
+               'X-Pajio-Tenant': instance.tenant_id, 'X-Pajio-Storage-Scope': A}
     return root, instance, app, headers
 
 
@@ -38,15 +38,15 @@ async def test_real_context_routes_auth_csrf_identity_and_validation(tenant):
     async with app.router.lifespan_context(app), httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url=ORIGIN) as client:
         for path in paths:
             assert (await client.get(path)).status_code == 401
-            assert (await client.get(path, headers=headers | {'X-Wearing-Tenant': 'wrong'})).status_code == 403
+            assert (await client.get(path, headers=headers | {'X-Pajio-Tenant': 'wrong'})).status_code == 403
             missing_owner = {k: v for k, v in headers.items() if k != 'X-Pajio-Storage-Scope'}
             assert (await client.get(path, headers=missing_owner)).status_code == 401
             assert (await client.get(path, headers=headers | {'X-Pajio-Storage-Scope': 'local'})).status_code == 401
-            assert (await client.get(path, headers=headers | {'X-Wearing-Identity': 'unknown'})).status_code == 404
-            assert (await client.get(path + '?identity=unknown', headers=headers | {'X-Wearing-Identity': 'daily'})).status_code == 409
+            assert (await client.get(path, headers=headers | {'X-Pajio-Identity': 'unknown'})).status_code == 404
+            assert (await client.get(path + '?identity=unknown', headers=headers | {'X-Pajio-Identity': 'daily'})).status_code == 409
         assert (await client.get(paths[1], headers=headers)).json()['supported'] is False
         token = (await client.get('/api/bootstrap', headers=headers)).json()['token']
-        mutate = headers | {'X-Wearing-Token': token}
+        mutate = headers | {'X-Pajio-Token': token}
         for path in ['/api/chat-imports', paths[1] + '/request']:
             assert (await client.post(path, json=body, headers=headers)).status_code == 403
             assert (await client.post(path, json=body, headers=mutate | {'Origin': 'https://other.invalid'})).status_code == 403
@@ -76,4 +76,4 @@ async def test_freeze_blocks_every_new_device_route_and_chat_route(tenant):
                              ('POST', '/api/devices/access/phone_test/close'), ('POST', '/api/devices/access/phone_test/return'),
                              ('GET', '/api/chat-imports'), ('POST', '/api/chat-imports'),
                              ('GET', '/api/chat-imports/receipts/synthetic-import-route'), ('DELETE', '/api/chat-imports/chi_' + 'f' * 32)]:
-            assert (await client.request(method, path, json={}, headers=headers | {'X-Wearing-Token': token})).status_code == 410
+            assert (await client.request(method, path, json={}, headers=headers | {'X-Pajio-Token': token})).status_code == 410

@@ -4,21 +4,21 @@ from datetime import timedelta
 import httpx
 import pytest
 from pydantic import ValidationError
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.hermes import HermesClient
-from wearing.life import LifeBook
-from wearing.life_proxy import dispatch
-from wearing.schedules import ScheduleBook, ScheduleCoordinator, ScheduleDraft, ScheduleError, instant, next_time
-from wearing.service import TaskService
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.hermes import HermesClient
+from pajio.life import LifeBook
+from pajio.life_proxy import dispatch
+from pajio.schedules import ScheduleBook, ScheduleCoordinator, ScheduleDraft, ScheduleError, instant, next_time
+from pajio.service import TaskService
+from pajio.store import Store
 from test_goals import GoalWire
 
 
 @pytest.fixture
 def clock(monkeypatch):
     value = ["2026-10-05T00:00:00+00:00"]
-    monkeypatch.setattr("wearing.schedules.now", lambda: value[0])
+    monkeypatch.setattr("pajio.schedules.now", lambda: value[0])
     return value
 
 
@@ -212,7 +212,7 @@ async def test_api_and_agent_share_store_and_access_boundaries(tmp_path, clock):
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         token = (await client.get("/api/bootstrap")).json()["token"]
         assert (await client.post("/api/schedules", json={"schedule": spec().model_dump(), "request_key":"api"})).status_code == 403
-        client.headers["X-Wearing-Token"] = token
+        client.headers["X-Pajio-Token"] = token
         response = await client.post("/api/schedules", json={"schedule": spec().model_dump(), "request_key":"api"})
         assert response.status_code == 201
         item = response.json()
@@ -226,7 +226,7 @@ async def test_api_and_agent_share_store_and_access_boundaries(tmp_path, clock):
         dispatch(LifeBook(app.state.store), "daily", "schedule_change", {"schedule_id":item["id"], "revision":1, "action":"pause"})
         assert (await client.get("/api/schedules")).json()["items"][0]["status"] == "paused"
         other = app.state.store.save_identity("另一个身份")["id"]
-        client.headers["X-Wearing-Identity"] = other
+        client.headers["X-Pajio-Identity"] = other
         assert (await client.get(f"/api/schedules/{item['id']}")).status_code == 404
         assert (await client.patch(f"/api/schedules/{item['id']}", json={"revision":2,"action":"resume"})).status_code == 404
     await app.state.service.hermes.close()

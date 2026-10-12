@@ -6,10 +6,10 @@ import httpx
 import pytest
 from fastapi import FastAPI, Request
 
-from wearing.cloud_apps import CloudApps, CloudAppError, FeishuCloudNetwork, FEATURES
-from wearing.cloud_apps_api import install_cloud_app_routes
-from wearing.cloud_apps_tools import read_resource, TOOLS
-from wearing.store import Store
+from pajio.cloud_apps import CloudApps, CloudAppError, FeishuCloudNetwork, FEATURES
+from pajio.cloud_apps_api import install_cloud_app_routes
+from pajio.cloud_apps_tools import read_resource, TOOLS
+from pajio.store import Store
 
 
 SECRET = "private-app-secret-canary"
@@ -68,7 +68,7 @@ class Network:
 
 @pytest.fixture
 def cloud(tmp_path):
-    return CloudApps(Store(tmp_path / "wearing.sqlite3"), Network())
+    return CloudApps(Store(tmp_path / "pajio.sqlite3"), Network())
 
 
 def due(cloud):
@@ -291,7 +291,7 @@ async def test_native_routes_use_request_identity_and_return_actual_resource_dat
 
     @app.middleware("http")
     async def identity(request: Request, call_next):
-        request.state.identity_id = request.headers.get("X-Wearing-Identity", "daily")
+        request.state.identity_id = request.headers.get("X-Pajio-Identity", "daily")
         return await call_next(request)
 
     install_cloud_app_routes(app, cloud)
@@ -309,7 +309,7 @@ async def test_operator_configuration_never_shares_user_tokens(cloud, tmp_path, 
     config = tmp_path / 'operator.json'
     config.write_text(json.dumps({'app_id': 'cli_testapp', 'secret': SECRET, 'features': ['documents', 'calendar', 'chat']}))
     config.chmod(0o600)
-    monkeypatch.setenv('WEARING_FEISHU_CONFIG_FILE', str(config))
+    monkeypatch.setenv('PAJIO_FEISHU_CONFIG_FILE', str(config))
     owner = cloud.snapshot('daily')
     other = cloud.store.save_identity('Other')['id']
     assert owner['configured'] and cloud.snapshot(other)['state'] == 'configured'
@@ -366,7 +366,7 @@ async def test_chat_reads_are_bounded_identity_scoped_and_read_only(cloud):
 
 
 async def test_context_receipt_is_real_partial_and_bound_to_stored_task_identity(cloud):
-    from wearing.cloud_context import collect_context
+    from pajio.cloud_context import collect_context
     await connect(cloud)
     receipt = await collect_context(cloud, 'daily')
     assert receipt['sampled'] and receipt['content_is_untrusted']

@@ -12,7 +12,7 @@ function deferred() {
   return {promise, resolve};
 }
 function fixture(t: {after: (fn: () => void) => void}) {
-  const directory = mkdtempSync(join(tmpdir(), 'wearing-storage-')), path = join(directory, 'state.db');
+  const directory = mkdtempSync(join(tmpdir(), 'pajio-storage-')), path = join(directory, 'state.db');
   const handles = new Set<DatabaseSync>(), state = createSqliteState();
   let opens = 0;
   const hooks: {before?: (sql: string, params: string[]) => Promise<void>} = {};

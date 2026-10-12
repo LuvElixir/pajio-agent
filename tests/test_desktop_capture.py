@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 import json
 import pytest
-from wearing.desktop_capture import capture_with_text
+from pajio.desktop_capture import capture_with_text
 
 
 def test_retains_text_from_same_snapshot_without_second_native_request():

@@ -1,0 +1,365 @@
+"""Pajio host for the pinned Hermes API adapter.
+
+Executed by Hermes' managed interpreter. The agent loop, model resolution,
+session persistence, run idempotency and approval logic remain upstream-owned.
+No GatewayRunner, platform bots, cron ticker or kanban workers are started.
+"""
+
+import asyncio
+import importlib.util
+import json
+import logging
+import os
+from pathlib import Path
+import signal
+import sqlite3
+import sys
+
+
+CONFIRMATION_GUARD_ACTIVE = False
+RECALL_GUARD_ACTIVE = False
+AI_CONSENT_GUARD_ACTIVE = False
+
+ALLOWED_ROUTES = frozenset({
+    ("GET", "/health"), ("GET", "/v1/capabilities"),
+    ("POST", "/v1/runs"), ("GET", "/v1/runs/{run_id}"),
+    ("GET", "/v1/runs/{run_id}/events"),
+    ("POST", "/v1/runs/{run_id}/approval"),
+    ("POST", "/v1/runs/{run_id}/steer"),
+    ("POST", "/v1/runs/{run_id}/stop"),
+    ("GET", "/v1/pajio/memory"), ("PATCH", "/v1/pajio/memory"),
+})
+
+
+def expected_life_tool_names():
+    from pajio.cloud_apps_contract import NAMES as CLOUD_NAMES
+    from pajio.native_actions_contract import NAMES as NATIVE_NAMES
+    return {"request_confirmation", "life_records", "life_create", "life_change", "task_lists", "task_list_change", "calendar_series", "goal_list", "goal_create", "goal_change", "schedule_list", "schedule_create", "schedule_change", "artifact_list", "artifact_read", "artifact_publish", "artifact_design_guide", "chat_import_search", "chat_import_read"} | CLOUD_NAMES | NATIVE_NAMES
+
+
+def adapter_class():
+    from aiohttp import web
+    from gateway.platforms.api_server import APIServerAdapter
+    try:
+        from .research import receipt_items
+        from .app_research import APP_TOOLS, app_receipt_items
+    except ImportError:  # Script entry point in the managed interpreter.
+        from research import receipt_items
+        from app_research import APP_TOOLS, app_receipt_items
+
+    class PajioAdapter(APIServerAdapter):
+        draining = False
+        file_tools = []
+        phone_tools = []
+        remote_tools = []
+        life_tools = []
+        profile_version = 0
+        computer_enabled = False
+        memory_tools = []
+        web_tools = []
+        planning_tools = []
+        skill_tools = []
+        media_tools = []
+        research_failed_runs = None
+
+        def _make_run_event_callback(self, run_id, loop):
+            upstream = super()._make_run_event_callback(run_id, loop)
+            def callback(event_type, tool_name=None, preview=None, args=None, **kwargs):
+                upstream(event_type, tool_name, preview, args, **kwargs)
+                if tool_name in {"web_search", "web_extract"} or tool_name in APP_TOOLS:
+                    try:
+                        from gateway.platforms.api_server import redact_sensitive_text
+                        clean_args = json.loads(redact_sensitive_text(json.dumps(args or {}, ensure_ascii=False), force=True))
+                        result = kwargs.get("result")
+                        if isinstance(result, dict):
+                            result = redact_sensitive_text(json.dumps(result, ensure_ascii=False), force=True)
+                        elif isinstance(result, str):
+                            result = redact_sensitive_text(result, force=True)
+                        items = (app_receipt_items(tool_name, event_type, result, kwargs.get("is_error", False))
+                                 if tool_name in APP_TOOLS else receipt_items(tool_name, event_type, clean_args, result, kwargs.get("is_error", False)))
+                        self.research.record(run_id, items)
+                    except Exception:
+                        self.research_failed_runs.add(run_id)
+                        logging.getLogger(__name__).warning("Research receipt could not be saved")
+            return callback
+
+        async def _handle_get_run(self, request):
+            # The upstream owner/auth checks execute before any receipt is read.
+            response = await super()._handle_get_run(request)
+            if response.status == 200:
+                data = json.loads(response.body)
+                run_id = request.match_info["run_id"]
+                try:
+                    data["research"] = await asyncio.to_thread(self.research.snapshot, run_id)
+                    if run_id in self.research_failed_runs:
+                        data["research"]["unavailable"] = True
+                except (OSError, ValueError, sqlite3.Error):
+                    data["research"] = {"items": [], "unavailable": True}
+                return web.json_response(data)
+            return response
+
+        def _http_route_table(self):
+            routes = [r for r in super()._http_route_table() if (r[0], r[1]) in ALLOWED_ROUTES]
+            return routes + [("GET", "/v1/pajio/memory", self._handle_memory), ("PATCH", "/v1/pajio/memory", self._handle_memory_change)]
+
+        async def _handle_memory(self, request):
+            denied = self._check_auth(request)
+            if denied is not None:
+                return denied
+            try:
+                data = await asyncio.to_thread(memory_snapshot)
+            except (OSError, ValueError):
+                return web.json_response({"error": "无法读取本身份的记忆；原文件未改动。"}, status=503)
+            return web.json_response(data)
+
+        async def _handle_memory_change(self, request):
+            denied = self._check_auth(request)
+            if denied is not None:
+                return denied
+            try:
+                change = await request.json()
+                if not isinstance(change, dict):
+                    return web.json_response({"error": "记忆修改格式无效。"}, status=422)
+                # No await between this check and the write: a new run cannot load
+                # the old frozen memory while an explicit edit is being committed.
+                if self._active_structured_run_count() or self._inflight_agent_runs:
+                    return web.json_response({"error": "当前任务正在使用记忆，请暂停任务或等它结束后重试。"}, status=409)
+                from tools.memory_tool import load_on_disk_store, _scan_memory_content, ENTRY_DELIMITER
+                try:
+                    from .memory_controls import mutate_memory, set_memory_enabled
+                except ImportError:
+                    from memory_controls import mutate_memory, set_memory_enabled
+                memory_snapshot()  # same size/symlink check as reads
+                if change.get("action") == "set_enabled":
+                    result = set_memory_enabled(Path(os.environ["HERMES_HOME"]), change)
+                else:
+                    result = mutate_memory(load_on_disk_store(), change, _scan_memory_content, ENTRY_DELIMITER,
+                                           home=Path(os.environ["HERMES_HOME"]))
+                if not result.get("success"):
+                    return web.json_response({"error": result.get("error", "记忆没有改动，请刷新后重试。")}, status=result.get("status", 409))
+                snapshot = memory_snapshot()
+                if change.get("action") == "set_enabled":
+                    from hermes_cli.config import load_config_readonly
+                    toolsets = load_config_readonly().get("platform_toolsets", {}).get("api_server", [])
+                    self.memory_tools = (["memory"] if "memory" in toolsets and any(t["enabled"] for t in snapshot["targets"].values()) else []) + (["session_search"] if "session_search" in toolsets else [])
+                return web.json_response(snapshot)
+            except (OSError, ValueError, RuntimeError):
+                return web.json_response({"error": "记忆暂时无法保存，请重新读取后核对。"}, status=503)
+
+        def _make_profile_prefix_middleware(self):
+            parent = super()._make_profile_prefix_middleware()
+
+            @web.middleware
+            async def one_profile(request, handler):
+                if request.path.startswith("/p/"):
+                    raise web.HTTPNotFound()
+                return await parent(request, handler)
+            return one_profile
+
+        def _wire_plugin_handlers(self, app):
+            # Plugins cannot silently expand this product's HTTP surface.
+            return None
+
+        def _gateway_is_draining(self):
+            return self.draining
+
+        async def _handle_health(self, request):
+            return web.json_response({"status": "ok", "platform": "pajio", "mode": "pajio-personal"})
+
+        async def _handle_capabilities(self, request):
+            response = await super()._handle_capabilities(request)
+            if response.status != 200:
+                return response
+            data = json.loads(response.body)
+            # Keep the upstream protocol identifier for existing client compatibility.
+            data.update(platform="pajio", model="pajio")
+            allowed_features = {"run_submission", "runs_idempotency", "run_status", "run_events_sse", "run_stop", "run_steer",
+                                "run_approval_response", "tool_progress_events", "approval_events", "reasoning_streaming",
+                                "session_continuity_header", "session_key_header"}
+            data["features"] = {k: v if k in allowed_features else False for k, v in data["features"].items()}
+            data["endpoints"] = {k: v for k, v in data["endpoints"].items() if (v["method"], v["path"]) in ALLOWED_ROUTES}
+            data["runtime"] = {"mode": "pajio-personal", "tool_execution": "server", "split_runtime": False}
+            data["pajio"] = {"profile_version": self.profile_version, "identity": "Pajio", "scheduler": False, "messaging": False}
+            data["pajio"]["memory_tools"] = self.memory_tools
+            data["endpoints"]["pajio_memory"] = {"method": "GET", "path": "/v1/pajio/memory"}
+            data["pajio"]["computer_tools"] = ["computer_use"] if self.computer_enabled else []
+            data["pajio"]["file_tools"] = self.file_tools
+            data["pajio"]["phone_tools"] = self.phone_tools
+            # The first enrollment (and later device kinds/permission changes)
+            # updates the upstream registry through MCP tools/list_changed.
+            from tools.registry import registry
+            data["pajio"]["remote_device_tools"] = sorted(entry.name for entry in registry.get_all_entries()
+                if entry.name.startswith("mcp__pajio_devices__") and entry.toolset == "mcp-pajio_devices")
+            data["pajio"]["life_tools"] = self.life_tools
+            data["pajio"]["web_tools"] = self.web_tools
+            data["pajio"]["planning_tools"] = self.planning_tools
+            data["pajio"]["skill_tools"] = self.skill_tools
+            data["pajio"]["media_tools"] = self.media_tools
+            data["pajio"]["confirmation_guard"] = "durable-v1" if CONFIRMATION_GUARD_ACTIVE else None
+            data["pajio"]["session_recall_guard"] = "sources-v1" if RECALL_GUARD_ACTIVE else None
+            data["pajio"]["ai_consent_guard"] = "deepseek-v1" if AI_CONSENT_GUARD_ACTIVE else None
+            data["pajio"]["research_receipts"] = True
+            data["pajio"]["app_observation_receipts"] = True
+            return web.json_response(data)
+
+    return PajioAdapter
+
+
+def memory_snapshot():
+    """Read the same upstream store the agent loads; no second memory writer."""
+    from datetime import datetime, timezone
+    from tools.memory_tool import load_on_disk_store, get_memory_dir
+    for name in ("USER.md", "MEMORY.md"):
+        path = get_memory_dir() / name
+        if path.is_symlink():
+            raise ValueError("Unsafe memory file")
+        if path.exists():
+            if path.stat().st_size > 65536:
+                raise ValueError("Unsafe or oversized memory file")
+            path.read_text(encoding="utf-8")
+    try:
+        from .memory_controls import revision, settings_snapshot, memory_history
+    except ImportError:
+        from memory_controls import revision, settings_snapshot, memory_history
+    _, settings_revision = settings_snapshot(Path(os.environ["HERMES_HOME"]))
+    store = load_on_disk_store()
+    return {"available": True, "observed_at": datetime.now(timezone.utc).isoformat(),
+            "targets": {target: {"enabled": store.target_enabled(target),
+                                 "entries": store._entries_for(target),
+                                 "revision": revision(store._entries_for(target)),
+                                 "used_chars": store._char_count(target),
+                                 "limit_chars": store._char_limit(target),
+                                 "settings_revision": settings_revision,
+                                 "history": memory_history(Path(os.environ["HERMES_HOME"]), target,
+                                                           store._entries_for(target), enabled=store.target_enabled(target))} for target in ("user", "memory")}}
+
+
+async def serve():
+    from gateway.config import PlatformConfig
+    adapter = adapter_class()(PlatformConfig(enabled=True, extra={
+        "host": "127.0.0.1", "port": int(os.environ["API_SERVER_PORT"]),
+        "key": os.environ["API_SERVER_KEY"], "model_name": "pajio", "cors_origins": "",
+    }))
+    stop = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            loop.add_signal_handler(sig, stop.set)
+        except NotImplementedError:  # Windows event loops use the synchronous signal bridge.
+            signal.signal(sig, lambda *_: loop.call_soon_threadsafe(stop.set))
+    try:
+        from hermes_cli.config import load_config
+        config = load_config()
+        manifest_path = Path(os.environ["HERMES_HOME"]) / "pajio-profile.json"
+        if manifest_path.exists():
+            adapter.profile_version = json.loads(manifest_path.read_text())["version"]
+        from tools.memory_tool import get_builtin_memory_store_flags
+        toolsets = config.get("platform_toolsets", {}).get("api_server", [])
+        from model_tools import get_tool_definitions
+        native = [name for name in ("todo", "skills", "vision") if name in toolsets]
+        available = {item["function"]["name"] for item in get_tool_definitions(
+            enabled_toolsets=native, quiet_mode=True, skip_tool_search_assembly=True)} if native else set()
+        adapter.planning_tools = sorted(available & {"todo_list"})
+        adapter.skill_tools = sorted(available & {"skills_list", "skill_view", "skill_manage"})
+        adapter.media_tools = sorted(available & {"vision_analyze"})
+        try:
+            from .research import ResearchBook
+        except ImportError:
+            from research import ResearchBook
+        adapter.research = ResearchBook(Path(os.environ["HERMES_HOME"]))
+        adapter.research_failed_runs = set()
+        if "web" in toolsets:
+            from tools.web_tools import check_web_api_key
+            adapter.web_tools = ["web_search", "web_extract"] if check_web_api_key() else []
+        adapter.memory_tools = (["memory"] if "memory" in toolsets and any(get_builtin_memory_store_flags(config)) else []) + (["session_search"] if "session_search" in toolsets else [])
+        adapter.computer_enabled = "computer_use" in config.get("platform_toolsets", {}).get("api_server", [])
+        if "pajio_files" in config.get("platform_toolsets", {}).get("api_server", []):
+            from tools.mcp_tool_discovery import discover_mcp_tools
+            discovered = await asyncio.to_thread(discover_mcp_tools, ["pajio_files"])
+            adapter.file_tools = [name for name in discovered if name.startswith("mcp__pajio_files__")]
+            if len(adapter.file_tools) != 6:
+                raise RuntimeError("Pajio file connector did not expose the expected tools")
+        if "pajio_phone" in config.get("platform_toolsets", {}).get("api_server", []):
+            from tools.mcp_tool_discovery import discover_mcp_tools
+            discovered = await asyncio.to_thread(discover_mcp_tools, ["pajio_phone"])
+            adapter.phone_tools = [name for name in discovered if name.startswith("mcp__pajio_phone__")]
+            if len(adapter.phone_tools) != 11:
+                raise RuntimeError("Pajio phone connector did not expose the expected tools")
+        if "pajio_devices" in toolsets:
+            from tools.mcp_tool_discovery import discover_mcp_tools
+            discovered = await asyncio.to_thread(discover_mcp_tools, ["pajio_devices"])
+            adapter.remote_tools = [name for name in discovered if name.startswith("mcp__pajio_devices__")]
+            if adapter.remote_tools and not any(name.endswith("__pajio_list_devices") for name in adapter.remote_tools):
+                raise RuntimeError("Pajio remote connector did not expose its inventory tool")
+        if "pajio_life" in toolsets:
+            from tools.mcp_tool_discovery import discover_mcp_tools
+            discovered = await asyncio.to_thread(discover_mcp_tools, ["pajio_life"])
+            adapter.life_tools = [name for name in discovered if name.startswith("mcp__pajio_life__")]
+            if {name.split("__")[-1] for name in adapter.life_tools} != expected_life_tool_names():
+                raise RuntimeError("Pajio life connector did not expose its expected tools")
+        if not await adapter.connect():
+            raise RuntimeError("Pajio engine could not bind its local API")
+        print("PAJIO_ENGINE_READY", flush=True)
+        await stop.wait()
+    finally:
+        adapter.draining = True
+        adapter.mark_shutdown_requested()
+        adapter.interrupt_active_runs("Pajio is shutting down")
+        await adapter.cancel_background_tasks()
+        await adapter.disconnect()
+        from tools.mcp_tool_lifecycle import shutdown_mcp_servers
+        await asyncio.to_thread(shutdown_mcp_servers, timeout=3.0)
+
+
+def load_host_package():
+    """Expose our Python bridge without importing the host interpreter's libraries.
+
+    A wheel lives beside ABI-specific dependencies in site-packages. Adding its
+    parent to the managed interpreter's path can select incompatible extensions.
+    Only the pajio package itself is shared across these environments.
+    """
+    if "pajio" not in sys.modules:
+        package = Path(__file__).resolve().parent
+        spec = importlib.util.spec_from_file_location(
+            "pajio", package / "__init__.py", submodule_search_locations=[str(package)])
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["pajio"] = module
+        spec.loader.exec_module(module)
+
+
+def main():
+    source = Path(sys.argv[1]).resolve()
+    sys.path.insert(0, str(source))
+    load_host_package()
+    # Capture host authority before loading editable provider dotenv settings.
+    from pajio.usage_guard import UsageGuardConfig, install_usage_guard
+    usage_config = UsageGuardConfig.from_env()
+    from pajio.session_recall_guard import RecallConfig, install_session_recall_guard
+    recall_root, recall_identity, recall_local = (os.environ.get(key) for key in
+        ('PAJIO_RECALL_DATA_DIR', 'PAJIO_RECALL_IDENTITY', 'PAJIO_RECALL_LOCAL'))
+    if not recall_root or not recall_identity or recall_local not in {'0', '1'}:
+        raise RuntimeError('Pajio history recall is missing trusted host configuration')
+    recall_config = RecallConfig(Path(recall_root), recall_identity, recall_local == '1')
+    from dotenv import load_dotenv
+    if os.environ.get("PAJIO_MODEL_ENV"):
+        # Model credentials are shared infrastructure, not identity accounts.
+        # Only provider key variables are imported from the shared file.
+        from dotenv import dotenv_values
+        shared = dotenv_values(os.environ["PAJIO_MODEL_ENV"])
+        for name in ("DEEPSEEK_API_KEY", "OPENAI_API_KEY", "ANTHROPIC_API_KEY", "OPENROUTER_API_KEY", "MINIMAX_API_KEY"):
+            if shared.get(name):
+                os.environ[name] = shared[name]
+    load_dotenv(Path(os.environ["HERMES_HOME"]) / ".env", override=True)
+    install_usage_guard(usage_config)
+    global AI_CONSENT_GUARD_ACTIVE
+    AI_CONSENT_GUARD_ACTIVE = usage_config.consent_required
+    from pajio.confirmation_guard import install_confirmation_guard
+    global CONFIRMATION_GUARD_ACTIVE
+    CONFIRMATION_GUARD_ACTIVE = install_confirmation_guard()
+    global RECALL_GUARD_ACTIVE
+    RECALL_GUARD_ACTIVE = install_session_recall_guard(recall_config)
+    asyncio.run(serve())
+
+
+if __name__ == "__main__":
+    main()

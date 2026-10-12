@@ -1,5 +1,5 @@
 .venv/
-.wearing/
+.pajio/
 .hypit/
 .cache/
 __pycache__/
@@ -29,7 +29,7 @@ node_modules/
 ._*
 .DS_Store
 .venv/
-.wearing/
+.pajio/
 .hypit/
 .local/
 .pumio-dev/

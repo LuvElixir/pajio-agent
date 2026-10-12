@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
-from wearing.cloud.core_reservations import CORE_RESERVATIONS_SOURCE
+from pajio.cloud.core_reservations import CORE_RESERVATIONS_SOURCE
 
 
 def validator(tmp_path):

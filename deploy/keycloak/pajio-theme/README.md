@@ -4,4 +4,4 @@ Extends the pinned Keycloak 26.7.4 `keycloak.v2` theme. No authentication templa
 
 Install this directory under the distribution's `themes/pajio` directory and set only the `pajio` realm's `loginTheme` to `pajio`. Back up the previous realm theme field and deployed file hashes before activation; verify discovery and actual rendered login HTML afterwards. Restoring the prior `loginTheme` rolls back the presentation. Keep `directAccessGrantsEnabled=false` for `pajio-app`.
 
-Shared presentation sources: `src/wearing/web/auth/auth.css`, `auth.js`, `bear-resting.png`, `bear-privacy.png`; copies here must remain byte-identical. Static image masters were generated with the built-in image tool from the approved Pajio character, then exported at 672px for the UI.
+Shared presentation sources: `src/pajio/web/auth/auth.css`, `auth.js`, `bear-resting.png`, `bear-privacy.png`; copies here must remain byte-identical. Static image masters were generated with the built-in image tool from the approved Pajio character, then exported at 672px for the UI.

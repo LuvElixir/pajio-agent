@@ -1,10 +1,10 @@
 import {useCallback, useEffect, useMemo, useSyncExternalStore} from 'react';
 import {AppState} from 'react-native';
-import {WearingApi, type Connection} from './core';
+import {PajioApi, type Connection} from './core';
 import {activityScope, createActivityStore} from './activity-store';
 import {serviceFetch} from './transport';
 
-const activityStore = createActivityStore({load: (connection, query) => new WearingApi(connection, serviceFetch).activity(query)});
+const activityStore = createActivityStore({load: (connection, query) => new PajioApi(connection, serviceFetch).activity(query)});
 export const refreshActivitySnapshot = (connection: Connection) => activityStore.refresh(connection);
 let lifecycleUsers = 0;
 let detachLifecycle: (() => void) | null = null;

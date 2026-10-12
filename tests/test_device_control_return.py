@@ -1,10 +1,10 @@
 """Real Core HTTP -> persistent relay: ordinary resume never releases a private pause."""
 import httpx
 
-from wearing.app import create_app
-from wearing.cloud import relay
-from wearing.cloud.relay import ResourceControl
-from wearing.config import Settings
+from pajio.app import create_app
+from pajio.cloud import relay
+from pajio.cloud.relay import ResourceControl
+from pajio.config import Settings
 from test_device_access_relay_integration import ACTOR, RESOURCE, setup
 
 
@@ -18,7 +18,7 @@ async def test_private_paused_resume_is_refused_with_actionable_copy_and_no_muta
     monkeypatch.setattr(relay, 'instance_relay', lambda _root: store)
     try:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
-            client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+            client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
             response = await client.post('/api/devices/control', json={'resource_id': RESOURCE, 'paused': False,
                                                                         'expected_generation': before['control_generation']})
             assert response.status_code == 409
@@ -38,7 +38,7 @@ async def test_ordinary_pause_still_resumes_through_existing_generation_gate(tmp
     monkeypatch.setattr(relay, 'instance_relay', lambda _root: store)
     try:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
-            client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+            client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
             result = await client.post('/api/devices/control', json={'resource_id': RESOURCE, 'paused': False, 'expected_generation': 1})
             assert result.status_code == 200
             assert result.json() == {'resource_id': RESOURCE, 'paused': False, 'generation': 2}

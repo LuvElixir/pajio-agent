@@ -5,11 +5,11 @@ from datetime import datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
-from wearing.goals import GoalBook, GoalCoordinator
-from wearing.life import LifeBook, LifeDraft
-from wearing.life_proxy import dispatch
-from wearing.schedules import ScheduleBook, ScheduleDraft, ScheduleError
-from wearing.store import Store
+from pajio.goals import GoalBook, GoalCoordinator
+from pajio.life import LifeBook, LifeDraft
+from pajio.life_proxy import dispatch
+from pajio.schedules import ScheduleBook, ScheduleDraft, ScheduleError
+from pajio.store import Store
 from test_goals import report
 from test_schedules import rig, clock
 
@@ -25,7 +25,7 @@ def advance(clock, seconds=15):
 
 def linked(rig, monkeypatch, steps=3):
     store, book, service, coordinator, wire, clock = rig
-    monkeypatch.setattr('wearing.goals.now', lambda: clock[0])
+    monkeypatch.setattr('pajio.goals.now', lambda: clock[0])
     goals = book.goals
     goal = goals.create('daily','找安静的假期去处','只研究，不下单','给出有依据的候选',steps)
     goal = goals.control(goal['id'],1,'resume')

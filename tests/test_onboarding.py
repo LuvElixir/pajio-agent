@@ -7,25 +7,25 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from wearing.account_deletion import DeletionJobs, digest
-from wearing.account_deletion_fixture import SyntheticDeletionAdapter
-from wearing.app import create_app
-from wearing.artifacts import ArtifactBook
-from wearing.briefing_api import BriefingBook, CreateBriefing
-from wearing.briefing_automation import BriefingAutomation, AutomationSave
-from wearing.briefing_preferences import SavePreferences
-from wearing.config import Settings
-from wearing.life import LifeBook, LifeDraft
-from wearing.onboarding import OnboardingBook, OnboardingError, ProfileValues, SaveOnboarding
-from wearing.schedules import ScheduleBook
-from wearing.store import Store
+from pajio.account_deletion import DeletionJobs, digest
+from pajio.account_deletion_fixture import SyntheticDeletionAdapter
+from pajio.app import create_app
+from pajio.artifacts import ArtifactBook
+from pajio.briefing_api import BriefingBook, CreateBriefing
+from pajio.briefing_automation import BriefingAutomation, AutomationSave
+from pajio.briefing_preferences import SavePreferences
+from pajio.config import Settings
+from pajio.life import LifeBook, LifeDraft
+from pajio.onboarding import OnboardingBook, OnboardingError, ProfileValues, SaveOnboarding
+from pajio.schedules import ScheduleBook
+from pajio.store import Store
 
 A = 'a' * 64
 B = 'b' * 64
 
 
 def setup(tmp_path):
-    store = Store(tmp_path / 'wearing.sqlite3')
+    store = Store(tmp_path / 'pajio.sqlite3')
     return store, OnboardingBook(store)
 
 
@@ -150,8 +150,8 @@ def test_existing_context_suppresses_first_run_but_draft_can_resume(tmp_path):
 
 
 def test_default_runtime_and_profile_preparation_do_not_hide_new_user_onboarding(tmp_path):
-    from wearing.profile import prepare_profile
-    from wearing.runtime import HermesRuntime
+    from pajio.profile import prepare_profile
+    from pajio.runtime import HermesRuntime
     store, book = setup(tmp_path)
     runtime = HermesRuntime(tmp_path)
     runtime.prepare_home()
@@ -185,12 +185,12 @@ async def test_real_app_route_auth_identity_csrf_and_no_task_side_effect(tmp_pat
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url='http://testserver') as http:
             assert (await http.get('/api/onboarding')).json()['revision'] == 0
             assert (await http.post('/api/onboarding', json=request().model_dump())).status_code == 403
-            headers = {'X-Wearing-Token': (await http.get('/api/bootstrap')).json()['token']}
+            headers = {'X-Pajio-Token': (await http.get('/api/bootstrap')).json()['token']}
             result = await http.post('/api/onboarding', headers=headers, json=request(roles=['employed']).model_dump())
             assert result.status_code == 200 and result.json()['revision'] == 1
-            assert (await http.get('/api/onboarding', headers={'X-Wearing-Identity': other})).json()['revision'] == 0
-            assert (await http.get('/api/onboarding?identity=daily', headers={'X-Wearing-Identity': other})).status_code == 409
-            assert (await http.get('/api/onboarding', headers={'X-Wearing-Identity': 'unknown'})).status_code == 404
+            assert (await http.get('/api/onboarding', headers={'X-Pajio-Identity': other})).json()['revision'] == 0
+            assert (await http.get('/api/onboarding?identity=daily', headers={'X-Pajio-Identity': other})).status_code == 409
+            assert (await http.get('/api/onboarding', headers={'X-Pajio-Identity': 'unknown'})).status_code == 404
             assert (await http.post('/api/onboarding', headers=headers, json={**request().model_dump(), 'identity_id': other})).status_code == 422
             assert (await http.post('/api/onboarding', headers={**headers, 'Origin': 'null'}, json=request().model_dump())).status_code == 403
             assert not app.state.store.list()
@@ -204,7 +204,7 @@ async def test_cloud_route_refuses_missing_owner_instead_of_using_local_profile(
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app), base_url='http://testserver') as http:
             assert (await http.get('/api/onboarding')).status_code == 401
             token = (await http.get('/api/bootstrap')).json()['token']
-            assert (await http.post('/api/onboarding', headers={'X-Wearing-Token': token}, json=request().model_dump())).status_code == 401
+            assert (await http.post('/api/onboarding', headers={'X-Pajio-Token': token}, json=request().model_dump())).status_code == 401
     finally:
         await app.state.service.hermes.close()
 

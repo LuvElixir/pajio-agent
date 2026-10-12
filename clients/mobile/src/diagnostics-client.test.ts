@@ -39,7 +39,7 @@ test('GET uses fixed credentials and identity headers, never body or query crede
   mutable.identity='other'; mutable.session.accessToken='changed';
   assert.equal((await api.snapshot()).identity_id,'daily'); assert.ok(request);
   assert.equal(request.url,'https://private-host.invalid/api/diagnostics'); assert.equal(request.init.method,'GET');
-  const headers = new Headers(request.init.headers); assert.equal(headers.get('Authorization'),'Bearer '+'s'.repeat(64)); assert.equal(headers.get('X-Wearing-Identity'),'daily');
+  const headers = new Headers(request.init.headers); assert.equal(headers.get('Authorization'),'Bearer '+'s'.repeat(64)); assert.equal(headers.get('X-Pajio-Identity'),'daily');
   assert.equal(request.init.redirect,'error'); assert.equal(request.init.body,undefined);
 });
 test('server error body and malformed receipt never become diagnostics or user-visible text', async () => {

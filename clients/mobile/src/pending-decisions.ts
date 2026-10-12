@@ -1,4 +1,4 @@
-import {ApiError, Connection, connectionEndpoint, connectionHeaders, scopeOf, Store, WearingApi} from './core';
+import {ApiError, Connection, connectionEndpoint, connectionHeaders, scopeOf, Store, PajioApi} from './core';
 
 export type PendingDecision = {id: string; identity_id: string; task_id: string; revision: number; state: string;
   recovery_task_id: string | null; can_resume: boolean; card: {title: string; action: string; impact: string}};
@@ -21,10 +21,10 @@ export function decisionLabel(row: PendingDecision): string {
 export class DecisionClient {
   constructor(private connection: Connection, private store: Pick<Store,'get'|'put'>, private id:()=>string, private fetcher: typeof fetch = fetch) {}
   private async request(path: string, body?: unknown): Promise<unknown> {
-    const token = body ? await new WearingApi(this.connection, this.fetcher).voiceAuthorization() : '';
+    const token = body ? await new PajioApi(this.connection, this.fetcher).voiceAuthorization() : '';
     const controller = new AbortController(), timer = setTimeout(()=>controller.abort(), 20000);
     try {
-      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method:body?'POST':'GET', signal:controller.signal, redirect:'error', headers:{...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity,...(body?{'X-Wearing-Token':token,'Content-Type':'application/json'}:{})}, ...(body?{body:JSON.stringify(body)}:{})});
+      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method:body?'POST':'GET', signal:controller.signal, redirect:'error', headers:{...connectionHeaders(this.connection),'X-Pajio-Identity':this.connection.identity,...(body?{'X-Pajio-Token':token,'Content-Type':'application/json'}:{})}, ...(body?{body:JSON.stringify(body)}:{})});
       if (!response.ok) throw new ApiError(response.status===409?'事项状态已有变化，请刷新后重新核对。':response.status===401?'连接已到期，请重新登录。':response.status===404?'当前身份找不到这项确认，请刷新。':'暂时无法处理，请稍后重试。',response.status);
       return await response.json();
     } catch(error) {if(error instanceof ApiError) throw error;throw new ApiError('暂时无法确认处理结果。刷新后可以用同一次请求重试。');}

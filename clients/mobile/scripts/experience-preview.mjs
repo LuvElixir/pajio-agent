@@ -90,8 +90,8 @@ export function createPreviewHandler({root = defaultRoot, port = 8793} = {}) {
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const port = Number(process.env.WEARING_EXPERIENCE_PORT || 8793);
-  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('WEARING_EXPERIENCE_PORT must be a valid port.');
+  const port = Number(process.env.PAJIO_EXPERIENCE_PORT || 8793);
+  if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('PAJIO_EXPERIENCE_PORT must be a valid port.');
   const server = http.createServer(createPreviewHandler({port}));
-  server.listen(port, '127.0.0.1', () => console.log(`Wearing iPhone experience preview: http://127.0.0.1:${port}/experience`));
+  server.listen(port, '127.0.0.1', () => console.log(`Pajio iPhone experience preview: http://127.0.0.1:${port}/experience`));
 }

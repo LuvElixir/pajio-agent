@@ -3,8 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const window = {};
-vm.runInNewContext(fs.readFileSync('src/wearing/web/conversation-drafts.js','utf8'), {window});
-const create = window.WearingDrafts.create;
+vm.runInNewContext(fs.readFileSync('src/pajio/web/conversation-drafts.js','utf8'), {window});
+const create = window.PajioDrafts.create;
 function storage() {
   const data = new Map();
   return {getItem: k => data.get(k) ?? null, setItem: (k,v) => data.set(k,v), removeItem: k => data.delete(k)};

@@ -6,9 +6,9 @@ from types import SimpleNamespace
 import httpx
 import pytest
 from fastapi import FastAPI, Request
-from wearing.store import Store
-from wearing.workspace import WorkspacePager, WorkspacePageError, file_metadata
-from wearing.workspace_api import install_workspace_page_routes
+from pajio.store import Store
+from pajio.workspace import WorkspacePager, WorkspacePageError, file_metadata
+from pajio.workspace_api import install_workspace_page_routes
 
 
 def collect(pager, root, **options):
@@ -132,17 +132,17 @@ async def test_routes_use_current_identity_workspace_and_read_only_metadata(tmp_
     app=FastAPI()
     @app.middleware('http')
     async def identity(request:Request,call_next):
-        request.state.identity_id=request.headers.get('X-Wearing-Identity','daily')
+        request.state.identity_id=request.headers.get('X-Pajio-Identity','daily')
         return await call_next(request)
     pager=install_workspace_page_routes(app,store,lambda identity:SimpleNamespace(workspace=roots[identity]))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://test') as client:
         first=await client.get('/api/workspace/page'); assert first.status_code==200
         cursor=first.json()['next_cursor']; assert cursor
-        wrong=await client.get('/api/workspace/page',params={'cursor':cursor},headers={'X-Wearing-Identity':other})
+        wrong=await client.get('/api/workspace/page',params={'cursor':cursor},headers={'X-Pajio-Identity':other})
         assert wrong.status_code==409 and 'private' not in wrong.text
         second=await client.get('/api/workspace/page',params={'cursor':cursor}); assert second.status_code==200
         assert len(first.json()['files'])+len(second.json()['files'])==210
         assert (await client.get('/api/workspace/metadata',params={'path':'private.md'})).status_code==404
-        assert (await client.get('/api/workspace/metadata',params={'path':'private.md'},headers={'X-Wearing-Identity':other})).json()['size']==14
+        assert (await client.get('/api/workspace/metadata',params={'path':'private.md'},headers={'X-Pajio-Identity':other})).json()['size']==14
         assert (await client.get('/api/workspace/page',params={'query':'x'*201})).status_code==422
     pager.close()

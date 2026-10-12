@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from wearing.cloud.device_bootstrap import BootstrapSpec, BootstrapBook, render, write_bundle, validate_delivery
-from wearing.cloud.device_bootstrap_ssh import STAGE_REMOTE
-from wearing.cloud.device_provisioning import Owner, ProvisionError, fingerprint
+from pajio.cloud.device_bootstrap import BootstrapSpec, BootstrapBook, render, write_bundle, validate_delivery
+from pajio.cloud.device_bootstrap_ssh import STAGE_REMOTE
+from pajio.cloud.device_provisioning import Owner, ProvisionError, fingerprint
 from test_device_provisioning import setup, reserve, spec
 
 KEY='ssh-ed25519 '+base64.b64encode(b'\0\0\0\x0bssh-ed25519\0\0\0\x20'+b'x'*32).decode()
@@ -47,7 +47,7 @@ def test_cloud_init_has_fresh_owner_os_identity_and_no_reused_credentials(tmp_pa
 
 
 def test_fresh_guests_include_real_native_runtime_dependencies():
-    from wearing.mobile import resource_id
+    from pajio.mobile import resource_id
     linux=json.loads(render(spec(),owner(),settings())['files']['user-data'].split('\n',1)[1])
     assert 'imagemagick' in linux['packages'] # Agent capture uses import, independently of mss/WebRTC.
     assert {'thunar', 'xfce4-terminal', 'mousepad'} <= set(linux['packages']) # Desktop launchers must open real applications.

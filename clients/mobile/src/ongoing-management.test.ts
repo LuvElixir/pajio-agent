@@ -18,7 +18,7 @@ function fake(handler: (call: Call, index: number) => Response | Promise<Respons
   const api = new OngoingManagementApi(connection, (async (input, init) => {
     const call = {path: new URL(String(input)).pathname, method: init?.method || 'GET', headers: new Headers(init?.headers), body: init?.body ? JSON.parse(String(init.body)) : null};
     calls.push(call);
-    assert.equal(call.headers.get('X-Wearing-Identity'), 'daily');
+    assert.equal(call.headers.get('X-Pajio-Identity'), 'daily');
     assert.equal(init?.redirect, 'error');
     assert.ok(init?.signal);
     return handler(call, calls.length - 1);
@@ -82,7 +82,7 @@ test('goal mutation uses bootstrap, CSRF and exact revision and verifies updated
   assert.equal(receipt.status, 'active');
   assert.equal(receipt.historyLoaded, false);
   assert.deepEqual(calls.map(call => [call.path, call.method]), [['/api/bootstrap', 'GET'], ['/api/goals/goal_1/control', 'POST']]);
-  assert.equal(calls[1].headers.get('X-Wearing-Token'), 'csrf-token');
+  assert.equal(calls[1].headers.get('X-Pajio-Token'), 'csrf-token');
   assert.deepEqual(calls[1].body, {revision: 3, action: 'resume', note: '', add_steps: 0});
 });
 test('schedule pause uses PATCH with no extra permissions or fabricated goal fields', async () => {

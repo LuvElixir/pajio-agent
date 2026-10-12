@@ -13,7 +13,7 @@ test('quota failures keep their actionable code but never expose arbitrary provi
     assert.equal(f.closed,1);
   }
 });
-function fixture(connection: Connection = {endpoint: 'https://wearing.example/', identity: 'daily'}) {
+function fixture(connection: Connection = {endpoint: 'https://pajio.example/', identity: 'daily'}) {
   const sent: (string | Uint8Array)[] = [];
   let closed = 0, urls: string[] = [];
   const socket = {bufferedAmount: 0, onopen: null as any, onclose: null as any, onerror: null as any, onmessage: null as any,
@@ -38,7 +38,7 @@ test('cloud iOS uses realtime audio with tenant-bound first frame and no credent
 test('startup preserves every chunk and explicit finish delivers only final text', async () => {
   const f = fixture();
   f.live.push(new Uint8Array([1, 0])); await turn(); f.socket.onopen();
-  assert.equal(f.urls[0], 'wss://wearing.example/api/voice/stream');
+  assert.equal(f.urls[0], 'wss://pajio.example/api/voice/stream');
   assert.equal(f.sent.length, 1);
   f.reply({type: 'ready', take: 'take-a'});
   f.live.push(new Uint8Array([2, 0]));

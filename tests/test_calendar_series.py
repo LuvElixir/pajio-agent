@@ -4,9 +4,9 @@ import httpx
 import pytest
 from fastapi import FastAPI, Request
 from pydantic import ValidationError
-from wearing.store import Store
-from wearing.calendar_series import CalendarSeriesBook, SeriesError
-from wearing.calendar_series_api import execute, install_calendar_series_routes
+from pajio.store import Store
+from pajio.calendar_series import CalendarSeriesBook, SeriesError
+from pajio.calendar_series_api import execute, install_calendar_series_routes
 
 
 @pytest.fixture
@@ -163,7 +163,7 @@ async def test_http_identity_cannot_be_forged_and_command_fields_are_exact(book)
 
 
 def test_agent_command_uses_identical_series_and_occurrence_contract(book):
-    from wearing.calendar_series_tools import dispatch
+    from pajio.calendar_series_tools import dispatch
     row=dispatch(book.store,'daily','calendar_series',{'action':'create','request_key':'agent','draft':draft()})
     result=execute(book,'daily',{'action':'query','start':'2026-10-01','end':'2026-11-01','timezone':'Asia/Shanghai','series_id':row['id']})
     assert len(result['items'])==4

@@ -10,7 +10,7 @@ from .search_api import install_search_routes
 install_search_routes(app, SearchBook(store))
 ```
 
-Identity always comes from `request.state.identity_id`; this module accepts no body-selected identity. The existing Gateway and tenant boundary continue to authenticate requests. The native client sends `connectionHeaders(connection)` including Bearer and expected tenant, plus `X-Wearing-Identity`, and rejects foreign identity responses.
+Identity always comes from `request.state.identity_id`; this module accepts no body-selected identity. The existing Gateway and tenant boundary continue to authenticate requests. The native client sends `connectionHeaders(connection)` including Bearer and expected tenant, plus `X-Pajio-Identity`, and rejects foreign identity responses.
 
 ```tsx
 <NativeSearchPanel

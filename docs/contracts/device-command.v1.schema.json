@@ -114,5 +114,5 @@
   "title": "DeviceCommand",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$comment": "Wearing device command v1. Validation only; authenticated tenant authority, atomic leases and durable deduplication are required separately."
+  "$comment": "Pajio device command v1. Validation only; authenticated tenant authority, atomic leases and durable deduplication are required separately."
 }

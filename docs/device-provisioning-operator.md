@@ -1,6 +1,6 @@
 # 专属设备供应、验收与维护：运营入口
 
-入口为 `python -m wearing.cloud.device_operator`。这是管理员工具，未注册到 Agent 或公开 API。SSH 目标使用已有受控 config，固定 `BatchMode=yes` 和 `StrictHostKeyChecking=yes`。不向租户进程分发 Proxmox 密钥。
+入口为 `python -m pajio.cloud.device_operator`。这是管理员工具，未注册到 Agent 或公开 API。SSH 目标使用已有受控 config，固定 `BatchMode=yes` 和 `StrictHostKeyChecking=yes`。不向租户进程分发 Proxmox 密钥。
 
 ## 已实现的范围
 
@@ -24,10 +24,10 @@ spec 必含 request_id（32 位随机十六进制）、tenant_id、identity_id�
 
 ```json
 {
-  "control": {"host":"control-host-alias","root":"/var/lib/wearing/gateway","account":"wearing","python":"/opt/wearing/venv/bin/python"},
+  "control": {"host":"control-host-alias","root":"/var/lib/pajio/gateway","account":"pajio","python":"/opt/pajio/venv/bin/python"},
   "operator_env":"/etc/pajio/operator.env",
   "tenants": {
-    "tenant_example": {"host":"tenant-host-alias","root":"/var/lib/wearing/instance","account":"wearing","python":"/opt/wearing/venv/bin/python"}
+    "tenant_example": {"host":"tenant-host-alias","root":"/var/lib/pajio/instance","account":"pajio","python":"/opt/pajio/venv/bin/python"}
   }
 }
 ```
@@ -39,11 +39,11 @@ policy 必含 node、storage、templates；模板按 kind 记录 VMID、config_s
 下面使用管理员已准备的私有路径。`PLAN_SHA256` 来自先前查看的 plan 输出，不能随意编造：
 
 ```sh
-python -m wearing.cloud.device_operator inventory --ssh-config "$SSH_CONFIG" --host "$SSH_HOST" --node "$NODE" --output "$INVENTORY_FILE"
-python -m wearing.cloud.device_operator plan --root "$LEDGER_ROOT" --ssh-config "$SSH_CONFIG" --host "$SSH_HOST" --node "$NODE" --admission-sources "$ADMISSION_SOURCES" --spec "$SPEC_FILE" --policy "$POLICY_FILE" --output "$PLAN_FILE"
-python -m wearing.cloud.device_operator reserve --root "$LEDGER_ROOT" --ssh-config "$SSH_CONFIG" --host "$SSH_HOST" --node "$NODE" --admission-sources "$ADMISSION_SOURCES" --spec "$SPEC_FILE" --policy "$POLICY_FILE" --plan-sha256 "$PLAN_SHA256"
-python -m wearing.cloud.device_operator apply --root "$LEDGER_ROOT" --ssh-config "$SSH_CONFIG" --host "$SSH_HOST" --node "$NODE" --admission-sources "$ADMISSION_SOURCES" --request-id "$REQUEST_ID" --plan-sha256 "$PLAN_SHA256"
-python -m wearing.cloud.device_operator status --root "$LEDGER_ROOT" --request-id "$REQUEST_ID"
+python -m pajio.cloud.device_operator inventory --ssh-config "$SSH_CONFIG" --host "$SSH_HOST" --node "$NODE" --output "$INVENTORY_FILE"
+python -m pajio.cloud.device_operator plan --root "$LEDGER_ROOT" --ssh-config "$SSH_CONFIG" --host "$SSH_HOST" --node "$NODE" --admission-sources "$ADMISSION_SOURCES" --spec "$SPEC_FILE" --policy "$POLICY_FILE" --output "$PLAN_FILE"
+python -m pajio.cloud.device_operator reserve --root "$LEDGER_ROOT" --ssh-config "$SSH_CONFIG" --host "$SSH_HOST" --node "$NODE" --admission-sources "$ADMISSION_SOURCES" --spec "$SPEC_FILE" --policy "$POLICY_FILE" --plan-sha256 "$PLAN_SHA256"
+python -m pajio.cloud.device_operator apply --root "$LEDGER_ROOT" --ssh-config "$SSH_CONFIG" --host "$SSH_HOST" --node "$NODE" --admission-sources "$ADMISSION_SOURCES" --request-id "$REQUEST_ID" --plan-sha256 "$PLAN_SHA256"
+python -m pajio.cloud.device_operator status --root "$LEDGER_ROOT" --request-id "$REQUEST_ID"
 ```
 
 ## 中断与容量语义

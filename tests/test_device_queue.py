@@ -1,7 +1,7 @@
 import pytest
 
-from wearing.cloud.device_queue import DeviceQueue
-from wearing.cloud.device_provisioning import ProvisionError
+from pajio.cloud.device_queue import DeviceQueue
+from pajio.cloud.device_provisioning import ProvisionError
 from test_device_provisioning import setup, spec, policy, SyntheticAdmission
 
 

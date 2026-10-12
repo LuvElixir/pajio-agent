@@ -4,13 +4,13 @@ from concurrent.futures import ThreadPoolExecutor
 import httpx
 import pytest
 from fastapi import FastAPI, Request
-from wearing.store import Store
-from wearing.artifacts import ArtifactBook
-from wearing.service import TaskService
-from wearing.schedules import ScheduleBook, ScheduleCoordinator
-from wearing.briefing_api import BriefingBook, BriefingError, CreateBriefing, install_briefing_routes
-from wearing.briefing_automation import BriefingAutomation, AutomationSave
-from wearing.briefing_automation_api import install_briefing_automation_routes
+from pajio.store import Store
+from pajio.artifacts import ArtifactBook
+from pajio.service import TaskService
+from pajio.schedules import ScheduleBook, ScheduleCoordinator
+from pajio.briefing_api import BriefingBook, BriefingError, CreateBriefing, install_briefing_routes
+from pajio.briefing_automation import BriefingAutomation, AutomationSave
+from pajio.briefing_automation_api import install_briefing_automation_routes
 from test_briefings import NoNetworkHermes
 
 A='a'*64;B='b'*64
@@ -18,7 +18,7 @@ A='a'*64;B='b'*64
 @pytest.fixture
 def system(tmp_path,monkeypatch):
     clock=['2026-10-07T23:00:00+00:00'] # 07:00 Shanghai
-    for module in ['wearing.briefing_automation','wearing.briefing_api','wearing.schedules']:
+    for module in ['pajio.briefing_automation','pajio.briefing_api','pajio.schedules']:
         monkeypatch.setattr(module+'.now',lambda:clock[0])
     store=Store(tmp_path/'auto.sqlite3');schedules=ScheduleBook(store);briefings=BriefingBook(store,ArtifactBook(store))
     auto=BriefingAutomation(store,briefings,schedules)
@@ -131,7 +131,7 @@ async def test_cloud_routes_require_trusted_scope_and_reservation_never_borrows_
 
 
 def test_pref_snapshot_is_explicit_and_quiet_hours_do_not_defer_generation(system):
-    from wearing.briefing_preferences import SavePreferences
+    from pajio.briefing_preferences import SavePreferences
     store,schedules,briefings,auto,clock=system
     first=briefings.preferences.save('daily',SavePreferences(revision=0,request_key='first-preference-setting',sources=['note'],priorities='original explicit scope'))
     auto.save('daily',A,config(preferences_revision=first['revision']))

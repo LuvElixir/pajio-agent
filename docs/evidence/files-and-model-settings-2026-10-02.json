@@ -9,7 +9,7 @@
   "status": "completed_unverified",
   "tools": [
     {
-      "tool": "mcp__wearing_files__list_allowed_directories",
+      "tool": "mcp__pajio_files__list_allowed_directories",
       "duration": 0.021,
       "error": false,
       "seq": 12
@@ -21,13 +21,13 @@
       "seq": 14
     },
     {
-      "tool": "mcp__wearing_files__write_file",
+      "tool": "mcp__pajio_files__write_file",
       "duration": 0.01,
       "error": false,
       "seq": 16
     },
     {
-      "tool": "mcp__wearing_files__read_text_file",
+      "tool": "mcp__pajio_files__read_text_file",
       "duration": 0.006,
       "error": false,
       "seq": 18
@@ -35,23 +35,23 @@
   ],
   "capabilities": {
     "profile_version": 2,
-    "identity": "Wearing",
+    "identity": "Pajio",
     "scheduler": false,
     "messaging": false,
     "file_tools": [
-      "mcp__wearing_files__read_text_file",
-      "mcp__wearing_files__write_file",
-      "mcp__wearing_files__create_directory",
-      "mcp__wearing_files__list_directory",
-      "mcp__wearing_files__get_file_info",
-      "mcp__wearing_files__list_allowed_directories"
+      "mcp__pajio_files__read_text_file",
+      "mcp__pajio_files__write_file",
+      "mcp__pajio_files__create_directory",
+      "mcp__pajio_files__list_directory",
+      "mcp__pajio_files__get_file_info",
+      "mcp__pajio_files__list_allowed_directories"
     ]
   },
   "file": {
-    "path": "Wearing-第一份文件.md",
+    "path": "Pajio-第一份文件.md",
     "bytes": 89,
     "sha256": "26a422f899c01e99be4c81a0c1cecb892f7c59a7c641bdc29d70ee69e28b48b6",
-    "content": "# Wearing 的第一份文件\n这件事，我来。\n验收标记：wearing-files-20261002\n",
+    "content": "# Pajio 的第一份文件\n这件事，我来。\n验收标记：pajio-files-20261002\n",
     "browser_download_matches": true
   },
   "model_ui_save_with_blank_key": {
@@ -68,7 +68,7 @@
     "cloud sandbox",
     "business outcomes"
   ],
-  "tool_evidence_source": "Recorded from the first authenticated SSE retrieval in this development session. Hermes expires transport buffers after 300 seconds; Wearing does not yet persist the full tool event stream.",
+  "tool_evidence_source": "Recorded from the first authenticated SSE retrieval in this development session. Hermes expires transport buffers after 300 seconds; Pajio does not yet persist the full tool event stream.",
   "restart": {
     "engine_ready": true,
     "files_active": true,

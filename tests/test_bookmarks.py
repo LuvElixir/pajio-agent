@@ -7,13 +7,13 @@ import pytest
 from fastapi import FastAPI, Request
 from pydantic import ValidationError
 
-from wearing.bookmarks import BookmarkBook
-from wearing.bookmark_api import install_bookmark_routes
-from wearing.life import LifeBook, LifeDraft, LifeError
-from wearing.life_api import install_life_routes
-from wearing.life_proxy import dispatch
-from wearing.search import SearchBook
-from wearing.store import Store
+from pajio.bookmarks import BookmarkBook
+from pajio.bookmark_api import install_bookmark_routes
+from pajio.life import LifeBook, LifeDraft, LifeError
+from pajio.life_api import install_life_routes
+from pajio.life_proxy import dispatch
+from pajio.search import SearchBook
+from pajio.store import Store
 
 
 @pytest.fixture
@@ -105,7 +105,7 @@ async def test_http_uses_real_life_write_and_identity_boundary(books):
     app = FastAPI()
     @app.middleware('http')
     async def identity(request:Request, call_next):
-        request.state.identity_id=request.headers.get('X-Wearing-Identity','daily')
+        request.state.identity_id=request.headers.get('X-Pajio-Identity','daily')
         return await call_next(request)
     install_life_routes(app,life);install_bookmark_routes(app,life)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://test') as client:
@@ -114,8 +114,8 @@ async def test_http_uses_real_life_write_and_identity_boundary(books):
         record=created.json()
         assert (await client.post('/api/life',json=data)).json()==record
         assert (await client.get('/api/bookmarks')).json()['items']==[record]
-        assert (await client.get('/api/bookmarks',headers={'X-Wearing-Identity':other})).json()['items']==[]
-        assert (await client.patch('/api/life/'+record['id'],headers={'X-Wearing-Identity':other},json={'revision':1,'patch':{'content':'no'}})).status_code==404
+        assert (await client.get('/api/bookmarks',headers={'X-Pajio-Identity':other})).json()['items']==[]
+        assert (await client.patch('/api/life/'+record['id'],headers={'X-Pajio-Identity':other},json={'revision':1,'patch':{'content':'no'}})).status_code==404
         bad=await client.patch('/api/life/'+record['id'],json={'revision':1,'patch':{'url':'file:///tmp/private'}})
         assert bad.status_code==422
         assert (await client.get('/api/life/'+record['id'])).json()==record

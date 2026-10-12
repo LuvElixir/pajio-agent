@@ -2,7 +2,7 @@ import {StateSwitch} from './experience/selection';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {ScrollView, Text, TextInput, View} from 'react-native';
 import {Button} from 'react-native-paper';
-import {Connection, MemorySnapshot, WearingApi} from './core';
+import {Connection, MemorySnapshot, PajioApi} from './core';
 import {serviceFetch} from './transport';
 import {storage} from './storage';
 import {useAppTheme} from './app-theme';
@@ -12,7 +12,7 @@ import {applyMemoryChange, MemoryHistoryItem, memoryHistoryChanges, memoryHistor
 
 type Confirm = {kind: 'remove'; index: number; text: string; revision: string} | {kind: 'clear'; count: number; historyCount: number; revision: string} | {kind: 'disable'; revision: string; settings_revision: string} | {kind: 'undo'; item: MemoryHistoryItem; revision: string};
 function MemoryContent({connection, target, data, onChanged}: {connection: Connection; target: 'user' | 'memory'; data: MemorySnapshot; onChanged: (data: MemorySnapshot) => void}) {
-  const {colors: c} = useAppTheme(), api = useMemo(() => new WearingApi(connection, serviceFetch), [connection]), current = data.targets?.[target];
+  const {colors: c} = useAppTheme(), api = useMemo(() => new PajioApi(connection, serviceFetch), [connection]), current = data.targets?.[target];
   const key = memoryDraftKey(connection, target), label = target === 'user' ? '关于你' : '长期记忆';
   const [draft, setDraft] = useState<MemoryDraft | null>(null), [open, setOpen] = useState(false), [confirm, setConfirm] = useState<Confirm | null>(null);
   const [error, setError] = useState(''), [receipt, setReceipt] = useState(''), [busy, setBusy] = useState(false), [ready, setReady] = useState(false), [draftError, setDraftError] = useState('');
@@ -36,7 +36,7 @@ function MemoryContent({connection, target, data, onChanged}: {connection: Conne
     catch (cause) {if (live.current) setError(cause instanceof Error ? cause.message : '暂时无法读取最新记忆。');}
     finally {lock.current = false; if (live.current) setBusy(false);}
   }
-  async function change(body: Parameters<WearingApi['changeMemory']>[0], editing = false) {
+  async function change(body: Parameters<PajioApi['changeMemory']>[0], editing = false) {
     if (lock.current || needsRefresh) return; lock.current = true; setBusy(true); setError(''); setReceipt('');
     try {
       const result = await applyMemoryChange(api, body);

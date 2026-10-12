@@ -4,7 +4,7 @@
 
 关闭 App 不等于拒绝，也不应丢失已停下的事情。新托管 `request_confirmation` 在发起 MCP elicitation **之前**，保存身份、task、run、原文和时限。在线原 run 等待 300 秒，用户及时决定仍在原 run 继续。时间过后卡变为 `needs_recheck`，不能再把旧卡当执行授权。
 
-“重新核对并继续”只创建一个只读恢复任务。它会重新查看已有对象，并在可安全自动继续时出一张新卡。当前受支持的恢复写入为 `mcp__wearing_life__life_change / goal_change / schedule_change`，它们的底层写入本来就原子核对 revision。任意终端命令、浏览器输入、子 Agent、外发和设备输入均不在许可集合。手机截图、元素读取和电脑只读观察可用于交付当前现状；此版没有声称恢复任意付款、协议接受或设备操作。
+“重新核对并继续”只创建一个只读恢复任务。它会重新查看已有对象，并在可安全自动继续时出一张新卡。当前受支持的恢复写入为 `mcp__pajio_life__life_change / goal_change / schedule_change`，它们的底层写入本来就原子核对 revision。任意终端命令、浏览器输入、子 Agent、外发和设备输入均不在许可集合。手机截图、元素读取和电脑只读观察可用于交付当前现状；此版没有声称恢复任意付款、协议接受或设备操作。
 
 ## HTTP 合同
 
@@ -43,7 +43,7 @@ GET 单项、列表与启动恢复会核对遗留的 `recovering` 对应任务�
 
 ## 执行器安装
 
-`HermesRuntime.env()` 给出可信 `PAJIO_CONFIRMATION_DATA_DIR` 和 `PAJIO_CONFIRMATION_IDENTITY`，不能来自模型参数。`engine_runner.main` 安装 `install_confirmation_guard()` 后才报告 `wearing.confirmation_guard='durable-v1'`。`TaskService._start` 检查此标记；普通任务不受该 capability 升级要求影响。
+`HermesRuntime.env()` 给出可信 `PAJIO_CONFIRMATION_DATA_DIR` 和 `PAJIO_CONFIRMATION_IDENTITY`，不能来自模型参数。`engine_runner.main` 安装 `install_confirmation_guard()` 后才报告 `pajio.confirmation_guard='durable-v1'`。`TaskService._start` 检查此标记；普通任务不受该 capability 升级要求影响。
 
 guard 包装 pinned Hermes `agent.tool_executor._dispatch_authorized_once` 的最终 `execute` callback。上游 Relay/plugin 参数改写之后、实际工具执行之前进行检查；顺序与并行调用共享同一入口。独立 SQLite receipt 在调用前以 `BEGIN IMMEDIATE` 消费，因此两线程、两进程以及重启后不会重复放行。工具异常不退还许可。
 
@@ -57,6 +57,6 @@ guard 包装 pinned Hermes `agent.tool_executor._dispatch_authorized_once` 的�
 
 `tests/test_gateway_voice.py` 新增私有 upstream Host 回归：有效服务凭据+正确租户后才把私有 Host 改为 public Host 并通过 TrustedHost；缺凭据/错误凭据/其他租户拒绝，HTTP Host 行为不放宽。
 
-相关 Python 回归在本次实现时 116 项通过；补充投递回执丢失后的终态恢复用例后，durable / confirmations / lifecycle / gateway voice 定向 54 项通过。无真实模型、外部设备、付款或用户 `.wearing` 数据变更。App 真机和真实部署后的运行验收应单独记录。
+相关 Python 回归在本次实现时 116 项通过；补充投递回执丢失后的终态恢复用例后，durable / confirmations / lifecycle / gateway voice 定向 54 项通过。无真实模型、外部设备、付款或用户 `.pajio` 数据变更。App 真机和真实部署后的运行验收应单独记录。
 
 2026-10-08 撤回恢复专项：`tests/test_confirmation_recovery_cancel_review.py` 新增 7 项合成回归，覆盖双 owner 同身份 HTTP、旧 key 与新子卡、旧状态重启修复、并发读取幂等、停止请求与终态区别、consumed 禁止重试、事务失败回滚。与既有 durable/cancel-owner 合跑 33 项通过；没有修改真实任务或确认卡。

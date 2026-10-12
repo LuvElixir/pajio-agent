@@ -35,7 +35,7 @@ export class ChatImportApi {
         token = bootstrap.token;
       }
       this.assertActive();
-      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method, redirect: 'error', signal: controller.signal, headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(method !== 'GET' ? {'X-Wearing-Token': token, 'Content-Type': 'application/json'} : {})}, ...(body ? {body: JSON.stringify(body)} : {})});
+      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method, redirect: 'error', signal: controller.signal, headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(method !== 'GET' ? {'X-Pajio-Token': token, 'Content-Type': 'application/json'} : {})}, ...(body ? {body: JSON.stringify(body)} : {})});
       this.assertActive();
       if (!response.ok) throw new ApiError(response.status === 409 ? method === 'DELETE' ? 'Pajio 正在处理任务，请先停止或等任务结束，再移除这批聊天。' : '这次导入的内容与原请求不一致，请先核对已导入批次。' : response.status === 404 ? '这台服务暂未找到对应聊天导入。' : response.status === 413 ? '聊天超出当前导入限制，可减少所选消息或移除旧批次后重试。' : response.status === 422 ? '聊天文件未通过导入检查，请减少选定范围后重试。' : '聊天导入暂时无法完成，请重试。', response.status);
       const result = await response.json(); this.assertActive(); return result;

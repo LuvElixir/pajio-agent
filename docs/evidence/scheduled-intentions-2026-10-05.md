@@ -4,8 +4,8 @@
 
 ## 当前结果
 
-- 本地 `8765` 已运行新代码；Hermes Wearing profile v10 已加载，能力探测为 reachable，三项 schedule 工具实际注册成功。
-- 真实用户安排列表仍为空。本轮自动测试和界面样例只写入隔离数据目录 `.wearing/qa/proactive-20261005/data`。
+- 本地 `8765` 已运行新代码；Hermes Pajio profile v10 已加载，能力探测为 reachable，三项 schedule 工具实际注册成功。
+- 真实用户安排列表仍为空。本轮自动测试和界面样例只写入隔离数据目录 `.pajio/qa/proactive-20261005/data`。
 - UI 入口为“一起记着的 → 到时我来”。保留用户选定的折带 W 和既有 3D 角色资产。
 
 ## 验证证据

@@ -4,9 +4,9 @@ from urllib.parse import parse_qs
 import httpx
 import pytest
 from starlette.applications import Starlette
-from wearing.cloud.control import ControlStore
-from wearing.cloud.gateway import GatewayConfig
-from wearing.cloud.native_login import NativeLogin, DEVICE_SESSION_SECONDS
+from pajio.cloud.control import ControlStore
+from pajio.cloud.gateway import GatewayConfig
+from pajio.cloud.native_login import NativeLogin, DEVICE_SESSION_SECONDS
 
 @pytest.fixture
 def native(tmp_path):

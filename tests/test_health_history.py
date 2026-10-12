@@ -7,10 +7,10 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from wearing.diagnostics import Diagnostics
-from wearing.health_history import HealthError, HealthHistory, HealthMonitor, at
-from wearing.health_history_api import install_health_history_routes
-from wearing.store import Store
+from pajio.diagnostics import Diagnostics
+from pajio.health_history import HealthError, HealthHistory, HealthMonitor, at
+from pajio.health_history_api import install_health_history_routes
+from pajio.store import Store
 
 NOW = 1791399000.0
 SECRET = 'PRIVATE-CANARY /Users/private/file https://secret.invalid?token=secret person@example.com'
@@ -301,9 +301,9 @@ async def test_loop_retries_inventory_failure_and_stops_without_orphans(fixture)
 
 
 async def test_actual_app_routes_require_auth_csrf_tenant_owner_identity_and_safe_download(tmp_path):
-    from wearing.app import create_app
-    from wearing.config import Settings
-    from wearing.cloud.worker import TenantBoundary
+    from pajio.app import create_app
+    from pajio.config import Settings
+    from pajio.cloud.worker import TenantBoundary
     app = create_app(Settings(tmp_path))
     app.add_middleware(TenantBoundary, tenant_id='tenant_qa', gateway_key='instance-key')
     store = app.state.store
@@ -316,9 +316,9 @@ async def test_actual_app_routes_require_auth_csrf_tenant_owner_identity_and_saf
     install_health_history_routes(app, book, monitor)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
         assert (await client.get('/api/diagnostics/history')).status_code == 401
-        client.headers.update({'Authorization':'Bearer instance-key','X-Wearing-Tenant':'wrong'})
+        client.headers.update({'Authorization':'Bearer instance-key','X-Pajio-Tenant':'wrong'})
         assert (await client.get('/api/diagnostics/history')).status_code == 403
-        client.headers['X-Wearing-Tenant'] = 'tenant_qa'
+        client.headers['X-Pajio-Tenant'] = 'tenant_qa'
         assert (await client.get('/api/diagnostics/history')).status_code == 401
         client.headers['X-Pajio-Storage-Scope'] = A
         initial = await client.get('/api/diagnostics/history')
@@ -326,7 +326,7 @@ async def test_actual_app_routes_require_auth_csrf_tenant_owner_identity_and_saf
         assert initial.headers['Cache-Control'] == 'no-store'
         assert (await client.post('/api/diagnostics/sample')).status_code == 403
         csrf = (await client.get('/api/bootstrap')).json()['token']
-        client.headers['X-Wearing-Token'] = csrf
+        client.headers['X-Pajio-Token'] = csrf
         assert (await client.post('/api/diagnostics/sample')).json()['sampled'] is True
         request = {'request_key':'request-key-00001','category':'devices'}
         bad = await client.post('/api/diagnostics/exports', json={**request,'error':SECRET})
@@ -340,10 +340,10 @@ async def test_actual_app_routes_require_auth_csrf_tenant_owner_identity_and_saf
         assert response.json()['transmission'] == 'not_sent'
         client.headers['X-Pajio-Storage-Scope'] = B
         assert (await client.get('/api/diagnostics/exports/'+metadata['id']+'/file')).status_code == 404
-        client.headers['X-Wearing-Identity'] = other
+        client.headers['X-Pajio-Identity'] = other
         assert (await client.get('/api/diagnostics/history')).json()['samples'] == []
         assert (await client.get('/api/diagnostics/history?identity=daily')).status_code == 409
-        client.headers['X-Wearing-Identity'] = 'missing'
+        client.headers['X-Pajio-Identity'] = 'missing'
         assert (await client.get('/api/diagnostics/history')).status_code == 404
     await app.state.service.hermes.close()
 
@@ -372,7 +372,7 @@ def test_paging_is_stable_while_new_samples_arrive_and_never_crosses_identity(fi
 
 def test_large_export_is_capped_and_records_truncation_and_immutable_checksum(fixture):
     store, book, clock = fixture
-    from wearing.health_history import MAX_EXPORT_BYTES
+    from pajio.health_history import MAX_EXPORT_BYTES
     value = snapshot()
     value['tasks']['items'] = [task(store) for _ in range(30)]
     for row in value['tasks']['items']:
@@ -390,8 +390,8 @@ def test_large_export_is_capped_and_records_truncation_and_immutable_checksum(fi
 
 
 async def test_real_hermes_probe_only_reads_capabilities_and_never_mutates_task_rows(fixture, tmp_path):
-    from wearing.config import Settings
-    from wearing.hermes import HermesClient
+    from pajio.config import Settings
+    from pajio.hermes import HermesClient
     store, book, _ = fixture
     task(store, phase='running')
     def original():

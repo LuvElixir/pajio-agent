@@ -34,7 +34,7 @@ flowchart LR
 
 ## 真实模型与持久记录
 
-隔离目录：`.wearing/qa/goal-event-continuity-20261006/`。
+隔离目录：`.pajio/qa/goal-event-continuity-20261006/`。
 
 使用真实 Hermes 和本机已配置模型，profile v18，仅测试记录读取与目标延续：
 

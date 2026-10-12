@@ -5,7 +5,7 @@ import sys
 
 import pytest
 
-from wearing.cloud.placement import VMSelection, preview
+from pajio.cloud.placement import VMSelection, preview
 
 
 def selection(**changes):
@@ -53,17 +53,17 @@ def test_cli_preview_is_offline_and_never_echoes_invalid_secret_payload(tmp_path
     request = tmp_path / "request.json"
     request.write_text(selection().model_dump_json())
     before = set(tmp_path.iterdir())
-    result = subprocess.run([sys.executable, "-m", "wearing.cli", "cloud", "plan", "--request", str(request)], capture_output=True, text=True)
+    result = subprocess.run([sys.executable, "-m", "pajio.cli", "cloud", "plan", "--request", str(request)], capture_output=True, text=True)
     assert result.returncode == 0
     assert json.loads(result.stdout)["mode"] == "offline_selection"
     assert set(tmp_path.iterdir()) == before
     request.write_text(json.dumps({**selection().model_dump(), "access_key": "test-secret-do-not-log"}))
-    failed = subprocess.run([sys.executable, "-m", "wearing.cli", "cloud", "plan", "--request", str(request)], capture_output=True, text=True)
+    failed = subprocess.run([sys.executable, "-m", "pajio.cli", "cloud", "plan", "--request", str(request)], capture_output=True, text=True)
     assert failed.returncode != 0 and "test-secret-do-not-log" not in failed.stdout + failed.stderr
 
 
 def test_release_catalog_is_available_from_cli_without_cloud_credentials():
-    result = subprocess.run([sys.executable, "-m", "wearing.cli", "cloud", "providers"], capture_output=True, text=True)
+    result = subprocess.run([sys.executable, "-m", "pajio.cli", "cloud", "providers"], capture_output=True, text=True)
     assert result.returncode == 0
     data = json.loads(result.stdout)
     assert data["cloud_verified"] is False and data["implementation_status"] == "planned"

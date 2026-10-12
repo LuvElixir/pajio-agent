@@ -5,8 +5,8 @@
 const {test} = require("node:test");
 const assert = require("node:assert");
 const fs = require("node:fs");
-const app = fs.readFileSync("src/wearing/web/app.js", "utf8");
-const html = fs.readFileSync("src/wearing/web/index.html", "utf8");
+const app = fs.readFileSync("src/pajio/web/app.js", "utf8");
+const html = fs.readFileSync("src/pajio/web/index.html", "utf8");
 
 const phoneInput = ["phone.mobile_click_on_screen_at_coordinates","phone.mobile_swipe_on_screen","phone.mobile_type_keys","phone.mobile_set_text","phone.mobile_press_button","phone.mobile_launch_app"];
 const device = (kind, methods, over = {}) => ({resource_id: "dev_" + kind + "_" + methods.length, name: "设备" + methods.length, kind, methods, last_seen_at: null,
@@ -92,7 +92,7 @@ function harness(devices, accessHook) {
   const source=app.slice(app.indexOf("function captureControlSnapshot"),app.indexOf("let permissionDevice"));
   const chat=app.slice(app.indexOf('$("computer-takeover").addEventListener'),app.indexOf("function configureDeployment"));
   new Function("api","state","busy","$","window","loadDevices","toggleComputer","showSettings",source+chat)
-    (api,state,busy,el,{WearingRemoteDevice:{open:(...args)=>opens.push(args)}},async()=>{},()=>{},()=>{});
+    (api,state,busy,el,{PajioRemoteDevice:{open:(...args)=>opens.push(args)}},async()=>{},()=>{},()=>{});
   async function click(device,mutate){
     const markup=renderRows([device]);
     const tag=markup.match(/<button[^>]*data-cloud-control=[\s\S]*?<\/button>/)[0];

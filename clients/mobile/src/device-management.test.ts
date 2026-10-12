@@ -79,8 +79,8 @@ test('Android status distinguishes an observation-only grant from known input pe
 test('inventory reads use identity authentication and reject duplicate device receipts', async () => {
   const {api, calls} = harness([() => response({devices: [device()]}), () => response({devices: [device(), device()]})]);
   assert.equal((await api.cloudDevices())[0].resource_id, 'computer_test');
-  assert.deepEqual([calls[0].url.pathname, calls[0].method, calls[0].headers.get('X-Wearing-Identity')], ['/api/devices', 'GET', connection.identity]);
-  assert.equal(calls[0].headers.has('X-Wearing-Token'), false);
+  assert.deepEqual([calls[0].url.pathname, calls[0].method, calls[0].headers.get('X-Pajio-Identity')], ['/api/devices', 'GET', connection.identity]);
+  assert.equal(calls[0].headers.has('X-Pajio-Token'), false);
   assert.equal(calls[0].redirect, 'error');
   await assert.rejects(() => api.cloudDevices(), status(422));
 });
@@ -89,7 +89,7 @@ test('pause sends the observed generation and validates resource, pause state an
   const {api, calls} = harness([() => response(bootstrap()), () => response({resource_id: 'computer_test', paused: true, generation: 4})]);
   await api.control(device(), true);
   assert.deepEqual(calls[1].body, {resource_id: 'computer_test', paused: true, expected_generation: 3});
-  assert.equal(calls[1].headers.get('X-Wearing-Token'), 'csrf-synthetic');
+  assert.equal(calls[1].headers.get('X-Pajio-Token'), 'csrf-synthetic');
   assert.equal(calls[1].url.pathname, '/api/devices/control');
   const invalid = harness([() => response(bootstrap()), () => response({resource_id: 'another_device', paused: true, generation: 4})]);
   await assert.rejects(() => invalid.api.control(device(), true), status(422));
@@ -101,7 +101,7 @@ test('CSRF expiry refreshes once and replays the identical generation-bound acti
   await api.control(device(), true);
   assert.deepEqual(calls.map(c => c.method), ['GET', 'POST', 'GET', 'POST']);
   assert.deepEqual(calls[1].body, calls[3].body);
-  assert.equal(calls[3].headers.get('X-Wearing-Token'), 'new');
+  assert.equal(calls[3].headers.get('X-Pajio-Token'), 'new');
 });
 
 test('a second 403 and a generation conflict do not loop, refetch or issue a different action', async () => {
@@ -121,7 +121,7 @@ test('wrong identity bootstrap prevents mutations and later caller edits cannot 
   const isolated = harness([() => response({devices: []})], shared);
   shared.identity = 'another_identity'; shared.endpoint = 'https://another.invalid';
   await isolated.api.cloudDevices();
-  assert.equal(isolated.calls[0].headers.get('X-Wearing-Identity'), connection.identity);
+  assert.equal(isolated.calls[0].headers.get('X-Pajio-Identity'), connection.identity);
   assert.equal(isolated.calls[0].url.host, 'device-tests.invalid');
 });
 

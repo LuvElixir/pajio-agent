@@ -7,7 +7,7 @@ import {StyleSheet, View} from 'react-native';
 export function AppDock({children}: {children: ReactNode}) {
   const s = useThemedStyles(makeStyles);
 
-  return <View testID="wearing-app-dock" style={s.dock}>{children}</View>;
+  return <View testID="pajio-app-dock" style={s.dock}>{children}</View>;
 }
 const makeStyles = (c: AppColors) => StyleSheet.create({
   dock: {paddingHorizontal: 12, paddingTop: 8, paddingBottom: 4, backgroundColor: c.dock},

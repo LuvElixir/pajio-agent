@@ -1,9 +1,9 @@
 import json
 import pytest
-from wearing.cloud.device_delivery import DeviceDelivery
-from wearing.cloud.device_delivery_ssh import HOST,GUEST
-from wearing.cloud.device_bootstrap import BootstrapBook
-from wearing.cloud.device_provisioning import ProvisionError,fingerprint
+from pajio.cloud.device_delivery import DeviceDelivery
+from pajio.cloud.device_delivery_ssh import HOST,GUEST
+from pajio.cloud.device_bootstrap import BootstrapBook
+from pajio.cloud.device_provisioning import ProvisionError,fingerprint
 from test_device_provisioning import setup,spec,reserve
 from test_device_bootstrap import settings
 
@@ -51,7 +51,7 @@ def test_rebound_or_incomplete_guest_never_marks_ready(delivery):
 def test_partial_enrollment_stays_pending_and_browser_is_separate(delivery,monkeypatch):
     d,book,p,bundle=delivery;request=spec().request_id
     d.boot(request,p,reviewed_sha256=bundle['bundle_sha256']);d.install_runtime(request,p)
-    from wearing.cloud.device_enrollment import EnrollmentBook
+    from pajio.cloud.device_enrollment import EnrollmentBook
     monkeypatch.setattr(EnrollmentBook,'inspect',lambda self,*args:{'owner_matches':True,'bootstrap_matches':True,'paired_scope_matches':True,'agent_online':True,'human_online':True,'mtls_verified':True})
     p.delivery_evidence=lambda *args:{'network_isolated':True,'native_ready':False,'browser_ready':False,'browser_setup_state':'first_run_unverified'}
     result=d.verify(request,p,None)
@@ -109,7 +109,7 @@ def test_qga_management_proof_allows_docker_bridge_but_not_wrong_nic():
 def test_actual_qga_source_collects_mac_and_only_ipv4(monkeypatch,capsys):
     import ast,json,pathlib,subprocess
     from types import SimpleNamespace
-    from wearing.cloud.device_delivery_ssh import HOST
+    from pajio.cloud.device_delivery_ssh import HOST
     tree=ast.parse(HOST)
     source=next(n.value.value for n in ast.walk(tree) if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='source' for t in n.targets))
     documents={'/etc/pajio-native/bootstrap-expected.json':'{}','/etc/pajio-native/device-owner.json':'{"kind":"linux"}','/etc/machine-id':'1'*32,'/etc/ssh/ssh_host_ed25519_key.pub':'ssh-ed25519 synthetic'}
@@ -178,8 +178,8 @@ def test_actual_delivery_guest_respects_dedicated_media_service_owner(tmp_path,m
     import hashlib,io,os,pathlib,pwd,socket,subprocess,sys,urllib.request
     from contextlib import nullcontext
     from types import SimpleNamespace
-    from wearing.cloud.device_delivery_ssh import GUEST
-    from wearing.cloud.device_provisioning import fingerprint
+    from pajio.cloud.device_delivery_ssh import GUEST
+    from pajio.cloud.device_provisioning import fingerprint
     owner={'kind':kind};machine='a'*32;artifact='b'*64
     payload={'action':'evidence','owner':owner,'owner_sha256':fingerprint(owner),'machine_sha256':hashlib.sha256(machine.encode()).hexdigest(),
              'artifact_sha256':artifact,'gateway_ipv4':'10.78.1.1','tenant_ipv4':'10.77.102.2','spec':{'resource_id':'computer_fixture','kind':kind}}

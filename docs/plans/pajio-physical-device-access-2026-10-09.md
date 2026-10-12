@@ -21,16 +21,16 @@
 
 | 现状 | 本次源码依据 | 能据此确认的范围 |
 |---|---|---|
-| 云端资源类型仅 Android 与 computer | `src/wearing/cloud/relay.py:55-59` | 没有通用 iPhone 执行设备类型 |
-| 连接器枚举已登记的 Android，执行时路由到固定 resource_id | `src/wearing/connectors/remote/adapter.py:83-94,116-135` | 已有 Agent 到真机的动作执行适配 |
-| 手机工具包含界面元素、截图、启动、点击、滑动、按键及文本 | `src/wearing/mobile.py:10-15`；`src/wearing/phone_proxy.py:158-165` | 是离散 Agent 工具，不是用户的视频遥控桌面 |
-| Android 跨数据目录的本机动作锁 | `src/wearing/phone_proxy.py:30-61,261-274` | 同一 OS 用户下 Pajio 调用互斥；不约束外部 scrcpy、其他 OS 用户或物理触碰 |
-| 云端事务租约、暂停代次和执行前重检 | `src/wearing/cloud/relay.py:276-299,326-387` | 暂停阻止新操作，旧已准入动作可能仍完成；尚无人工会话所有权 |
-| 持久账本、相同动作不重放、异常进入 unknown | `src/wearing/connectors/remote/client.py:218-262` | 可复用动作恢复机制，不是连续视频传输能力 |
-| App 有设备清单、配对文件、权限、暂停/恢复和核对 | `clients/mobile/src/NativeDevicePanel.tsx:137-221`；`src/wearing/app.py:498-600` | 没有“打开手机”实时画面、点击、输入、旋转或私密登录页面 |
-| Native 日历/提醒等使用前台能力会话 | `clients/mobile/src/NativeActionSession.tsx:23-33`；`src/wearing/native_actions.py:92-98` | 当前会话仅 iOS，前台限定；不是操作其他 App 的通用接口 |
-| 原生文本输入拒绝 password 字段，元素读取遮蔽其文字 | `src/wearing/android_text.py:14-24,82-84` | 仅保护该原生文本路径；不能据此宣称截图、通知、剪贴板或模型旁路均安全 |
-| 本机手机动作日志不记录输入内容、截图或账号数据 | `src/wearing/phone_proxy.py:87-94` | 仅此日志的范围；云端 commands 仍保存命令参数与结果，见 `src/wearing/cloud/relay.py:365-366,394-402` |
+| 云端资源类型仅 Android 与 computer | `src/pajio/cloud/relay.py:55-59` | 没有通用 iPhone 执行设备类型 |
+| 连接器枚举已登记的 Android，执行时路由到固定 resource_id | `src/pajio/connectors/remote/adapter.py:83-94,116-135` | 已有 Agent 到真机的动作执行适配 |
+| 手机工具包含界面元素、截图、启动、点击、滑动、按键及文本 | `src/pajio/mobile.py:10-15`；`src/pajio/phone_proxy.py:158-165` | 是离散 Agent 工具，不是用户的视频遥控桌面 |
+| Android 跨数据目录的本机动作锁 | `src/pajio/phone_proxy.py:30-61,261-274` | 同一 OS 用户下 Pajio 调用互斥；不约束外部 scrcpy、其他 OS 用户或物理触碰 |
+| 云端事务租约、暂停代次和执行前重检 | `src/pajio/cloud/relay.py:276-299,326-387` | 暂停阻止新操作，旧已准入动作可能仍完成；尚无人工会话所有权 |
+| 持久账本、相同动作不重放、异常进入 unknown | `src/pajio/connectors/remote/client.py:218-262` | 可复用动作恢复机制，不是连续视频传输能力 |
+| App 有设备清单、配对文件、权限、暂停/恢复和核对 | `clients/mobile/src/NativeDevicePanel.tsx:137-221`；`src/pajio/app.py:498-600` | 没有“打开手机”实时画面、点击、输入、旋转或私密登录页面 |
+| Native 日历/提醒等使用前台能力会话 | `clients/mobile/src/NativeActionSession.tsx:23-33`；`src/pajio/native_actions.py:92-98` | 当前会话仅 iOS，前台限定；不是操作其他 App 的通用接口 |
+| 原生文本输入拒绝 password 字段，元素读取遮蔽其文字 | `src/pajio/android_text.py:14-24,82-84` | 仅保护该原生文本路径；不能据此宣称截图、通知、剪贴板或模型旁路均安全 |
+| 本机手机动作日志不记录输入内容、截图或账号数据 | `src/pajio/phone_proxy.py:87-94` | 仅此日志的范围；云端 commands 仍保存命令参数与结果，见 `src/pajio/cloud/relay.py:365-366,394-402` |
 
 历史证据：`docs/evidence/remote-device-2026-10-03.md:7-15` 记录过单租户云端到 Mac + 小米 6X 的真实 HOME、设置启动、界面元素、截图、暂停与恢复。它没有验证用户从 iPhone 遥控该 Android、私密登录、跨用户隔离或社交账号的收藏读取。本次没有重复真机验收。
 

@@ -1,7 +1,7 @@
 import type {Connection} from './core';
 
 export type ComposerState = {
-  type: 'wearing-composer-state'; identity: string; pageId: string; contextKey: string;
+  type: 'pajio-composer-state'; identity: string; pageId: string; contextKey: string;
   text: string; sending: boolean; ready: boolean; ackSeq: number; error?: string;
   contextLabel?: string; ackVoiceId?: string;
 };
@@ -12,7 +12,7 @@ export function readComposerState(raw: string, source: string, connection: Conne
   try {
     if (raw.length > 30000 || new URL(source).origin !== new URL(connection.endpoint).origin) return null;
     const value = JSON.parse(raw);
-    if (value?.type !== 'wearing-composer-state' || value.identity !== connection.identity ||
+    if (value?.type !== 'pajio-composer-state' || value.identity !== connection.identity ||
       typeof value.pageId !== 'string' || value.pageId.length < 8 || value.pageId.length > 100 ||
       typeof value.contextKey !== 'string' || value.contextKey.length > 4000 ||
       typeof value.text !== 'string' || value.text.length > 12000 ||
@@ -29,5 +29,5 @@ export function readComposerState(raw: string, source: string, connection: Conne
 
 export function composerScript(state: ComposerState, seq: number, command: ComposerCommand): string {
   const payload = {...command, identity: state.identity, pageId: state.pageId, contextKey: state.contextKey, seq};
-  return `window.WearingHost?.composerCommand?.(${JSON.stringify(payload)}); true;`;
+  return `window.PajioHost?.composerCommand?.(${JSON.stringify(payload)}); true;`;
 }

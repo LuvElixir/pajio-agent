@@ -11,7 +11,7 @@
     "sdk": 28,
     "resource_id": "phone_20b031a3c8ab7b824dd6"
   },
-  "expected": "Wearing 帮我行动",
+  "expected": "Pajio 帮我行动",
   "independent_ui_readback": true,
   "screenshot_visually_checked": true,
   "browser_pause_mcp_rejected": true,
@@ -19,32 +19,32 @@
   "tools": [
     {
       "event": "tool.started",
-      "tool": "mcp__wearing_phone__mobile_list_devices",
+      "tool": "mcp__pajio_phone__mobile_list_devices",
       "seq": 0
     },
     {
       "event": "tool.completed",
-      "tool": "mcp__wearing_phone__mobile_list_devices",
+      "tool": "mcp__pajio_phone__mobile_list_devices",
       "seq": 1
     },
     {
       "event": "tool.started",
-      "tool": "mcp__wearing_phone__mobile_list_elements_on_screen",
+      "tool": "mcp__pajio_phone__mobile_list_elements_on_screen",
       "seq": 46
     },
     {
       "event": "tool.completed",
-      "tool": "mcp__wearing_phone__mobile_list_elements_on_screen",
+      "tool": "mcp__pajio_phone__mobile_list_elements_on_screen",
       "seq": 47
     },
     {
       "event": "tool.started",
-      "tool": "mcp__wearing_phone__mobile_take_screenshot",
+      "tool": "mcp__pajio_phone__mobile_take_screenshot",
       "seq": 48
     },
     {
       "event": "tool.completed",
-      "tool": "mcp__wearing_phone__mobile_take_screenshot",
+      "tool": "mcp__pajio_phone__mobile_take_screenshot",
       "seq": 49
     },
     {
@@ -59,32 +59,32 @@
     },
     {
       "event": "tool.started",
-      "tool": "mcp__wearing_phone__mobile_set_text",
+      "tool": "mcp__pajio_phone__mobile_set_text",
       "seq": 79
     },
     {
       "event": "tool.completed",
-      "tool": "mcp__wearing_phone__mobile_set_text",
+      "tool": "mcp__pajio_phone__mobile_set_text",
       "seq": 80
     },
     {
       "event": "tool.started",
-      "tool": "mcp__wearing_phone__mobile_list_elements_on_screen",
+      "tool": "mcp__pajio_phone__mobile_list_elements_on_screen",
       "seq": 96
     },
     {
       "event": "tool.completed",
-      "tool": "mcp__wearing_phone__mobile_list_elements_on_screen",
+      "tool": "mcp__pajio_phone__mobile_list_elements_on_screen",
       "seq": 97
     },
     {
       "event": "tool.started",
-      "tool": "mcp__wearing_phone__mobile_take_screenshot",
+      "tool": "mcp__pajio_phone__mobile_take_screenshot",
       "seq": 98
     },
     {
       "event": "tool.completed",
-      "tool": "mcp__wearing_phone__mobile_take_screenshot",
+      "tool": "mcp__pajio_phone__mobile_take_screenshot",
       "seq": 99
     }
   ],

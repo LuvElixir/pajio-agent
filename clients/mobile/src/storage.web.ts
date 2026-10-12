@@ -1,7 +1,7 @@
 import {openDB} from 'idb';
 import type {Connection, Media, Store} from './core';
 import type {StateDatabase} from './sqlite-store';
-const database = openDB('wearing-mobile-preview', 1, {upgrade(db) {db.createObjectStore('state'); db.createObjectStore('originals');}});
+const database = openDB('pajio-mobile-preview', 1, {upgrade(db) {db.createObjectStore('state'); db.createObjectStore('originals');}});
 export const storage: Store = {
   async get<T>(key: string) {return (await (await database).get('state', key)) as T ?? null;},
   async put(key, value) {await (await database).put('state', value, key);},

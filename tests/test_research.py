@@ -3,8 +3,8 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 
-from wearing.research import ResearchBook, MAX_RECEIPTS, public_url, receipt_items
-from wearing.store import Store
+from pajio.research import ResearchBook, MAX_RECEIPTS, public_url, receipt_items
+from pajio.store import Store
 
 
 def test_receipts_distinguish_search_read_cache_and_failure_without_page_body():
@@ -56,14 +56,14 @@ def test_run_and_identity_isolation_persistence_and_atomic_limit(tmp_path):
 def test_symlink_store_refused(tmp_path):
     original = tmp_path / "original"
     original.write_text("preserve")
-    (tmp_path / "wearing-research.sqlite3").symlink_to(original)
+    (tmp_path / "pajio-research.sqlite3").symlink_to(original)
     with pytest.raises(ValueError):
         ResearchBook(tmp_path)
     assert original.read_text() == "preserve"
 
 
 def test_task_receipt_survives_reload(tmp_path):
-    store = Store(tmp_path / "wearing.sqlite3")
+    store = Store(tmp_path / "pajio.sqlite3")
     task = store.create("test", "computer")
     record = {"items": [{"status": "read", "url": "https://example.org"}], "omitted": 0}
     store.update(task["id"], research=record)

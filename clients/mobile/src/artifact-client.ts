@@ -32,7 +32,7 @@ export class ArtifactApi {
     try {
       const response = await this.fetcher(new URL(`/api/artifacts/${encodeURIComponent(idValue)}${suffix}`, connectionEndpoint(this.connection)).toString(), {
         method: 'GET', redirect: 'error', signal: controller.signal,
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity},
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity},
       });
       if (!response.ok) {
         const data: unknown = await response.json().catch(() => null);

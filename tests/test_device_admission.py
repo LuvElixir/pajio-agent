@@ -9,14 +9,14 @@ from pathlib import Path
 import pytest
 from sqlalchemy import delete, insert, select, update
 
-from wearing.cloud.account_deletion_control import AccountDeletionControl
-from wearing.cloud.control import ControlStore, users, tenants, members, ownership, routes
-from wearing.cloud.device_admission import (AccountProof, AdmissionError, AdmissionSources,
+from pajio.cloud.account_deletion_control import AccountDeletionControl
+from pajio.cloud.control import ControlStore, users, tenants, members, ownership, routes
+from pajio.cloud.device_admission import (AccountProof, AdmissionError, AdmissionSources,
     TrustedSSHAdmission, control_evidence, tenant_evidence, readonly_control, remote_source)
-from wearing.cloud.device_provisioning import ProvisionBook, ProvisionError
-from wearing.cloud.instance import initialize_instance
-from wearing.config import write_private_json
-from wearing.store import Store
+from pajio.cloud.device_provisioning import ProvisionBook, ProvisionError
+from pajio.cloud.instance import initialize_instance
+from pajio.config import write_private_json
+from pajio.store import Store
 from test_device_provisioning import Provider, spec, policy, NOW
 
 
@@ -25,8 +25,8 @@ def account(tmp_path):
     control = ControlStore('sqlite:///' + str(tmp_path / 'control.sqlite3'), initialize=True, operator=True)
     root = tmp_path / 'instance'
     instance = initialize_instance(root, 'tenant_a', 'https://fixture.invalid')
-    Store(root / 'data/wearing.sqlite3')
-    (root / 'data/wearing.sqlite3').chmod(0o600)
+    Store(root / 'data/pajio.sqlite3')
+    (root / 'data/pajio.sqlite3').chmod(0o600)
     control.grant('fixture', 'alice', 'tenant_a')
     control.bind('tenant_a', instance.instance_id, 'https://fixture.invalid', 'fixture.json')
     with control.transaction() as db:
@@ -38,13 +38,13 @@ def account(tmp_path):
 
 def test_control_and_tenant_evidence_select_only_necessary_metadata(account):
     control, root, instance, uid = account
-    before = hashlib.sha256((root / 'data/wearing.sqlite3').read_bytes()).hexdigest()
+    before = hashlib.sha256((root / 'data/pajio.sqlite3').read_bytes()).hexdigest()
     proof = control_evidence(control, 'tenant_a')
     assert proof['owner_user_id'] == uid and proof['instance_id'] == instance.instance_id
     assert set(proof) == {'tenant_id','instance_id','owner_user_id','ownership_revision','member_digest','observed_at'}
     metadata = tenant_evidence(root, 'tenant_a', 'daily', instance.instance_id)
     assert metadata['identity_id'] == 'daily'
-    assert before == hashlib.sha256((root / 'data/wearing.sqlite3').read_bytes()).hexdigest()
+    assert before == hashlib.sha256((root / 'data/pajio.sqlite3').read_bytes()).hexdigest()
     assert 'gateway' not in json.dumps(proof) and 'fixture' not in json.dumps(proof)
     # Query-only connection state is not accidentally retained in a shared pool.
     with control.transaction(mutating=True) as db:
@@ -107,15 +107,15 @@ def test_tenant_evidence_verifies_identity_volume_scope_and_freeze(account, chan
     elif change == 'tombstone': write_private_json(root / 'deletion-tombstone.json', {})
     elif change == 'volume_owner': write_private_json(root / 'data/instance-owner.json', {'tenant_id':'tenant_b','instance_id':instance.instance_id})
     else:
-        path = root / 'data/wearing.sqlite3';path.rename(path.with_suffix('.backup'))
+        path = root / 'data/pajio.sqlite3';path.rename(path.with_suffix('.backup'))
         if change == 'database_symlink': path.symlink_to(path.with_suffix('.backup'))
     with pytest.raises(ValueError): tenant_evidence(root, target_tenant, target_id, target_instance)
 
 
 def transport(tmp_path, responses):
     config = tmp_path / 'ssh-config';config.write_text('')
-    sources = AdmissionSources.model_validate({'control': {'host':'control', 'root':'/var/lib/wearing/gateway'},
-        'operator_env':'/etc/pajio/operator.env','tenants':{'tenant_a':{'host':'tenant-a','root':'/var/lib/wearing/instance'}}})
+    sources = AdmissionSources.model_validate({'control': {'host':'control', 'root':'/var/lib/pajio/gateway'},
+        'operator_env':'/etc/pajio/operator.env','tenants':{'tenant_a':{'host':'tenant-a','root':'/var/lib/pajio/instance'}}})
     calls = []
     def run(argv, **kwargs):
         calls.append((argv, kwargs))
@@ -141,7 +141,7 @@ def test_trusted_ssh_checks_control_tenant_control_with_exact_host_trust(tmp_pat
     for argv, kwargs in calls:
         assert 'BatchMode=yes' in argv and 'StrictHostKeyChecking=yes' in argv
         assert not kwargs.get('shell') and 'sudo -n' in argv[-1]
-        assert 'WEARING_CONTROL_OPERATOR_DATABASE_URL=' not in argv[-1]
+        assert 'PAJIO_CONTROL_OPERATOR_DATABASE_URL=' not in argv[-1]
     assert 'SELECT 1 FROM identities WHERE id=?' in remote_source()
     compile(remote_source(), '<exact-remote-admission>', 'exec')
 
@@ -246,7 +246,7 @@ def test_no_guard_or_caller_boolean_can_authorize_provisioning(tmp_path):
 @pytest.mark.parametrize('action', ['plan','reserve','apply'])
 def test_operator_cli_requires_trusted_sources_before_ledger_or_host_access(tmp_path,monkeypatch,capsys,action):
     import sys
-    from wearing.cloud.device_operator import main
+    from pajio.cloud.device_operator import main
     root=tmp_path/'must-not-create'
     monkeypatch.setattr(sys,'argv',['device-operator',action,'--root',str(root)])
     with pytest.raises(SystemExit) as error:main()
@@ -255,7 +255,7 @@ def test_operator_cli_requires_trusted_sources_before_ledger_or_host_access(tmp_
 
 
 def test_spec_does_not_accept_self_reported_active_state():
-    from wearing.cloud.device_provisioning import DeviceSpec
+    from pajio.cloud.device_provisioning import DeviceSpec
     with pytest.raises(ValueError):DeviceSpec.model_validate({**spec().model_dump(),'active':True})
 
 
@@ -270,6 +270,6 @@ def test_unrelated_tenant_catalog_change_does_not_rebind_existing_request(tmp_pa
     guard,_=transport(tmp_path,replies()+replies())
     before=guard.check(spec())
     sources=guard.sources.model_dump()
-    sources['tenants']['tenant_other']={'host':'other','root':'/var/lib/wearing/instance'}
+    sources['tenants']['tenant_other']={'host':'other','root':'/var/lib/pajio/instance'}
     guard.sources=AdmissionSources.model_validate(sources)
     assert guard.check(spec()).scope()==before.scope()

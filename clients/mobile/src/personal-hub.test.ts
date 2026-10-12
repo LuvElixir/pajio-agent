@@ -98,7 +98,7 @@ test('read-only API keeps identity and auth in headers, never URLs, and encodes 
   assert.equal(new URL(calls[0].url).searchParams.get('path'), file.path);
   assert.equal(calls[0].url.includes('xxxxxxxx'), false);
   assert.equal(calls[0].init?.redirect, 'error');
-  assert.equal((calls[0].init?.headers as Record<string, string>)['X-Wearing-Identity'], 'daily');
+  assert.equal((calls[0].init?.headers as Record<string, string>)['X-Pajio-Identity'], 'daily');
   assert.equal((calls[0].init?.headers as Record<string, string>).Authorization, 'Bearer ' + 'x'.repeat(48));
   assert.equal(calls[0].init?.method, undefined);
   await assert.rejects(() => api.textFile({...file, path: '../notes.md'}));
@@ -147,7 +147,7 @@ test('original exports use authenticated read only requests and reject changed o
   assert.equal(new URL(calls[0].url).searchParams.get('path'), '私人资料/报告.pdf');
   assert.equal(calls[0].init?.redirect, 'error');
   assert.equal(calls[0].init?.method, undefined);
-  assert.equal((calls[0].init?.headers as Record<string, string>)['X-Wearing-Identity'], 'daily');
+  assert.equal((calls[0].init?.headers as Record<string, string>)['X-Pajio-Identity'], 'daily');
   await assert.rejects(() => api.original({path: 'huge.pdf', size: WORKSPACE_ORIGINAL_LIMIT + 1, modified: 1}), /20 MB/);
   await assert.rejects(() => api.original({path: '../private.pdf', size: 4, modified: 1}));
   assert.equal(calls.length, 1);
@@ -188,7 +188,7 @@ test('file pagination and exact metadata keep auth scope and avoid a first-200 l
   connection.identity = 'changed-after-construction';
   await api.workspacePage({directory: 'work', query: ' 文件 '});
   assert.equal(calls[0].url.searchParams.get('query'), '文件');
-  assert.equal((calls[0].init?.headers as Record<string, string>)['X-Wearing-Identity'], 'daily');
+  assert.equal((calls[0].init?.headers as Record<string, string>)['X-Pajio-Identity'], 'daily');
   assert.equal(calls[0].init?.redirect, 'error');
   assert.equal((await api.workspaceMetadata('work/file-999.md')).path, 'work/file-999.md');
   assert.equal(calls[1].url.pathname, '/api/workspace/metadata');

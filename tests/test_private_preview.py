@@ -4,8 +4,8 @@ from urllib.parse import urlparse, parse_qs
 import httpx
 import pytest
 
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.preview import create_preview_app
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.preview import create_preview_app
 
 ORIGIN='http://127.0.0.1:18865'
 
@@ -46,7 +46,7 @@ async def test_private_handoff_is_one_use_origin_bound_and_never_forwards_browse
     def worker(request):
         incoming.append(request)
         assert request.headers['Authorization']=='Bearer '+(root/'gateway.key').read_text().strip()
-        assert request.headers['X-Wearing-Tenant']=='tenant_test'
+        assert request.headers['X-Pajio-Tenant']=='tenant_test'
         assert request.headers['Host']=='127.0.0.1:18865'
         assert 'cookie' not in request.headers
         return httpx.Response(200,stream=RawJSON(),headers={'Content-Type':'application/json','Set-Cookie':'must-not-cross=1','Content-Security-Policy':"default-src 'self'"})
@@ -61,12 +61,12 @@ async def test_private_handoff_is_one_use_origin_bound_and_never_forwards_browse
         assert (await login(c,root)).status_code==401
         assert app.state.cookie_name in c.cookies
         assert (await c.get('/auth/session')).json()['mode']=='private_ssh_preview'
-        r=await c.get('/api/bootstrap',headers={'Authorization':'Bearer browser-key','X-Wearing-Tenant':'tenant_other'})
+        r=await c.get('/api/bootstrap',headers={'Authorization':'Bearer browser-key','X-Pajio-Tenant':'tenant_other'})
         assert r.status_code==200 and 'set-cookie' not in r.headers
         assert r.headers['content-security-policy']=="default-src 'self'"
         assert (await c.post('/api/devices/control',json={})).status_code==403
-        assert (await c.post('/api/devices/control',json={},headers={'Origin':ORIGIN,'X-Wearing-Token':'page-token'})).status_code==200
-        assert incoming[-1].headers['X-Wearing-Token']=='page-token'
+        assert (await c.post('/api/devices/control',json={},headers={'Origin':ORIGIN,'X-Pajio-Token':'page-token'})).status_code==200
+        assert incoming[-1].headers['X-Pajio-Token']=='page-token'
         assert (await c.get('/api/bootstrap',headers={'Host':'evil.example'})).status_code==400
         old_cookie=dict(c.cookies)
     restarted=create_preview_app(root,'http://127.0.0.1:18866',worker_transport=httpx.MockTransport(worker))
@@ -76,7 +76,7 @@ async def test_private_handoff_is_one_use_origin_bound_and_never_forwards_browse
 
 
 @pytest.mark.parametrize('origin,upstream',[
-    ('https://wearing.example','http://127.0.0.1:18866'),
+    ('https://pajio.example','http://127.0.0.1:18866'),
     (ORIGIN,'https://external.example'),(ORIGIN,'http://127.0.0.1:18865'),
     (ORIGIN,'http://127.0.0.1:18866/path')])
 def test_preview_refuses_public_listener_or_arbitrary_upstream(tmp_path,origin,upstream):

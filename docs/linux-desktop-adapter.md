@@ -121,15 +121,15 @@ subsequent observation establishes their effect.
 Once pairing is complete, use the existing connector command:
 
 ```text
-python -m wearing.cli connector service install --root /absolute/connector/root
-python -m wearing.cli connector service status --root /absolute/connector/root
-python -m wearing.cli connector service stop --root /absolute/connector/root
-python -m wearing.cli connector service start --root /absolute/connector/root
-python -m wearing.cli connector service uninstall --root /absolute/connector/root
+python -m pajio.cli connector service install --root /absolute/connector/root
+python -m pajio.cli connector service status --root /absolute/connector/root
+python -m pajio.cli connector service stop --root /absolute/connector/root
+python -m pajio.cli connector service start --root /absolute/connector/root
+python -m pajio.cli connector service uninstall --root /absolute/connector/root
 ```
 
 The Linux implementation writes a private unit under
-`~/.config/systemd/user/com.wearing.connector.<root-hash>.service`, then enables it
+`~/.config/systemd/user/com.pajio.connector.<root-hash>.service`, then enables it
 with `systemctl --user`. It must be installed from the intended desktop user's
 session, with that user's systemd bus available. It does not elevate privileges,
 enable lingering, install packages or start a desktop. Provision the user bus and

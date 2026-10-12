@@ -3,12 +3,12 @@ import asyncio
 import json
 import httpx
 import pytest
-from wearing.store import Store
-from wearing.notifications import NotificationConfig, NotificationService, NotificationError, SEND_URL
-from wearing.notifications_api import install_notification_routes
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.schedules import ScheduleBook, ScheduleDraft
+from pajio.store import Store
+from pajio.notifications import NotificationConfig, NotificationService, NotificationError, SEND_URL
+from pajio.notifications_api import install_notification_routes
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.schedules import ScheduleBook, ScheduleDraft
 
 PROJECT = '12345678-abcd-1234-abcd-123456789abc'
 INSTALL = 'synthetic-phone-001'
@@ -196,19 +196,19 @@ async def test_notification_routes_use_real_auth_csrf_and_identity_boundary(tmp_
         body = {'installation_id': INSTALL, 'expo_push_token': TOKEN, 'project_id': PROJECT, 'platform': 'ios'}
         assert (await client.post('/api/notifications/register', json=body)).status_code == 403
         bootstrap = (await client.get('/api/bootstrap')).json()
-        headers = {'X-Wearing-Token': bootstrap['token'], 'X-Wearing-Identity': 'daily'}
+        headers = {'X-Pajio-Token': bootstrap['token'], 'X-Pajio-Identity': 'daily'}
         r = await client.post('/api/notifications/register', json=body, headers=headers)
         assert r.status_code == 200 and r.json()['enabled'] is True
         assert TOKEN not in r.text
         assert (await client.post('/api/notifications/register', json={**body, 'identity_id': 'other'}, headers=headers)).status_code == 422
         assert (await client.post('/api/notifications/disable', json={'installation_id': INSTALL}, headers={**headers, 'Origin': 'https://evil.invalid'})).status_code == 403
         work = app.state.store.save_identity('Work')['id']
-        r = await client.get('/api/notifications/status', params={'installation_id': INSTALL}, headers={**headers, 'X-Wearing-Identity': work})
+        r = await client.get('/api/notifications/status', params={'installation_id': INSTALL}, headers={**headers, 'X-Pajio-Identity': work})
         assert r.status_code == 200 and r.json()['enabled'] is False
     await service.close(); await app.state.service.hermes.close()
 
 async def test_real_confirmation_card_emits_one_approval_event_per_request(setup):
-    from wearing.confirmations import ConfirmationBook, MARKER
+    from pajio.confirmations import ConfirmationBook, MARKER
     service, store, calls, _ = setup
     register(service)
     task = store.create('synthetic action', 'hermes')
@@ -239,7 +239,7 @@ async def test_logout_disables_only_this_installation_across_tenant_identities(s
     assert service.status(work, other)['enabled']
 
 async def test_tenant_middleware_protects_notification_registration(tmp_path):
-    from wearing.cloud.worker import TenantBoundary
+    from pajio.cloud.worker import TenantBoundary
     app = create_app(Settings(tmp_path))
     app.add_middleware(TenantBoundary, tenant_id='tenant_test', gateway_key='instance-key')
     service = NotificationService(app.state.store, config=CONFIG)
@@ -249,12 +249,12 @@ async def test_tenant_middleware_protects_notification_registration(tmp_path):
         body = {'installation_id': INSTALL, 'expo_push_token': TOKEN, 'project_id': PROJECT, 'platform': 'ios'}
         assert (await client.post('/api/notifications/register', json=body)).status_code == 401
         client.headers['Authorization'] = 'Bearer instance-key'
-        client.headers['X-Wearing-Tenant'] = 'wrong'
+        client.headers['X-Pajio-Tenant'] = 'wrong'
         assert (await client.post('/api/notifications/register', json=body)).status_code == 403
-        client.headers['X-Wearing-Tenant'] = 'tenant_test'
+        client.headers['X-Pajio-Tenant'] = 'tenant_test'
         csrf = (await client.get('/api/bootstrap')).json()['token']
         assert (await client.post('/api/notifications/register', json=body)).status_code == 403
-        client.headers['X-Wearing-Token'] = csrf
+        client.headers['X-Pajio-Token'] = csrf
         # The trusted gateway supplies this from its validated session; cloud
         # registrations without a finite session lease must fail closed.
         assert (await client.post('/api/notifications/register', json=body)).status_code == 401
@@ -294,11 +294,11 @@ def scheduled_result(store, monkeypatch, *, output='[SILENT]', status='completed
                      identity='daily', owner=None):
     book = ScheduleBook(store)
     with monkeypatch.context() as patch:
-        patch.setattr('wearing.schedules.now', lambda: '2026-10-10T00:00:00+00:00')
+        patch.setattr('pajio.schedules.now', lambda: '2026-10-10T00:00:00+00:00')
         schedule = book.create(identity, ScheduleDraft(title='Synthetic quiet check',
             instruction='Inspect only synthetic inputs.', kind='once', at='2026-10-10T00:01:00+00:00'),
             'synthetic-quiet-check', owner_scope=owner)
-        patch.setattr('wearing.schedules.now', lambda: '2026-10-10T00:01:00+00:00')
+        patch.setattr('pajio.schedules.now', lambda: '2026-10-10T00:01:00+00:00')
         task = book.claim(schedule['id'])
         assert task
         store.update(task['id'], status=status, output=output)

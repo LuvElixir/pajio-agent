@@ -3,12 +3,12 @@ from datetime import datetime, timezone
 import httpx
 import pytest
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.hermes import HermesClient
-from wearing.schedules import ScheduleDraft
-from wearing.usage import UsagePolicy
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.hermes import HermesClient
+from pajio.schedules import ScheduleDraft
+from pajio.usage import UsagePolicy
+from pajio.store import Store
 from test_goals import GoalWire
 
 
@@ -19,7 +19,7 @@ async def rig(tmp_path, monkeypatch):
     settings = Settings(tmp_path, hermes_key='fixture')
     client = HermesClient(settings, httpx.MockTransport(wire))
     app = create_app(settings, hermes=client, engine_autostart=False, local_devices=False)
-    from wearing.cloud.worker import TenantBoundary
+    from pajio.cloud.worker import TenantBoundary
     app.add_middleware(TenantBoundary, tenant_id='fixture', gateway_key='fixture-key')
     # An explicitly marked fixture replaces only engine discovery, not quota guard.
     monkeypatch.setattr(app.state.runtime, 'status', lambda: {'url': settings.hermes_url, 'running': True})
@@ -30,9 +30,9 @@ async def rig(tmp_path, monkeypatch):
 
 async def test_exhausted_http_submit_keeps_original_and_does_not_claim_execution(rig):
     app, wire = rig
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers={'Authorization': 'Bearer fixture-key', 'X-Wearing-Tenant': 'fixture', 'X-Pajio-Storage-Scope': 'a' * 64}) as http:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers={'Authorization': 'Bearer fixture-key', 'X-Pajio-Tenant': 'fixture', 'X-Pajio-Storage-Scope': 'a' * 64}) as http:
         token = (await http.get('/api/bootstrap')).json()['token']
-        headers = {'X-Wearing-Token': token}
+        headers = {'X-Pajio-Token': token}
         body = {'content': 'quota fixture message', 'request_id': 'quota-request-0001'}
         first = await http.post('/api/conversation', json=body, headers=headers)
         assert first.status_code == 201
@@ -104,7 +104,7 @@ async def test_goal_and_schedule_keep_retry_reason_without_duplicate_tasks(rig, 
     # Pause the goal and exercise the separate schedule coordinator path.
     goals.control(goal['id'], state['revision'], 'pause')
     clock = ['2026-10-08T00:00:00+00:00']
-    monkeypatch.setattr('wearing.schedules.now', lambda: clock[0])
+    monkeypatch.setattr('pajio.schedules.now', lambda: clock[0])
     schedule = app.state.schedules.create('daily', ScheduleDraft(title='quota schedule', instruction='read fixture only', kind='once', at='2026-10-08T00:01:00+00:00'), 'quota-schedule')
     clock[0] = '2026-10-08T00:02:00+00:00'
     await app.state.schedule_coordinator.tick()

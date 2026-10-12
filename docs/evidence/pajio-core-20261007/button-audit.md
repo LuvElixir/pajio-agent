@@ -43,7 +43,7 @@ P2 缺口与边界：
 | 底部 聊天/今天/任务/记忆/我的 | `BottomNavigation.onSelect → Mobile.selectTab → router.setParams` | 5 项真实路由；切页保留 RetainedConversation；`Mobile.tsx:71-89`。 |
 | 顶部小熊/进展 | `ActivityReview.onOpenChange(true); refresh()` | GET activity，原生 Modal，历史/待处理分组；只展示实际状态。 |
 | 关闭进展、刷新、结果项 | `onOpenChange(false)` / snapshot.refresh / `onOpenTask(task_id)` | 结果项按 id 跳嵌入对话/详情，Web `activity.js:50-79` 成功打开后才 seen。 |
-| 搜索对话 | `ReviewRequest{target:'search'} → WearingHost.openSearch` | 嵌入当前已载入对话 DOM 搜索；不是全身份历史搜索。 |
+| 搜索对话 | `ReviewRequest{target:'search'} → PajioHost.openSearch` | 嵌入当前已载入对话 DOM 搜索；不是全身份历史搜索。 |
 | 搜索上一处/下一处/完成 | `navigateMatch` / `closeSearch` | 无匹配 disabled；切页关闭；`web/mobile-host.js:53-128`。 |
 | 设置 | `setScreen('settings')` | 原生 SettingsHub。 |
 | 返回 | `Mobile.goBack` | 记忆文件层级、衣橱、设置、记录专门分支；Android BackHandler。 |

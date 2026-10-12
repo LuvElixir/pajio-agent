@@ -7,12 +7,12 @@ import json
 import httpx
 import pytest
 
-from wearing.cloud.commands import CommandRejected, DeviceCommand
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.relay import (RelayStore, RelayError, PairRequest, PollRequest,
+from pajio.cloud.commands import CommandRejected, DeviceCommand
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.relay import (RelayStore, RelayError, PairRequest, PollRequest,
     ConnectionRequest, ClaimRequest, ResultRequest, create_relay_app, utc)
-from wearing.config import write_private_json
-from wearing.connectors.remote.client import Connector, Journal, PairBundle
+from pajio.config import write_private_json
+from pajio.connectors.remote.client import Connector, Journal, PairBundle
 
 READ='phone.mobile_list_elements_on_screen'
 WRITE='phone.mobile_click_on_screen_at_coordinates'
@@ -36,7 +36,7 @@ def queue(store,method=WRITE):
 
 
 def test_remote_pause_fences_queued_and_resume_requires_current_connection_ack(paired):
-    from wearing.cloud.relay import ResourceControl
+    from pajio.cloud.relay import ResourceControl
     _, s, _, conn = paired
     command = queue(s)
     s.control('daily', ResourceControl(resource_id='phone_test', paused=True, expected_generation=0))
@@ -66,7 +66,7 @@ def test_remote_pause_fences_queued_and_resume_requires_current_connection_ack(p
 
 
 def test_pause_discards_inflight_contents_and_never_clears_action_review(paired):
-    from wearing.cloud.relay import ResourceControl
+    from pajio.cloud.relay import ResourceControl
     _,s,_,conn = paired
     c=queue(s); claim(s,c,conn)
     with pytest.raises(RelayError, match='resource_not_paired'):
@@ -251,7 +251,7 @@ async def test_claim_response_lost_does_not_dispatch(paired,tmp_path):
     root,s,b,conn=paired
     adapter=FakeAdapter(); node=device(tmp_path,b,conn,adapter)
     c=queue(s)
-    import wearing.connectors.remote.client as mod
+    import pajio.connectors.remote.client as mod
     original=mod.response
     async def lose(client,path,payload):
         result=await original(client,path,payload)

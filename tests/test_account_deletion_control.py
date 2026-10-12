@@ -5,9 +5,9 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 from sqlalchemy import select, update
 
-from wearing.account_deletion import DeletionError
-from wearing.cloud.account_deletion_control import AccountDeletionControl
-from wearing.cloud.control import ControlError, ControlStore, deletion_requests, members, ownership, sessions, tenants, users
+from pajio.account_deletion import DeletionError
+from pajio.cloud.account_deletion_control import AccountDeletionControl
+from pajio.cloud.control import ControlError, ControlStore, deletion_requests, members, ownership, sessions, tenants, users
 
 
 @pytest.fixture

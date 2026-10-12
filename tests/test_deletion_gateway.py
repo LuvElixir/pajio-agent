@@ -11,11 +11,11 @@ import pytest
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-from wearing.cloud.account_deletion_control import AccountDeletionControl
-from wearing.cloud.control import ControlStore, ControlError
-from wearing.cloud.deletion_gateway import PREFIX, ReceiptCodec, fresh_auth
-from wearing.cloud.gateway import create_gateway_app, load_gateway, forward_worker
-from wearing.cloud.session_guard import SessionRevoked
+from pajio.cloud.account_deletion_control import AccountDeletionControl
+from pajio.cloud.control import ControlStore, ControlError
+from pajio.cloud.deletion_gateway import PREFIX, ReceiptCodec, fresh_auth
+from pajio.cloud.gateway import create_gateway_app, load_gateway, forward_worker
+from pajio.cloud.session_guard import SessionRevoked
 from test_gateway import lab, login, ORIGIN, ISSUER
 from test_gateway_voice import Connector, Remote, start
 from test_mobile_gateway import authorize, CHALLENGE, STATE, VERIFIER
@@ -30,12 +30,12 @@ def registered(root, current):
 
 
 def cookie_sid(client):
-    return json.loads(base64.b64decode(client.cookies.get('__Host-wearing-session').split('.')[0]))['sid']
+    return json.loads(base64.b64decode(client.cookies.get('__Host-pajio-session').split('.')[0]))['sid']
 
 
 async def web_reauth(client, provider, *, subject='alice', claims=None):
     account = (await client.get('/auth/session')).json()
-    begin = await client.post(PREFIX + '/reauth', json={}, headers={'Origin': ORIGIN, 'X-Wearing-CSRF': account['csrf']})
+    begin = await client.post(PREFIX + '/reauth', json={}, headers={'Origin': ORIGIN, 'X-Pajio-CSRF': account['csrf']})
     assert begin.status_code == 200
     response = await client.get(begin.json()['authorize_url'])
     assert response.status_code == 302
@@ -58,22 +58,22 @@ async def test_deletion_plan_receipt_survives_submission_lost_response_and_block
             fields = {k: plan[k] for k in ['request_key', 'receipt_token']}
             fields.update(plan_revision=plan['revision'], confirm='DELETE')
             account = (await client.get('/auth/session')).json()
-            headers = {'Origin': ORIGIN, 'X-Wearing-CSRF': account['csrf']}
+            headers = {'Origin': ORIGIN, 'X-Pajio-CSRF': account['csrf']}
             assert (await client.post(PREFIX + '/request', json=fields, headers=headers)).json()['code'] == 'reauth_required'
             status_headers = {'Authorization': 'Bearer ' + recovery}
             assert (await client.get(PREFIX + '/status', headers=status_headers)).json()['state'] == 'not_submitted'
             assert (await web_reauth(client, provider)).status_code == 303
             account = (await client.get('/auth/session')).json()
             sid = cookie_sid(client)
-            old_cookie = client.cookies.get('__Host-wearing-session')
-            headers['X-Wearing-CSRF'] = account['csrf']
+            old_cookie = client.cookies.get('__Host-pajio-session')
+            headers['X-Pajio-CSRF'] = account['csrf']
             sent = await client.post(PREFIX + '/request', json=fields, headers=headers)
             assert sent.status_code == 202 and sent.json()['data_erased'] is False
             # Forget the response: the PRE-submission credential recovers the exact job.
             state = (await client.get(PREFIX + '/status', headers=status_headers)).json()
             assert state['id'] == sent.json()['id'] and state['state'] == 'awaiting_operator'
             assert state['code'] == 'adapter_unconfigured'
-            client.cookies.set('__Host-wearing-session', old_cookie)
+            client.cookies.set('__Host-pajio-session', old_cookie)
             for path in ['/auth/session', '/api/bootstrap', PREFIX + '/plan']:
                 assert (await client.get(path)).status_code == 401
                 assert (await client.get(path, headers=status_headers)).status_code == 401
@@ -137,7 +137,7 @@ async def test_receipt_tampering_and_other_account_cannot_submit_or_enumerate(tm
             assert (await web_reauth(b, provider, subject='bob')).status_code == 303
             csrf = (await b.get('/auth/session')).json()['csrf']
             payload = {'request_key': plan['request_key'], 'receipt_token': plan['receipt_token'], 'plan_revision': plan['revision'], 'confirm': 'DELETE'}
-            assert (await b.post(PREFIX + '/request', json=payload, headers={'Origin': ORIGIN, 'X-Wearing-CSRF': csrf})).status_code == 422
+            assert (await b.post(PREFIX + '/request', json=payload, headers={'Origin': ORIGIN, 'X-Pajio-CSRF': csrf})).status_code == 422
             invalid = plan['receipt_token'][:-8] + 'tampered'
             assert (await a.get(PREFIX + '/status', headers={'Authorization': 'Bearer ' + invalid})).status_code == 401
             assert (await b.get(PREFIX + '/status')).status_code == 401
@@ -202,7 +202,7 @@ async def test_voice_freeze_before_connection_finishes_sends_no_first_frame(tmp_
         app = create_gateway_app(root, voice_connector=connector)
         try:
             client = TestClient(app, base_url=ORIGIN)
-            with client.websocket_connect('wss://wearing.example/api/voice/stream') as ws:
+            with client.websocket_connect('wss://pajio.example/api/voice/stream') as ws:
                 ws.send_json(start(token))
                 with pytest.raises(WebSocketDisconnect): ws.receive_json()
             assert remote.messages == []
@@ -221,7 +221,7 @@ async def test_voice_freeze_during_stream_rejects_old_token_frames(tmp_path):
         app = create_gateway_app(root, voice_connector=connector)
         try:
             client = TestClient(app, base_url=ORIGIN)
-            with client.websocket_connect('wss://wearing.example/api/voice/stream') as ws:
+            with client.websocket_connect('wss://pajio.example/api/voice/stream') as ws:
                 ws.send_json(start(token))
                 assert ws.receive_json()['type'] == 'ready'
                 book.request(current, 'voice_stream_request_1234567890', plan['revision'])
@@ -278,7 +278,7 @@ async def test_unknown_ownership_and_stale_plan_never_freeze_account(tmp_path):
             assert not unknown['ready'] and unknown['blockers'][0]['code'] == 'ownership_unknown'
             assert (await web_reauth(client, provider)).status_code == 303
             account = (await client.get('/auth/session')).json()
-            csrf = {'Origin': ORIGIN, 'X-Wearing-CSRF': account['csrf']}
+            csrf = {'Origin': ORIGIN, 'X-Pajio-CSRF': account['csrf']}
             payload = {'request_key': unknown['request_key'], 'receipt_token': unknown['receipt_token'],
                        'plan_revision': unknown['revision'], 'confirm': 'DELETE'}
             denied = await client.post(PREFIX + '/request', json=payload, headers=csrf)

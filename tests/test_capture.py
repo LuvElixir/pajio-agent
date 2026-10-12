@@ -9,12 +9,12 @@ import httpx
 from PIL import Image
 import pytest
 
-from wearing.app import create_app
-from wearing.capture import CaptureBook, CaptureDraft, OrganizedNote
-from wearing.capture_worker import CaptureWorker
-from wearing.config import Settings
-from wearing.life import LifeBook, LifeDraft, LifeError
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.capture import CaptureBook, CaptureDraft, OrganizedNote
+from pajio.capture_worker import CaptureWorker
+from pajio.config import Settings
+from pajio.life import LifeBook, LifeDraft, LifeError
+from pajio.store import Store
 
 
 def png():
@@ -22,7 +22,7 @@ def png():
 
 
 @pytest.fixture
-def book(tmp_path):return CaptureBook(LifeBook(Store(tmp_path/'wearing.sqlite3')))
+def book(tmp_path):return CaptureBook(LifeBook(Store(tmp_path/'pajio.sqlite3')))
 
 
 def asset(book,key='image-one'):return book.upload('daily',png(),'海报.png','image/png',key)
@@ -162,7 +162,7 @@ async def test_upload_api_guards_original_and_persisted_capture(tmp_path):
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://testserver') as c:
         url='/api/life/assets?name=poster.png&request_key=upload-api'
         assert (await c.post(url,content=png(),headers={'Content-Type':'image/png'})).status_code==403
-        c.headers['X-Wearing-Token']=(await c.get('/api/bootstrap')).json()['token']
+        c.headers['X-Pajio-Token']=(await c.get('/api/bootstrap')).json()['token']
         assert (await c.post(url,content=png(),headers={'Content-Type':'image/png','Origin':'https://other.example'})).status_code==403
         response=await c.post(url,content=png(),headers={'Content-Type':'image/png'});assert response.status_code==201
         a=response.json(); original=await c.get('/api/life/assets/'+a['id'])
@@ -171,7 +171,7 @@ async def test_upload_api_guards_original_and_persisted_capture(tmp_path):
         response=await c.post('/api/captures',json=draft);assert response.status_code==201
         item=response.json()['record'];assert item['capture']['state']=='queued'
         other=(await c.post('/api/identities',json={'name':'海外','description':'','region':'international'})).json()['id']
-        c.headers['X-Wearing-Identity']=other
+        c.headers['X-Pajio-Identity']=other
         assert (await c.get('/api/life/assets/'+a['id'])).status_code==404
         assert (await c.post('/api/captures',json=draft)).status_code==404
         assert (await c.post('/api/captures/'+item['capture']['id']+'/retry',json={})).status_code==404
@@ -185,7 +185,7 @@ async def test_worker_completed_output_is_validated_and_original_already_saved(b
         assert book.life.get('daily',job['record_id'])['capture']['state']=='organizing'
         return json.dumps({'output':json.dumps({'title':'周末散步','content':'先记下去公园散步的念头。'},ensure_ascii=False)},ensure_ascii=False)
     monkeypatch.setattr(worker,'extract',extract);monkeypatch.setattr(worker,'command',command)
-    from wearing.runtime import HermesRuntime
+    from pajio.runtime import HermesRuntime
     monkeypatch.setattr(HermesRuntime,'python',property(lambda _:book.store.path))
     await worker.run(job)
     record=book.life.get('daily',job['record_id'])
@@ -199,7 +199,7 @@ async def test_worker_invalid_output_does_not_mutate_record(book,monkeypatch):
     async def extract(_):return []
     async def command(*args,**kwargs):return json.dumps({'output':'{"title":"x","content":"x","completed":true}'})
     monkeypatch.setattr(worker,'extract',extract);monkeypatch.setattr(worker,'command',command)
-    from wearing.runtime import HermesRuntime
+    from pajio.runtime import HermesRuntime
     monkeypatch.setattr(HermesRuntime,'python',property(lambda _:book.store.path))
     await worker.run(job)
     record=book.life.get('daily',job['record_id'])

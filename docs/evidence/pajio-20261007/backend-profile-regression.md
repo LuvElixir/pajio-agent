@@ -3,27 +3,27 @@
 The backend command recorded in `docs/pajio-zcode-delivery-2026-10-07.md:37`
 now passes all **131 tests**. The earlier failure was an outdated test expectation
 for the life connector's confirmation settings. Only `tests/test_life.py` was
-changed; `src/wearing/profile.py`, live configuration, services and mobile sources
+changed; `src/pajio/profile.py`, live configuration, services and mobile sources
 were not changed by this correction.
 
 ## Reproduction and root cause
 
-Working directory: `/Users/archieliew/Documents/facet`.
+Working directory: `/Users/archieliew/Documents/pajio`.
 
 ```sh
 uv run pytest -q tests/test_life.py::test_profile_exposes_life_tools_preserving_model_config
 ```
 
 Before the correction: **1 failed in 0.37s**. The assertion at the former
-`tests/test_life.py:175` required the generated `mcp_servers.wearing_life` mapping
+`tests/test_life.py:175` required the generated `mcp_servers.pajio_life` mapping
 to exactly equal the input connector. The actual mapping additionally contained:
 
 ```python
 {"timeout": 360, "elicitation": {"enabled": True, "timeout": 300}}
 ```
 
-These are intentional owned profile fields in `src/wearing/profile.py:118–119`.
-`src/wearing/life_proxy.py` exposes `request_confirmation` through the same MCP
+These are intentional owned profile fields in `src/pajio/profile.py:118–119`.
+`src/pajio/life_proxy.py` exposes `request_confirmation` through the same MCP
 connector. `docs/confirmation-cards.md` specifies the existing 300-second decision
 window; the 360-second tool timeout allows that window to complete. Removing
 these fields to satisfy the old assertion would weaken the confirmation path.
@@ -87,5 +87,5 @@ SHA-256 at verification:
 
 - Updated `tests/test_life.py`:
   `06786b8db5a0bfceaa3d13932f74f6dffdd8af04b0476199a7e3c64c41659cda`
-- Observed, unchanged `src/wearing/profile.py`:
+- Observed, unchanged `src/pajio/profile.py`:
   `4bd59a354f4d194fb28ac1d56b27d720e0cab32741601142d21d66bb1ef6a874`

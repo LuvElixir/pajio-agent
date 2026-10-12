@@ -5,11 +5,11 @@ from datetime import datetime, timezone
 from types import SimpleNamespace
 import httpx
 import pytest
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.diagnostics import Diagnostics, reference
-from wearing.diagnostics_api import install_diagnostic_routes
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.diagnostics import Diagnostics, reference
+from pajio.diagnostics_api import install_diagnostic_routes
+from pajio.store import Store
 
 NOW = 1791399000.0
 CANARY = 'PRIVATE-secret-token /Users/person/private.txt https://secret.invalid?token=hidden'
@@ -96,7 +96,7 @@ async def test_recent_limit_and_identity_do_not_leak_older_or_other_tasks(tmp_pa
     assert [row['task_id'] for row in snapshot['tasks']['items']] == [hidden['id']]
 
 async def test_real_app_tenant_and_identity_middleware_protect_diagnostic_route(tmp_path):
-    from wearing.cloud.worker import TenantBoundary
+    from pajio.cloud.worker import TenantBoundary
     app = create_app(Settings(tmp_path))
     app.add_middleware(TenantBoundary, tenant_id='tenant_qa', gateway_key='instance-key')
     # Explicit isolated adapters replace any production mount; no engine starts.
@@ -106,15 +106,15 @@ async def test_real_app_tenant_and_identity_middleware_protect_diagnostic_route(
     install_diagnostic_routes(app, store, runtime)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
         assert (await client.get('/api/diagnostics')).status_code == 401
-        client.headers.update({'Authorization':'Bearer instance-key', 'X-Wearing-Tenant':'wrong'})
+        client.headers.update({'Authorization':'Bearer instance-key', 'X-Pajio-Tenant':'wrong'})
         assert (await client.get('/api/diagnostics')).status_code == 403
-        client.headers['X-Wearing-Tenant'] = 'tenant_qa'
+        client.headers['X-Pajio-Tenant'] = 'tenant_qa'
         response = await client.get('/api/diagnostics')
         assert response.status_code == 200 and response.headers['Cache-Control'] == 'no-store'
         assert own['id'] in response.text and hidden['id'] not in response.text and 'PRIVATE' not in response.text
-        assert (await client.get('/api/diagnostics', headers={'X-Wearing-Identity':other})).json()['tasks']['items'][0]['task_id'] == hidden['id']
-        assert (await client.get('/api/diagnostics?identity=daily', headers={'X-Wearing-Identity':other})).status_code == 409
-        assert (await client.get('/api/diagnostics', headers={'X-Wearing-Identity':'missing'})).status_code == 404
+        assert (await client.get('/api/diagnostics', headers={'X-Pajio-Identity':other})).json()['tasks']['items'][0]['task_id'] == hidden['id']
+        assert (await client.get('/api/diagnostics?identity=daily', headers={'X-Pajio-Identity':other})).status_code == 409
+        assert (await client.get('/api/diagnostics', headers={'X-Pajio-Identity':'missing'})).status_code == 404
     await app.state.service.hermes.close()
 
 async def test_get_does_not_mutate_task_or_event_rows(tmp_path):
@@ -150,7 +150,7 @@ async def test_owner_filter_precedes_task_limit_and_omits_unowned_tasks(tmp_path
 
 
 async def test_actual_cloud_app_snapshot_and_history_scope_each_owner(tmp_path):
-    from wearing.cloud.worker import TenantBoundary
+    from pajio.cloud.worker import TenantBoundary
     app = create_app(Settings(tmp_path), local_devices=False, engine_autostart=False)
     app.add_middleware(TenantBoundary, tenant_id='tenant_qa', gateway_key='instance-key')
     store = app.state.store
@@ -177,7 +177,7 @@ async def test_actual_cloud_app_snapshot_and_history_scope_each_owner(tmp_path):
     try:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
             assert (await client.get('/api/diagnostics')).status_code == 401
-            client.headers.update({'Authorization': 'Bearer instance-key', 'X-Wearing-Tenant': 'tenant_qa'})
+            client.headers.update({'Authorization': 'Bearer instance-key', 'X-Pajio-Tenant': 'tenant_qa'})
             assert (await client.get('/api/diagnostics')).status_code == 401
             assert (await client.get('/api/diagnostics?owner_scope='+owner_a)).status_code == 401
             for principal, visible, invisible in ((owner_a, own, foreign), (owner_b, foreign, own)):
@@ -191,9 +191,9 @@ async def test_actual_cloud_app_snapshot_and_history_scope_each_owner(tmp_path):
                     assert hidden['id'] not in response.text and hidden['id'] not in history.text
                 assert 'PRIVATE' not in response.text and principal not in response.text
             client.headers['X-Pajio-Storage-Scope'] = owner_a
-            response = await client.get('/api/diagnostics', headers={'X-Wearing-Identity': other_identity})
+            response = await client.get('/api/diagnostics', headers={'X-Pajio-Identity': other_identity})
             assert response.status_code == 200
             assert [row['task_id'] for row in response.json()['tasks']['items']] == [other['id']]
-            assert (await client.get('/api/diagnostics', headers={'X-Wearing-Tenant': 'foreign'})).status_code == 403
+            assert (await client.get('/api/diagnostics', headers={'X-Pajio-Tenant': 'foreign'})).status_code == 403
     finally:
         await app.state.service.hermes.close()

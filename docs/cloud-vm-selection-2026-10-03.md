@@ -1,6 +1,6 @@
-# Wearing 多云 VM 选型与接入
+# Pajio 多云 VM 选型与接入
 
-2026-10-03。用户最新确认：同时考虑用户自有云账户的一键部署，以及 Wearing 代建和运营的托管服务；海内外主流厂商都应进入适配范围。默认一位租户一套独立 VM 内的 Wearing/Hermes/私有数据，设备仍是连接器。用户已选择腾讯云并授权使用现有 CLI。已完成目录、离线预览及腾讯云真实账户发现/按量与包月询价；一台香港按量 VM 已完成 Wearing/Hermes 安装、真实模型/记忆/文件/单轮目标、整机重启保留和加密冷备份隔离恢复校验。**该私人试验实例正在付费运行，完整 SaaS 尚未上线**。
+2026-10-03。用户最新确认：同时考虑用户自有云账户的一键部署，以及 Pajio 代建和运营的托管服务；海内外主流厂商都应进入适配范围。默认一位租户一套独立 VM 内的 Pajio/Hermes/私有数据，设备仍是连接器。用户已选择腾讯云并授权使用现有 CLI。已完成目录、离线预览及腾讯云真实账户发现/按量与包月询价；一台香港按量 VM 已完成 Pajio/Hermes 安装、真实模型/记忆/文件/单轮目标、整机重启保留和加密冷备份隔离恢复校验。**该私人试验实例正在付费运行，完整 SaaS 尚未上线**。
 
 ## 先覆盖谁
 
@@ -32,23 +32,23 @@ Agent 核心 VM 不承担用户的全部桌面工作。Mac/Windows 桌面和手�
 
 每个部署绑定 `provider_id + account_ref + account_scope + region + tenant_id`，由平台可信记录解析实际账户和凭据；用户提交的配置不是授权。`account_ref` 只是逻辑引用，不能包含 AccessKey、密码、模型密钥或登录 cookie。
 
-- 用户自有云账户：用户直接付云费，以专用项目/资源组及受限授权交给 Wearing 管理这套实例。
-- Wearing 托管账户：平台创建实例并承担云费，产品账单另向用户计费；租户 Worker 不得到平台云管理凭据。
+- 用户自有云账户：用户直接付云费，以专用项目/资源组及受限授权交给 Pajio 管理这套实例。
+- Pajio 托管账户：平台创建实例并承担云费，产品账单另向用户计费；租户 Worker 不得到平台云管理凭据。
 - 独占物理主机：后续单独档位，不能把普通 VM 宣传成独享物理服务器。
 
-AWS `aws` / `aws-cn` 属于独立账户分区；Azure 公共环境和中国环境有不同管理端点。阿里/腾讯/华为的国内站与国际站账户、结算、区域能力也要分别核对，不能只替换一个 region 字符串就宣称兼容。这里的 `china-site` / `international-site` 是 Wearing 的配置分类，不是宣称所有厂商采用相同 IAM 分区机制。[AWS 中国账号要求](https://www.amazonaws.cn/en/about-aws/china/faqs/)、[Azure 中国服务与端点](https://learn.microsoft.com/en-us/azure/china/concepts-service-availability)。
+AWS `aws` / `aws-cn` 属于独立账户分区；Azure 公共环境和中国环境有不同管理端点。阿里/腾讯/华为的国内站与国际站账户、结算、区域能力也要分别核对，不能只替换一个 region 字符串就宣称兼容。这里的 `china-site` / `international-site` 是 Pajio 的配置分类，不是宣称所有厂商采用相同 IAM 分区机制。[AWS 中国账号要求](https://www.amazonaws.cn/en/about-aws/china/faqs/)、[Azure 中国服务与端点](https://learn.microsoft.com/en-us/azure/china/concepts-service-availability)。
 
 网络要同时验证模型服务、软件/镜像下载、用户浏览器和电脑/手机出站连接四条路径。区域的延迟、流量费、产品可用性和账户资格共同决定选型，不按“国内/海外”标签直接自动挑选。
 
 ## 统一流程保留厂商差异
 
-公共生命周期是：发现账户/区域/规格与镜像 → 完整报价 → 明确支出授权 → 幂等创建 → 私有数据卷 → 初始化 Wearing → 健康/实例归属检查 → 用户与设备绑定 → 持续运行 → 排空/备份 → 停止/恢复 → 更新 → 退出与回收。
+公共生命周期是：发现账户/区域/规格与镜像 → 完整报价 → 明确支出授权 → 幂等创建 → 私有数据卷 → 初始化 Pajio → 健康/实例归属检查 → 用户与设备绑定 → 持续运行 → 排空/备份 → 停止/恢复 → 更新 → 退出与回收。
 
-腾讯首轮先复用已安装的官方 tccli；后续可复用 OpenTofu 与成熟 Provider 管理 VM、卷、网络和快照，Wearing 只做配置、权限、操作账本、预算与恢复协调；云 API 的签名、登录和常规 SDK 不自行重写。OpenTofu 通过 Provider 插件管理不同系统。[官方插件机制](https://opentofu.org/docs/language/providers/)。具体 Provider 版本、license、锁文件、校验和及 OpenTofu 兼容性需在各模块验收时固定；本次没有安装或执行这些插件。
+腾讯首轮先复用已安装的官方 tccli；后续可复用 OpenTofu 与成熟 Provider 管理 VM、卷、网络和快照，Pajio 只做配置、权限、操作账本、预算与恢复协调；云 API 的签名、登录和常规 SDK 不自行重写。OpenTofu 通过 Provider 插件管理不同系统。[官方插件机制](https://opentofu.org/docs/language/providers/)。具体 Provider 版本、license、锁文件、校验和及 OpenTofu 兼容性需在各模块验收时固定；本次没有安装或执行这些插件。
 
 OpenTofu 管声明式资源；运行时启停、异步任务查询与专用备份恢复，可以按提供商能力调用受限官方 SDK。不要用删除资源模拟停止，也不能每次恢复都销毁旧实例。每套部署状态独立保存并加锁，导入用户已有实例需要独立核对资源归属，不能把整个用户云账户纳入 state。
 
-| 差异 | 本次发现 | Wearing 的处理 |
+| 差异 | 本次发现 | Pajio 的处理 |
 | --- | --- | --- |
 | 创建完成 | AWS/阿里/腾讯创建入口、Azure PUT、GCP operation、华为 job 各自有完成规则 | 创建请求被接受不等于安装完成；分别记录云任务、VM 状态和产品健康 |
 | 重试 | AWS/阿里 ClientToken，GCP requestId，华为 X-Client-Token，百度 ClientToken；Azure 已有资源 PUT 可能更新 | 先持久保存操作与参数，重试复用幂等语义；超时先核对原请求，不能直接再下单；Azure 创建避免覆盖已有 VM |
@@ -65,16 +65,16 @@ OpenTofu 管声明式资源；运行时启停、异步任务查询与专用备�
 `cloud/providers.json` 保存研究目录与首轮/首批/后续顺序，`cloud/placement.py` 提供离线 VM 配置预览：
 
 ```sh
-uv run wearing cloud providers
-uv run wearing cloud plan --request deploy/vm/selection-example.json
+uv run pajio cloud providers
+uv run pajio cloud plan --request deploy/vm/selection-example.json
 ```
 
 示例文件不含账户密钥；改成真实逻辑引用也不表示已获得账户授权。输出明确标记 `planned`、`ready_to_provision: false`、`quote: null`、`creates_resources: false`、`hardware_isolation_verified: false`。它不是 OpenTofu 的云 plan，不访问账户、不读取云 CLI 登录信息、不检查实时区域库存，也不产生资源。配置散列只用于比较配置，不能作为支付授权、云 API 幂等令牌或恢复证据。
 
-腾讯云新增 `wearing cloud tencent inspect` 与 `quote`，复用现有 tccli 做实时读取，输出不含云密钥；支持中国站人民币的按量/一个月包月报价。这个入口没有购买/启停/删除接口，也不接到 Agent 工具或租户网页。另有不接入 Agent/网页的操作者部署脚本，首台安装、重启和部分备份恢复已经验收；完整生命周期待后续测试。见[腾讯云首轮](tencent-cloud-first-run-2026-10-03.md)。其他厂商与 OpenTofu 模块仍待实现。
+腾讯云新增 `pajio cloud tencent inspect` 与 `quote`，复用现有 tccli 做实时读取，输出不含云密钥；支持中国站人民币的按量/一个月包月报价。这个入口没有购买/启停/删除接口，也不接到 Agent 工具或租户网页。另有不接入 Agent/网页的操作者部署脚本，首台安装、重启和部分备份恢复已经验收；完整生命周期待后续测试。见[腾讯云首轮](tencent-cloud-first-run-2026-10-03.md)。其他厂商与 OpenTofu 模块仍待实现。
 
 ## 第一轮真正的退出条件
 
-先完成腾讯云闭环，其他五家使用相同验收清单逐家加入：实际账户最小权限与撤销；创建请求不重复扣费；独立 VM/卷/网络；固定 Wearing/Hermes 安装；两用户错路由拒绝；真实记忆/文件/目标重启保留；一致性备份恢复到新实例；设备重连且不重复动作；实例/磁盘/IP/快照账单核对；用户退出时保留或导出其数据并核对所有剩余资源。
+先完成腾讯云闭环，其他五家使用相同验收清单逐家加入：实际账户最小权限与撤销；创建请求不重复扣费；独立 VM/卷/网络；固定 Pajio/Hermes 安装；两用户错路由拒绝；真实记忆/文件/目标重启保留；一致性备份恢复到新实例；设备重连且不重复动作；实例/磁盘/IP/快照账单核对；用户退出时保留或导出其数据并核对所有剩余资源。
 
 腾讯云首台已按用户选择的按量方式运行；第二台只在双租户隔离或全新 VM 恢复验收时另开。当前已有 VM、云盘及公网出流量费用，模型另计；其他地区与账户仍逐一验证。整个工程状态见[进度表](progress.md)。

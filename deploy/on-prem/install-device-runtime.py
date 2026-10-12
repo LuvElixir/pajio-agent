@@ -50,7 +50,7 @@ def verify_bundle(directory,expected):
         raise ValueError('runtime_manifest_changed')
     files=manifest['files'];required=COMMON|(LINUX if manifest['kind']=='linux' else ANDROID)
     if not isinstance(files,dict) or not required<=set(files) or len(files)>150:raise ValueError('runtime_bundle_incomplete')
-    wheels=[v for v in files if re.fullmatch(r'wearing-[A-Za-z0-9_.+-]+\.whl',v)]
+    wheels=[v for v in files if re.fullmatch(r'pajio-[A-Za-z0-9_.+-]+\.whl',v)]
     if len(wheels)!=1:raise ValueError('runtime_wheel_required')
     for name,info in files.items():
         if name not in required and not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.+-]{0,199}\.whl',name):
@@ -89,7 +89,7 @@ def install(directory,artifact_sha256,vmid,machine_sha256):
     if os.geteuid()!=0:raise ValueError('operator_required')
     if hashlib.sha256(Path('/etc/machine-id').read_text().strip().encode()).hexdigest()!=machine_sha256:raise ValueError('runtime_guest_identity_changed')
     if not 100<=vmid<=999999999 or socket.gethostname()!='pajio-'+str(vmid):raise ValueError('fresh_clone_hostname_required')
-    if Path('/etc/pve').exists() or Path('/var/lib/wearing/instance').exists():raise ValueError('dedicated_device_vm_required')
+    if Path('/etc/pve').exists() or Path('/var/lib/pajio/instance').exists():raise ValueError('dedicated_device_vm_required')
     run(['systemd-detect-virt','--vm','--quiet'])
     owner=private('/etc/pajio-native/device-owner.json');expected=private('/etc/pajio-native/bootstrap-expected.json')
     proof={'version':1,'owner_sha256':digest(owner),'artifact_sha256':artifact_sha256}
@@ -129,11 +129,11 @@ def install(directory,artifact_sha256,vmid,machine_sha256):
     run([str(venv/'bin/python'),'-m','pip','install','--disable-pip-version-check','--no-index','--find-links',str(stage),'--require-hashes','-r',str(stage/'requirements-media.txt')])
     run([str(venv/'bin/python'),'-m','pip','install','--disable-pip-version-check','--no-index','--no-deps','--force-reinstall',str(stage/wheel)])
     source_code="""from pathlib import Path
-from wearing.runtime import unpack_source,HERMES_REVISION,SOURCE_SHA256
+from pajio.runtime import unpack_source,HERMES_REVISION,SOURCE_SHA256
 import sys
 p=Path('/opt/pajio-native/source');p.mkdir(exist_ok=True)
 unpack_source(Path(sys.argv[1]),p)
-(p/('hermes-agent-'+HERMES_REVISION)/'.wearing-source-verified').write_text(SOURCE_SHA256)
+(p/('hermes-agent-'+HERMES_REVISION)/'.pajio-source-verified').write_text(SOURCE_SHA256)
 """
     run([str(venv/'bin/python'),'-c',source_code,str(stage/'hermes-source.tar.gz')])
     if manifest['kind']=='linux':
@@ -158,7 +158,7 @@ unpack_source(Path(sys.argv[1]),p)
     # Marker is used only by the restricted NativeAdapter, never an Agent shell.
     marker_code="""import json,os,pwd
 from pathlib import Path
-from wearing.runtime import HERMES_REVISION,SOURCE_SHA256
+from pajio.runtime import HERMES_REVISION,SOURCE_SHA256
 import sys
 u=pwd.getpwnam(sys.argv[1]);d=Path(u.pw_dir)/'.pajio'
 for p in (d,d/'runtime',d/'hermes'):

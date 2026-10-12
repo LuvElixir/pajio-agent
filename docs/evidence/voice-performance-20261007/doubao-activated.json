@@ -1,7 +1,7 @@
 {
   "source": "synthetic macOS Tingting; paced PCM; no user recording",
   "provider": "doubao-seedasr-2",
-  "path": "LAN bridge -> Wearing -> Doubao",
+  "path": "LAN bridge -> Pajio -> Doubao",
   "duration_seconds": 8.0033125,
   "after_finish_ms": 691,
   "total_ms": 8790,

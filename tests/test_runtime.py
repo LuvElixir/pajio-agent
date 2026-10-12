@@ -10,9 +10,9 @@ import httpx
 import pytest
 from filelock import FileLock
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.runtime import HermesRuntime, RuntimeError, stop_owned_process, unpack_source
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.runtime import HermesRuntime, RuntimeError, stop_owned_process, unpack_source
 
 
 @pytest.mark.parametrize("enabled", [True, False])
@@ -48,7 +48,7 @@ def test_unpack_rejects_traversal_and_links(tmp_path, monkeypatch, name, kind):
         else:
             item.size = 1
             output.addfile(item, io.BytesIO(b"x"))
-    monkeypatch.setattr("wearing.runtime.SOURCE_SHA256", hashlib.sha256(archive.read_bytes()).hexdigest())
+    monkeypatch.setattr("pajio.runtime.SOURCE_SHA256", hashlib.sha256(archive.read_bytes()).hexdigest())
     with pytest.raises(RuntimeError, match="不支持的路径"):
         unpack_source(archive, tmp_path / "source")
     assert not (tmp_path / "escaped").exists()
@@ -72,7 +72,7 @@ async def test_concurrent_install_is_rejected_and_network_error_is_safe(tmp_path
         assert "另一个进程" in (await runtime.install())["error"]
     def fail(_):
         raise OSError("sensitive-debug-token")
-    monkeypatch.setattr("wearing.runtime.fetch_source", fail)
+    monkeypatch.setattr("pajio.runtime.fetch_source", fail)
     status = await runtime.install()
     assert status["phase"] == "failed"
     assert "sensitive-debug-token" not in str(status)
@@ -85,7 +85,7 @@ async def test_model_login_is_required_before_launching_gateway(tmp_path, monkey
     interpreter = runtime.home / "installs" / "test" / "bin" / "python"
     interpreter.parent.mkdir(parents=True)
     interpreter.touch()
-    from wearing.runtime import HERMES_REVISION
+    from pajio.runtime import HERMES_REVISION
     (runtime.root / "installed.json").write_text(json.dumps({"revision": HERMES_REVISION, "python": str(interpreter)}))
     async def missing_model(force=False):
         return {"state": "needs_login", "provider": None}
@@ -97,7 +97,7 @@ async def test_model_login_is_required_before_launching_gateway(tmp_path, monkey
 
 @pytest.mark.parametrize('local_devices', [False, True])
 async def test_valid_cloud_runtime_connects_remote_discovery_before_first_enrollment(tmp_path, monkeypatch, local_devices):
-    from wearing.cloud.instance import initialize_instance
+    from pajio.cloud.instance import initialize_instance
     root=tmp_path/'instance'
     initialize_instance(root,'tenant_test','http://127.0.0.1:18865')
     runtime=HermesRuntime(root/'data',local_devices=local_devices)
@@ -109,7 +109,7 @@ async def test_valid_cloud_runtime_connects_remote_discovery_before_first_enroll
     class StopBeforeLaunch(Exception):pass
     def capture(*args,**kwargs):
         profiles.append(args[5]);raise StopBeforeLaunch()
-    monkeypatch.setattr('wearing.runtime.prepare_profile',capture)
+    monkeypatch.setattr('pajio.runtime.prepare_profile',capture)
     with pytest.raises(StopBeforeLaunch):await runtime.start()
     remote=profiles[0]
     if local_devices:assert remote is None
@@ -154,7 +154,7 @@ async def test_runtime_connection_secret_stays_server_side_and_active_run_blocks
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         assert (await client.post("/api/runtime/start")).status_code == 403
         token = (await client.get("/api/bootstrap")).json()["token"]
-        client.headers["X-Wearing-Token"] = token
+        client.headers["X-Pajio-Token"] = token
         response = await client.post("/api/runtime/start")
         assert response.status_code == 200
         assert "private-gateway-key" not in response.text

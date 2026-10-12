@@ -10,9 +10,9 @@
 | 按钮触发一次前台定位，支持拒绝、超时、权限再核对；预览后可选择带入对话 | `clients/mobile/src/NativeConnections.tsx:71` | 天气应直接使用本次坐标，不要求用户先发一条聊天 |
 | iOS Agent 本机能力已有 `location.read`，仅 App active 且已授权时执行 | `clients/mobile/src/native-action-runtime.ts:18`、`native-action-driver.ts:59` | 它不是后台持续定位，也不能保证用户睡觉时云端获得当前位置 |
 | “今天”已有任务进展、今日日程、简报入口 | `clients/mobile/src/TodayPanel.tsx:40` | 没有天气卡片、更新/过期/归因状态 |
-| 简报可选日程、待办、笔记、工作区、飞书 | `src/wearing/briefing_preferences.py:11`、`briefing_api.py:123` | 没有天气来源、天气 API 或天气额度；当前简报是持久 HTML，不宜直接塞进临时天气原始数据 |
+| 简报可选日程、待办、笔记、工作区、飞书 | `src/pajio/briefing_preferences.py:11`、`briefing_api.py:123` | 没有天气来源、天气 API 或天气额度；当前简报是持久 HTML，不宜直接塞进临时天气原始数据 |
 
-对 `src/wearing`、`clients/mobile`、`tests` 的天气关键词检索没有发现已实现的天气数据接入。读取手机桌面的“天气”应用名称不代表天气能力已接通。
+对 `src/pajio`、`clients/mobile`、`tests` 的天气关键词检索没有发现已实现的天气数据接入。读取手机桌面的“天气”应用名称不代表天气能力已接通。
 
 ## Apple 当前要求
 

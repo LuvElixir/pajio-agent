@@ -17,40 +17,40 @@ function host(search) {
     },
     dispatchEvent: event => calls.push(event.type),
   };
-  vm.runInNewContext(fs.readFileSync('src/wearing/web/mobile-host.js', 'utf8'),
+  vm.runInNewContext(fs.readFileSync('src/pajio/web/mobile-host.js', 'utf8'),
     {window, document, location: {search}, URLSearchParams, Event});
   return {window, calls, document, events, viewport};
 }
 
 test('ordinary web pages never receive native host presentation state', () => {
   const {window, calls} = host('?identity=daily');
-  assert.equal(window.WearingHost, undefined);
+  assert.equal(window.PajioHost, undefined);
   assert.deepEqual(calls, []);
 });
 
 test('leaving an embedded conversation pauses media and dismisses keyboard once', () => {
   const {window, calls} = host('?host=mobile');
-  const state = window.WearingHost;
+  const state = window.PajioHost;
   assert.equal(state.hidden, false);
   state.setActive(false);
   state.setActive(false);
   assert.equal(state.hidden, true);
-  assert.deepEqual(calls, ['mobile-host', 'pause-first', 'pause-second', 'blur', 'wearing-host-visibility']);
+  assert.deepEqual(calls, ['mobile-host', 'pause-first', 'pause-second', 'blur', 'pajio-host-visibility']);
   // Returning emits one event; individual consumers decide whether to resume.
   // A presentation signal must not unconditionally autoplay every video.
   state.setActive(true);
   state.setActive(true);
   assert.equal(state.hidden, false);
-  assert.equal(calls.filter(x => x === 'wearing-host-visibility').length, 2);
+  assert.equal(calls.filter(x => x === 'pajio-host-visibility').length, 2);
   assert.equal(calls.filter(x => x === 'pause-first').length, 1);
 });
 
 test('background transition works before an input is focused', () => {
   const {window, calls, document} = host('?host=mobile');
   document.activeElement = null;
-  window.WearingHost.setActive(false);
-  assert.equal(window.WearingHost.hidden, true);
-  assert.equal(calls.at(-1), 'wearing-host-visibility');
+  window.PajioHost.setActive(false);
+  assert.equal(window.PajioHost.hidden, true);
+  assert.equal(calls.at(-1), 'pajio-host-visibility');
 });
 
 test('only App embedding disables layout zoom; ordinary browser viewport remains untouched', () => {
@@ -99,10 +99,10 @@ function conversationHost(records = []) {
     dispatchEvent(event) {for (const fn of events.get(event.type) || []) fn(event);},
   };
   const context = {document, location: {search: '?host=mobile&composer=native'}, URLSearchParams, Event,
-    window: {matchMedia: () => ({matches: false}), WearingActivity: {openTask: async id => activity.push(id)}},
+    window: {matchMedia: () => ({matches: false}), PajioActivity: {openTask: async id => activity.push(id)}},
     state: {messages: records}, notice() {}, MutationObserver: class {constructor(fn) {observers.push(fn);} observe() {}},
   };
-  vm.runInNewContext(fs.readFileSync('src/wearing/web/mobile-host.js', 'utf8'), context);
+  vm.runInNewContext(fs.readFileSync('src/pajio/web/mobile-host.js', 'utf8'), context);
   function paint(next = records) {
     context.state.messages = next; messages.children = [];
     for (const message of next) {
@@ -140,7 +140,7 @@ test('search inspects loaded user/assistant text literally, navigates and clears
     {content: '<script> 今天', turn: {id: 'task-a', status: 'completed_unverified', output: '今天的安排'}},
     {content: '另外一件事', turn: {id: 'task-b', status: 'completed_unverified', output: '明天再说'}},
   ]);
-  h.context.window.WearingHost.openSearch();
+  h.context.window.PajioHost.openSearch();
   const panel = h.body.children.at(-1), input = panel.children[0].children[0], navigation = panel.children[1];
   input.value = '今天'; input.fire('input');
   assert.equal(h.messages.querySelectorAll('.host-search-match').length, 2);
@@ -149,12 +149,12 @@ test('search inspects loaded user/assistant text literally, navigates and clears
   input.value = '<script>'; input.fire('input'); assert.equal(h.messages.querySelectorAll('.host-search-match').length, 1);
   input.value = '未出现'; input.fire('input'); assert.equal(navigation.children[0].textContent, '没有找到');
   assert.equal(navigation.children[2].disabled, true);
-  h.context.window.WearingHost.closeSearch(); assert.equal(panel.hidden, true);
+  h.context.window.PajioHost.closeSearch(); assert.equal(panel.hidden, true);
   assert.equal(h.messages.querySelectorAll('.host-search-match').length, 0);
 });
 
 test('mobile styling removes duplicate and opaque controls without hiding approvals or accessibility text scaling', () => {
-  const css = fs.readFileSync('src/wearing/web/mobile-host.css', 'utf8');
+  const css = fs.readFileSync('src/pajio/web/mobile-host.css', 'utf8');
   assert.match(css, /\.native-composer-host #activity-return/);
   assert.match(css, /\.native-composer-host #messages \[data-verify\]/);
   assert.match(css, /\.native-composer-host #messages \[data-goal-source\]/);

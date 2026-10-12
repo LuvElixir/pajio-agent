@@ -28,7 +28,7 @@ export function usageSnapshot(value: unknown): UsageSnapshot {
 export async function loadUsage(connection: Connection, fetcher: typeof fetch = fetch): Promise<UsageSnapshot> {
   const controller = new AbortController(), timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const response = await fetcher(new URL('/api/usage', connectionEndpoint(connection)).toString(), {signal: controller.signal, redirect: 'error', headers: {...connectionHeaders(connection), 'X-Wearing-Identity': connection.identity}});
+    const response = await fetcher(new URL('/api/usage', connectionEndpoint(connection)).toString(), {signal: controller.signal, redirect: 'error', headers: {...connectionHeaders(connection), 'X-Pajio-Identity': connection.identity}});
     if (!response.ok) throw new ApiError(response.status === 401 ? '连接已失效，请重新连接后查看用量。' : '暂时无法读取用量，请稍后刷新。', response.status);
     return usageSnapshot(await response.json());
   } catch (error) {if (error instanceof ApiError) throw error; throw new ApiError('暂时连不上用量服务，请检查连接后刷新。');}

@@ -32,7 +32,7 @@ function fixture(identity = 'alice', shared?: Store) {
     async blob() {events.push('blob'); return new Blob(['audio']);},
   };
   const session = new VoiceSession({
-    connection: {endpoint: 'https://wearing.example/', identity}, store,
+    connection: {endpoint: 'https://pajio.example/', identity}, store,
     recorder(): VoiceRecorder {return {
       async prepare(held) {events.push('prepare'); const result = prepare ? await prepare() : true; return result && held();},
       record() {events.push('record'); return recording?.();},

@@ -10,13 +10,13 @@ from contextlib import asynccontextmanager
 
 import pytest
 
-from wearing.capture import CaptureBook
-from wearing.capture_setup import prepare, save_key, speech_key
-from wearing.capture_worker import CaptureWorker
-from wearing.life import LifeBook
-from wearing.speech import (SpeechError, decode_wav, recognize_pcm, request_packet,
+from pajio.capture import CaptureBook
+from pajio.capture_setup import prepare, save_key, speech_key
+from pajio.capture_worker import CaptureWorker
+from pajio.life import LifeBook
+from pajio.speech import (SpeechError, decode_wav, recognize_pcm, request_packet,
                             response_packet, transcribe_file, STREAM_RESOURCE, STREAM_URL)
-from wearing.store import Store
+from pajio.store import Store
 
 
 def reply(body, final=False):
@@ -42,7 +42,7 @@ def test_pcm_resampling_is_bounded_and_keeps_original(tmp_path):
 
 
 def test_config_is_private_and_status_never_contains_key(tmp_path, monkeypatch):
-    monkeypatch.delenv('WEARING_SPEECH_API_KEY', raising=False)
+    monkeypatch.delenv('PAJIO_SPEECH_API_KEY', raising=False)
     key = 'private-speech-key-do-not-log'
     save_key(tmp_path, key)
     assert speech_key(tmp_path) == key
@@ -50,7 +50,7 @@ def test_config_is_private_and_status_never_contains_key(tmp_path, monkeypatch):
     assert prepare(tmp_path)['prepared']
     assert key not in json.dumps(prepare(tmp_path))
     assert not (tmp_path/'runtime').exists()
-    monkeypatch.setenv('WEARING_SPEECH_API_KEY','bad\nkey')
+    monkeypatch.setenv('PAJIO_SPEECH_API_KEY','bad\nkey')
     assert speech_key(tmp_path) == ''
 
 
@@ -129,16 +129,16 @@ async def test_cancel_closes_session_without_retry_or_late_transcript():
 
 
 async def test_no_network_without_configured_key(tmp_path,monkeypatch):
-    monkeypatch.delenv('WEARING_SPEECH_API_KEY', raising=False)
+    monkeypatch.delenv('PAJIO_SPEECH_API_KEY', raising=False)
     with pytest.raises(SpeechError) as error:await transcribe_file(source(tmp_path), tmp_path)
     assert error.value.code == 'not_configured'
 
 
 async def test_worker_timing_logs_exclude_transcript_path_and_unexpected_fields(tmp_path,monkeypatch,caplog):
-    worker = CaptureWorker(CaptureBook(LifeBook(Store(tmp_path/'wearing.sqlite3'))))
-    caplog.set_level(logging.INFO,logger='wearing.capture_worker')
+    worker = CaptureWorker(CaptureBook(LifeBook(Store(tmp_path/'pajio.sqlite3'))))
+    caplog.set_level(logging.INFO,logger='pajio.capture_worker')
     async def command(args, **kwargs):
-        assert '-m' in args and 'wearing.capture_stt' in args and '--serve' not in args
+        assert '-m' in args and 'pajio.capture_stt' in args and '--serve' not in args
         return json.dumps({'text':'private-text', 'timings': {'decode_ms':2, 'private':'private-detail'}})
     monkeypatch.setattr(worker,'command',command)
     await worker.recognize(tmp_path/'private-audio.wav')

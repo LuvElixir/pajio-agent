@@ -46,20 +46,20 @@ Pajio 负责产品身份、个人上下文、目标管理和交互界面，个�
 准备 Python 3.11+ 与 uv 后执行以下命令。
 
 ```bash
-git clone https://github.com/LuvElixir/wearing.git
-cd wearing
+git clone https://github.com/LuvElixir/pajio.git
+cd pajio
 uv sync --extra dev
-uv run wearing serve
+uv run pajio serve
 ```
 
 打开 **http://127.0.0.1:8765**，按连接面板的提示安装本地引擎并配置模型，也可以使用命令行。
 
 ```bash
-uv run wearing engine install
-uv run wearing engine model
+uv run pajio engine install
+uv run pajio engine model
 ```
 
-模型接通前可以保存消息，真实回应与任务执行需要可用的引擎和模型连接。个人数据保存在私有的 `.wearing/` 目录中，不纳入 Git。
+模型接通前可以保存消息，真实回应与任务执行需要可用的引擎和模型连接。个人数据保存在私有的 `.pajio/` 目录中，不纳入 Git。
 
 ## 开发进度
 

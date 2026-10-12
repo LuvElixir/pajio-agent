@@ -11,8 +11,8 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const vm = require("node:vm");
-const ROOT = process.env.PAJIO_REVIEW_ROOT || "/Users/archieliew/Documents/facet";
-const read = name => fs.readFileSync(path.join(ROOT, "src/wearing/web", name), "utf8");
+const ROOT = process.env.PAJIO_REVIEW_ROOT || "/Users/archieliew/Documents/pajio";
+const read = name => fs.readFileSync(path.join(ROOT, "src/pajio/web", name), "utf8");
 const SOURCES = Object.fromEntries(["scoped-store.js", "account-deletion.js", "onboarding.js"].map(name => [name, read(name)]));
 const empty = () => ({roles:[], apps:[], interests:[], reply_detail:null, reply_tone:null});
 const plain = value => JSON.parse(JSON.stringify(value));
@@ -45,8 +45,8 @@ function harness(options={}) {
     setItem(key,value){if(!durable)throw new Error("quota exceeded");data.set(key,String(value));},removeItem:key=>data.delete(key),clear:()=>data.clear()};
   const state={identityId:"qa",identityEpoch:1,connected:true,token:"synthetic-csrf",deployment:"cloud",polling:false,sending:false};
   const profiles=new Map([["qa",options.profile||snapshot()]]);
-  const window=eventTarget({id:"window",open(){},WearingIds:{uuid:()=>"reviewkey"+(++serial).toString().padStart(24,"0")},WearingPajio:{bearMarkup:()=>""},
-    WearingLife:{openView:view=>views.push(view)},WearingHost:{hidden:false}});
+  const window=eventTarget({id:"window",open(){},PajioIds:{uuid:()=>"reviewkey"+(++serial).toString().padStart(24,"0")},PajioBrand:{bearMarkup:()=>""},
+    PajioLife:{openView:view=>views.push(view)},PajioHost:{hidden:false}});
   class StaleIdentity extends Error {}
   const context={window,document,state,localStorage,sessionStorage:localStorage,location:{origin:"https://qa.invalid",search:"",hash:"",pathname:"/",assign(){}},
     StaleIdentity,URL,URLSearchParams,Date,JSON,Number,Array,Object,String,Boolean,Math,Error,Promise,Set,Map,Event,
@@ -73,15 +73,15 @@ function harness(options={}) {
     return plain(result);
   };
   const h={context,state,window,document,element,calls,opened,views,notices,profiles,data,
-    setDurable:value=>{durable=value;},journal:name=>JSON.parse(window.WearingStore.get(name)||"null"),
+    setDurable:value=>{durable=value;},journal:name=>JSON.parse(window.PajioStore.get(name)||"null"),
     click(selector,dataset={}){element("onboarding-panel").dispatchEvent({type:"click",target:{closest:s=>s===selector?{dataset}:null}});},
   };
   vm.createContext(context);
   for(const name of ["scoped-store.js","account-deletion.js","onboarding.js"]) {
     vm.runInContext(SOURCES[name],context,{filename:name});
-    if(name==="scoped-store.js")window.WearingStoreBind("cloud","a".repeat(64));
+    if(name==="scoped-store.js")window.PajioStoreBind("cloud","a".repeat(64));
   }
-  h.mod=window.WearingOnboarding;h.t=h.mod._test;
+  h.mod=window.PajioOnboarding;h.t=h.mod._test;
   assert.ok(h.t?.load&&h.t?.save,"Onboarding _test state-machine seam must remain available or adapt this harness, not product behavior");
   return h;
 }
@@ -153,19 +153,19 @@ test("P2: revocation pending never claims Feishu is connected",async()=>{
 });
 
 test("P1: account freeze prevents new onboarding business requests and local writes",async()=>{
-  const h=harness();await h.t.load();await h.window.WearingDeletion.freezeAccountWork();
+  const h=harness();await h.t.load();await h.window.PajioDeletion.freezeAccountWork();
   h.t.choose({...empty(),roles:["student"]});await h.t.save("draft",1);
   assert.equal(h.calls.filter(c=>c.method==="POST").length,0);
   assert.equal(h.journal(h.t.draftKey()),null);assert.equal(h.journal(h.t.pendingKey()),null);
 });
 
 test("P1: account deletion cache cleanup includes both onboarding journals and preserves another account",()=>{
-  const h=harness();const store=h.window.WearingStore;
+  const h=harness();const store=h.window.PajioStore;
   const draft="onboarding-draft:v1:qa",pending="onboarding-request:v1:qa";
   store.set(draft,JSON.stringify({identity:"qa",revision:0,step:1,values:empty()}));
   store.set(pending,JSON.stringify({identity:"qa",body:{revision:0,status:"draft",step:1,values:empty(),request_key:"reviewkey1234567890"}}));
   const other="pajio:"+"b".repeat(64)+":"+draft;h.context.localStorage.setItem(other,"other-account");
-  h.window.WearingDeletion.clearAccountCaches({origin:h.context.location.origin,user_id:"qa-user"});
+  h.window.PajioDeletion.clearAccountCaches({origin:h.context.location.origin,user_id:"qa-user"});
   assert.equal(store.get(draft),null);assert.equal(store.get(pending),null);
   assert.equal(h.context.localStorage.getItem(other),"other-account");
 });

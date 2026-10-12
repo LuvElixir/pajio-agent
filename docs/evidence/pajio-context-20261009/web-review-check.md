@@ -1,6 +1,6 @@
 # Web 聊天导入独立复核
 
-日期：2026-10-09。范围：`src/wearing/web/chat-import.js`、`scoped-store.js` 以及调用处的账号/身份围栏。复核只读产品源码，使用合成文本、合成 ZIP、内存存储与模拟 API；没有访问真实聊天、设备、8765 服务或生产账户。
+日期：2026-10-09。范围：`src/pajio/web/chat-import.js`、`scoped-store.js` 以及调用处的账号/身份围栏。复核只读产品源码，使用合成文本、合成 ZIP、内存存储与模拟 API；没有访问真实聊天、设备、8765 服务或生产账户。
 
 ## 结论与版本
 
@@ -10,8 +10,8 @@
 
 | 文件 | SHA-256 |
 | --- | --- |
-| `src/wearing/web/chat-import.js` | `474fd74303ba03661bb0b978c105f6174acec6f59b4f47b9b8f1324272acd320` |
-| `src/wearing/web/scoped-store.js` | `1007e59a5f8d9167aa00fd40be5b1ccaf3d5ca8f879f53b42d94cc0590ee4845` |
+| `src/pajio/web/chat-import.js` | `474fd74303ba03661bb0b978c105f6174acec6f59b4f47b9b8f1324272acd320` |
+| `src/pajio/web/scoped-store.js` | `1007e59a5f8d9167aa00fd40be5b1ccaf3d5ca8f879f53b42d94cc0590ee4845` |
 
 最终异常复验前后两文件哈希一致。后续如有列表日期格式或面板布局修改，这份证据仍绑定以上版本；不得将新哈希自动当作同一验收版本。
 
@@ -48,7 +48,7 @@
 }
 ```
 
-这验证了真实 `WearingStore.get()` 吞异常返回 null 时，真实 `WearingStore.remove()` 的 false 仍阻止误报成功。对应实现为 `chat-import.js:169–180` 的 `writeJournal()` 与 `scoped-store.js:28` 的布尔返回。
+这验证了真实 `PajioStore.get()` 吞异常返回 null 时，真实 `PajioStore.remove()` 的 false 仍阻止误报成功。对应实现为 `chat-import.js:169–180` 的 `writeJournal()` 与 `scoped-store.js:28` 的布尔返回。
 
 另运行仓库新增的单项回归：
 

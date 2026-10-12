@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 import httpx
 import pytest
 
-from wearing.notifications import NotificationConfig, NotificationService, NotificationError
-from wearing.quiet_hours import quiet_until, validate_quiet_hours
-from wearing.store import Store
+from pajio.notifications import NotificationConfig, NotificationService, NotificationError
+from pajio.quiet_hours import quiet_until, validate_quiet_hours
+from pajio.store import Store
 
 PROJECT = '12345678-abcd-1234-abcd-123456789abc'
 INSTALL = 'synthetic-phone-001'
@@ -107,14 +107,14 @@ async def test_superseded_or_disabled_held_notification_never_sends(env):
 
 
 async def test_http_policy_requires_csrf_and_scopes_revision(tmp_path):
-    from wearing.app import create_app
-    from wearing.config import Settings
+    from pajio.app import create_app
+    from pajio.config import Settings
     app = create_app(Settings(tmp_path))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://testserver') as client:
         body = dict(installation_id=INSTALL,revision=0,**policy())
         assert (await client.post('/api/notifications/preferences',json=body)).status_code == 403
         boot = (await client.get('/api/bootstrap')).json()
-        headers = {'X-Wearing-Token':boot['token'],'X-Wearing-Identity':'daily'}
+        headers = {'X-Pajio-Token':boot['token'],'X-Pajio-Identity':'daily'}
         assert (await client.post('/api/notifications/preferences',json=body,headers=headers)).json()['revision'] == 1
         assert (await client.post('/api/notifications/preferences',json=body,headers=headers)).status_code == 409
         assert (await client.post('/api/notifications/preferences',json={**body,'revision':1,'timezone':'bad'},headers=headers)).status_code == 400

@@ -2,7 +2,7 @@ import {useAppTheme, useThemedStyles, type AppColors} from './app-theme';
 import {useEffect, useMemo, useState} from 'react';
 import {ActivityIndicator, Image, StyleSheet, Text, View} from 'react-native';
 import {BookOpen, ChevronRight, Folder, RefreshCw, Settings} from 'lucide-react-native';
-import {Connection, MemorySnapshot, WearingApi} from './core';
+import {Connection, MemorySnapshot, PajioApi} from './core';
 import {serviceFetch} from './transport';
 import {TactilePressable} from './experience/primitives';
 import TaskManagementPanel from './TaskManagementPanel';
@@ -21,7 +21,7 @@ export function MemoryPanel({connection}: {connection: Connection}) {
   const {colors: c} = useAppTheme();
   const s = useThemedStyles(makeStyles);
 
-  const api = useMemo(() => new WearingApi(connection, serviceFetch), [connection]);
+  const api = useMemo(() => new PajioApi(connection, serviceFetch), [connection]);
   const [generation, setGeneration] = useState(0), [data, setData] = useState<MemorySnapshot | null>(null);
   const [error, setError] = useState(''), [loading, setLoading] = useState(true);
   useEffect(() => {

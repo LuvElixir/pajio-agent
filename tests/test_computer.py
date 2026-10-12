@@ -4,11 +4,11 @@ import httpx
 import pytest
 import yaml
 
-from wearing.app import create_app
-from wearing.computer import enroll, enrolled
-from wearing.config import Settings
-from wearing.profile import prepare_profile
-from wearing.runtime import HermesRuntime, RuntimeError
+from pajio.app import create_app
+from pajio.computer import enroll, enrolled
+from pajio.config import Settings
+from pajio.profile import prepare_profile
+from pajio.runtime import HermesRuntime, RuntimeError
 
 
 def test_computer_is_opt_in_and_corrupt_registry_fails_closed(tmp_path):
@@ -62,7 +62,7 @@ async def test_takeover_is_authenticated_and_available_during_active_run(tmp_pat
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         assert (await client.post("/api/computer/pause")).status_code == 403
         assert not calls
-        client.headers["X-Wearing-Token"] = (await client.get("/api/bootstrap")).json()["token"]
+        client.headers["X-Pajio-Token"] = (await client.get("/api/bootstrap")).json()["token"]
         assert (await client.post("/api/computer/bind")).status_code == 409
         assert (await client.post("/api/computer/pause")).json()["holder"] == "human"
         assert (await client.post("/api/computer/resume")).json()["holder"] == "agent"
@@ -91,7 +91,7 @@ async def test_probe_bridge_runs_under_managed_interpreter(tmp_path, monkeypatch
 def test_real_upstream_takeover_blocks_observation_and_input_before_driver(tmp_path):
     from pathlib import Path
     import subprocess
-    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".wearing")
+    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".pajio")
     if not runtime.python.is_file():
         pytest.skip("Requires the pinned local Hermes interpreter")
     env = runtime.env()
@@ -100,13 +100,13 @@ def test_real_upstream_takeover_blocks_observation_and_input_before_driver(tmp_p
 import json
 from tools.bot_desktop import lease
 from tools.computer_use.tool import handle_computer_use
-lease.acquire("wearing-test-human")
+lease.acquire("pajio-test-human")
 blocked = [json.loads(handle_computer_use(args)) for args in (
-    {"action":"capture","mode":"ax","app":"WearingProbe"},
+    {"action":"capture","mode":"ax","app":"PajioProbe"},
     {"action":"type","text":"MUST NOT TYPE"})]
 assert all(r.get("code")=="human_has_control" for r in blocked)
 assert lease.release("wrong-viewer").holder == "human"
-assert lease.release("wearing-test-human").holder == "agent"
+assert lease.release("pajio-test-human").holder == "agent"
 print("blocked capture and input; stale handback refused; correct handback accepted")
 '''
     result = subprocess.run([str(runtime.python), "-c", script], cwd=runtime.source,

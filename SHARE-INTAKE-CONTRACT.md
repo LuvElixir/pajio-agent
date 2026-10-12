@@ -6,7 +6,7 @@ Status: App modules, native extension/config plugin and business receiver implem
 
 - Existing Expo SDK 57 dependencies are sufficient: expo-sharing 57.0.22, expo-file-system 57.0.7, expo-crypto 57.0.3. No package added.
 - `app.json` replaces the plain `expo-sharing` plugin with `./plugins/share-intake.cjs`.
-- iOS plugin reuses Expo's share target/entitlement generation, then replaces `ShareIntoViewController.swift` with `extensions/share-intake/ShareIntoViewController.swift`. Native target: `expo-sharing-extension`, extension bundle: `io.luckyloading.wearing.mobile.share`, App Group: `group.io.luckyloading.wearing.mobile.share`.
+- iOS plugin reuses Expo's share target/entitlement generation, then replaces `ShareIntoViewController.swift` with `extensions/share-intake/ShareIntoViewController.swift`. Native target: `expo-sharing-extension`, extension bundle: `io.luckyloading.pajio.mobile.share`, App Group: `group.io.luckyloading.pajio.mobile.share`.
 - Main app and extension require that App Group in their signed provisioning profiles. The extension shares only content copies/manifests, never keychain, tokens, sessions or identity credentials. The existing product bundle ID is preserved.
 - **Prebuild and a native rebuild are required.** An OTA JavaScript bundle does not add an extension/Android intent filters. Expo Go is not an acceptance target. Older iOS binaries safely report the missing share entry rather than assuming availability.
 - iOS uses a standard share ViewController: Save → durable local copy → Done. It does not use Expo's experimental responder-chain auto-open technique. The user returns to Pajio to preview; foreground/cold-start intake consumes the queue.
@@ -36,7 +36,7 @@ Official documentation/source checked against installed SDK:
 
    The panel previews text, thumbnails and file metadata, names the selected identity, and requires a separate explicit import / chat-draft action. `onChooseIdentity` should open the real identity selector. The identity and action become immutable once a request begins; uncertain results must be retried in that same scope. Scoped panel keys include account/credential generation so stale callbacks cannot update a new identity's UI.
 
-3. In existing `src/app/+native-intent.tsx`, preserve native sign-in handling and intercept exactly `pajio://expo-sharing` (optional legacy wearing scheme if desired) to an existing App view such as `/?view=share-intake`. Do not feed it to auth error handling. iOS standard extension does not deep-link or launch the host app.
+3. In existing `src/app/+native-intent.tsx`, preserve native sign-in handling and intercept exactly `pajio://expo-sharing` (optional legacy pajio scheme if desired) to an existing App view such as `/?view=share-intake`. Do not feed it to auth error handling. iOS standard extension does not deep-link or launch the host app.
 4. Capture receiver:
 
    ```ts

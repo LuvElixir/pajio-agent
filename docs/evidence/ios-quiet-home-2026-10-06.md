@@ -1,6 +1,6 @@
-# Wearing 首页减法与轻薄输入栏 · 2026-10-06
+# Pajio 首页减法与轻薄输入栏 · 2026-10-06
 
-范围：`clients/mobile/src/experience/` 交互预览。用户提供豆包截图作为参考，明确要求独立判断，保持 Wearing 身份。此次不改真实业务服务或账户。
+范围：`clients/mobile/src/experience/` 交互预览。用户提供豆包截图作为参考，明确要求独立判断，保持 Pajio 身份。此次不改真实业务服务或账户。
 
 ## 设计判断
 

@@ -3,10 +3,10 @@ import json
 import httpx
 import pytest
 
-from wearing.config import Settings
-from wearing.hermes import HermesClient
-from wearing.service import TaskError, TaskService
-from wearing.store import Store
+from pajio.config import Settings
+from pajio.hermes import HermesClient
+from pajio.service import TaskError, TaskService
+from pajio.store import Store
 
 
 class HermesStub:
@@ -27,7 +27,7 @@ class HermesStub:
         body = json.loads(request.content) if request.content else None
         self.calls.append((request.method, request.url.path, body, dict(request.headers)))
         if request.url.path == "/v1/capabilities":
-            return httpx.Response(200, json={"features":{"run_approval":True}, "wearing":{"phone_tools": self.phone_tools, "remote_device_tools": self.remote_tools}})
+            return httpx.Response(200, json={"features":{"run_approval":True}, "pajio":{"phone_tools": self.phone_tools, "remote_device_tools": self.remote_tools}})
         if request.method == "POST" and request.url.path == "/v1/runs":
             if self.fail_create:
                 raise httpx.ReadTimeout("response lost after server accepted", request=request)
@@ -105,7 +105,7 @@ async def test_uncertain_create_is_never_automatically_resubmitted(rig):
         await service.start(task["id"])
     posts = [call for call in stub.calls if call[:2] == ("POST", "/v1/runs")]
     assert len(posts) == 1
-    assert posts[0][3]["idempotency-key"].startswith("wearing-")
+    assert posts[0][3]["idempotency-key"].startswith("pajio-")
 
 
 async def test_poll_reconnect_preserves_remote_run(rig):
@@ -149,7 +149,7 @@ async def test_one_run_at_a_time_and_no_phone_fallback(rig):
 
 async def test_phone_task_requires_discovered_tools_and_still_needs_verification(rig):
     service, stub, store = rig
-    stub.phone_tools = ["mcp_wearing_phone_mobile_list_elements_on_screen"]
+    stub.phone_tools = ["mcp_pajio_phone_mobile_list_elements_on_screen"]
     task = store.create("Read the phone screen", "phone")
     await service.start(task["id"])
     stub.run_status = "completed"
@@ -243,9 +243,9 @@ async def test_offline_messages_cannot_skip_earlier_unsent_context(rig):
 
 async def test_cloud_phone_task_uses_remote_capabilities(rig):
     service,stub,store=rig
-    stub.remote_tools=["mcp__wearing_devices__wearing_computer_observe"]
+    stub.remote_tools=["mcp__pajio_devices__pajio_computer_observe"]
     task=store.create("Read paired phone", "phone")
     with pytest.raises(TaskError): await service.start(task["id"])
-    stub.remote_tools=["mcp__wearing_devices__mobile_list_elements_on_screen"]
+    stub.remote_tools=["mcp__pajio_devices__mobile_list_elements_on_screen"]
     await service.start(task["id"])
     assert len([c for c in stub.calls if c[:2]==("POST","/v1/runs")])==1

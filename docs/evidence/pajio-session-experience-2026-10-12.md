@@ -58,7 +58,7 @@ Direct ESLint over `src` passed; generated exports and unrelated existing plugin
 lint errors are not claimed as resolved.
 
 Private build, deployment, performance and device receipts are retained under
-`.wearing/qa/20261012-session-experience/`, excluded from version control. Deployed
+`.pajio/qa/20261012-session-experience/`, excluded from version control. Deployed
 files were compared to live baselines and backed up before replacement. The
 Keycloak provider has no maintenance HTTP endpoint and is inert after its
 one-shot activation environment is removed.

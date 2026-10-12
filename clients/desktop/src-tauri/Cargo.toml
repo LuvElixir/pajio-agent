@@ -1,10 +1,10 @@
 [package]
-name = "wearing-desktop"
+name = "pajio-desktop"
 version = "0.2.0"
 edition = "2021"
 rust-version = "1.90"
 license = "MIT"
-description = "Wearing desktop client; the personal agent remains a separate service"
+description = "Pajio desktop client; the personal agent remains a separate service"
 
 [features]
 default = ["custom-protocol"]

@@ -1,17 +1,17 @@
 # 电脑确认后自动继续验收
 
-日期：2026-10-04（Asia/Shanghai）。私有证据目录：`.wearing/qa/approval-continuation-20261004/`。
+日期：2026-10-04（Asia/Shanghai）。私有证据目录：`.pajio/qa/approval-continuation-20261004/`。
 
 ## 实际验收
 
 复用固定版本 Hermes 的官方 MCP elicitation 与 runs approval 接口。使用现有 DeepSeek 模型，在独立本机租户、ASGI relay 和真实 Mac 原生驱动上完成：
 
-1. 模型观察专用 `WearingInputProbe` 窗口，申请一次动作；网页显示具体操作并等待确认，尚无输入命令。
+1. 模型观察专用 `PajioInputProbe` 窗口，申请一次动作；网页显示具体操作并等待确认，尚无输入命令。
 2. 网页批准后，原工具调用取得设备回执。点击测试真实显示「点击已验证」。
-3. 后续填写测试把「验证输入」设置为 `Wearing 自动续跑验收`，回执携带 `value_readback`。
+3. 后续填写测试把「验证输入」设置为 `Pajio 自动续跑验收`，回执携带 `value_readback`。
 4. 模型在同一轮重新读取同一窗口，在 `accessibility_text` 中核对实际字段值并自动回复；独立 CUA 读取同一窗口也确认该值。
 
-最后一轮只有一个 Wearing task、一个原 run、一次提交（attempt=1）、一个输入命令、一次批准事件、一个设备回执事件；批准后有一次重新 capture。没有补发催办消息、开启第二个 run 或重放旧输入。
+最后一轮只有一个 Pajio task、一个原 run、一次提交（attempt=1）、一个输入命令、一次批准事件、一个设备回执事件；批准后有一次重新 capture。没有补发催办消息、开启第二个 run 或重放旧输入。
 
 首轮等待超过 90 秒，未执行输入；发现服务端与 Hermes 同时结束确认会丢失结构化结果，已给服务端增加短暂等待余量，并在最终超时返回取消状态。首次点击验收还发现上游序列化只留下可操作元素，省略静态文字和值；现在保留同一次原生 AX 快照文字，最后填写验收已实际读回。
 

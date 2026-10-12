@@ -5,10 +5,10 @@ import sqlite3
 import httpx
 import pytest
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.goals import GoalBook, GoalError
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.goals import GoalBook, GoalError
+from pajio.store import Store
 
 
 def finish(book, goal, decision="review", summary="阶段结果已整理，等你核对"):
@@ -133,12 +133,12 @@ async def test_feedback_http_auth_identity_and_validation(tmp_path):
         token = (await client.get("/api/bootstrap")).json()["token"]
         data = (await client.get("/api/goal-updates")).json()
         uid = data["items"][0]["id"]
-        assert (await client.get("/api/goal-updates", headers={"X-Wearing-Identity": other})).json()["unread"] == 0
+        assert (await client.get("/api/goal-updates", headers={"X-Pajio-Identity": other})).json()["unread"] == 0
         assert (await client.post("/api/goal-updates/seen", json={"ids": [uid]})).status_code == 403
-        headers = {"X-Wearing-Token": token}
+        headers = {"X-Pajio-Token": token}
         for ids in ([], [True], ["1"], [0], list(range(1, 102))):
             assert (await client.post("/api/goal-updates/seen", json={"ids": ids}, headers=headers)).status_code == 422
-        assert (await client.post("/api/goal-updates/seen", json={"ids": [uid]}, headers={**headers, "X-Wearing-Identity": other})).status_code == 409
+        assert (await client.post("/api/goal-updates/seen", json={"ids": [uid]}, headers={**headers, "X-Pajio-Identity": other})).status_code == 409
         assert (await client.post("/api/goal-updates/seen", json={"ids": [uid]}, headers=headers)).json()["unread"] == 0
         assert book.get(g["id"])["status"] == "needs_review"
     await app.state.service.hermes.close()

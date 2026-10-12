@@ -1,6 +1,6 @@
 const {test} = require('node:test');
 const assert = require('node:assert/strict');
-const {researchMarkup} = require('../src/wearing/web/research.js');
+const {researchMarkup} = require('../src/pajio/web/research.js');
 test('sources are escaped, safe, timestamped and collapsed', () => {
   const html = researchMarkup({items: [{status:'read', title:'<img onerror=x>', url:'https://example.org', observed_at:'2026-10-05T01:00:00Z',cached:true}, {status:'found',title:'bad',url:'javascript:alert(1)'}]});
   assert.ok(html.includes('&lt;img onerror=x&gt;'));

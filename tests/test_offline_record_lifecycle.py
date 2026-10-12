@@ -1,8 +1,8 @@
 """Archive/restore acknowledgement and CAS contracts on fresh synthetic data only."""
 import sqlite3
 import pytest
-from wearing.life import LifeBook, LifeDraft, LifeError
-from wearing.store import Store
+from pajio.life import LifeBook, LifeDraft, LifeError
+from pajio.store import Store
 
 
 @pytest.fixture
@@ -52,7 +52,7 @@ def test_failed_archive_receipt_rolls_back_tombstone_and_list_revision(book):
 async def test_http_actions_require_revision_and_never_accept_deleted_at_edit_patch(book):
     import httpx
     from fastapi import FastAPI, Request
-    from wearing.life_api import install_life_routes
+    from pajio.life_api import install_life_routes
     app = FastAPI()
     @app.middleware('http')
     async def identity(request: Request, call_next):

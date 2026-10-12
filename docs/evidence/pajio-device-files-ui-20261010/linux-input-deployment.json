@@ -10,7 +10,7 @@
     "b": {
       "target": "b",
       "backup": "/var/backups/pajio-linux-input/linux-b-20261010T043206",
-      "source_path": "/opt/pajio-native/venv/lib/python3.12/site-packages/wearing/private_media_sources.py",
+      "source_path": "/opt/pajio-native/venv/lib/python3.12/site-packages/pajio/private_media_sources.py",
       "before_sha256": "198c66cd2b029d309c0d36993685d791ba49dd175c4ed4a358b332ca9d7a48c2",
       "candidate_sha256": "68224908ba6aee571facf46c6bb6eb48b98e86e1312ac5e1123cabfcc4ee7f8c",
       "state_before": {
@@ -88,7 +88,7 @@
     "a": {
       "target": "a",
       "backup": "/var/backups/pajio-linux-input/linux-a-20261010T043235",
-      "source_path": "/opt/pajio-native/venv/lib/python3.12/site-packages/wearing/private_media_sources.py",
+      "source_path": "/opt/pajio-native/venv/lib/python3.12/site-packages/pajio/private_media_sources.py",
       "before_sha256": "198c66cd2b029d309c0d36993685d791ba49dd175c4ed4a358b332ca9d7a48c2",
       "candidate_sha256": "68224908ba6aee571facf46c6bb6eb48b98e86e1312ac5e1123cabfcc4ee7f8c",
       "state_before": {

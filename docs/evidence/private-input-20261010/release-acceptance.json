@@ -4,14 +4,14 @@
   "agent": {
     "task_id": "aa023d1db89d41208cdf10b11505779e",
     "run_id": "run_adfb3cf4b6164f2cb431af4de1fee32d",
-    "session_id": "wearing-personal-ae5ca5ab86274109aaab7dc175cc6563",
+    "session_id": "pajio-personal-ae5ca5ab86274109aaab7dc175cc6563",
     "product_status": "completed_unverified",
     "model": "deepseek-flash",
     "provider": "deepseek",
     "observed_tool_names": [
       "tool_describe",
-      "mcp__wearing_devices__wearing_list_devices",
-      "mcp__wearing_devices__mobile_list_apps"
+      "mcp__pajio_devices__pajio_list_devices",
+      "mcp__pajio_devices__mobile_list_apps"
     ],
     "relay": {
       "command_id": "command_a79df51290f942b0a92767dcd3e401f6",

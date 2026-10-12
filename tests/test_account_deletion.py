@@ -9,9 +9,9 @@ import threading
 
 import pytest
 
-from wearing.account_deletion import DeletionError, DeletionJobs, Receipt, digest
-from wearing.account_deletion_fixture import SyntheticDeletionAdapter
-from wearing.account_deletion_cli import run
+from pajio.account_deletion import DeletionError, DeletionJobs, Receipt, digest
+from pajio.account_deletion_fixture import SyntheticDeletionAdapter
+from pajio.account_deletion_cli import run
 
 USER='user_a'
 OTHER='user_b'

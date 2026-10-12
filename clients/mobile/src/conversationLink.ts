@@ -1,7 +1,7 @@
 import type {RecordItem} from './core';
 export function conversationLink(endpoint: string, identity: string, record?: RecordItem | null, previewOrigin?: string, reviewRequest?: ReviewRequest | null) {
   const url = new URL(endpoint);
-  if (previewOrigin === url.origin) url.pathname = '/wearing';
+  if (previewOrigin === url.origin) url.pathname = '/pajio';
   url.searchParams.set('identity', identity);
   if (reviewRequest?.target === 'activity') {
     if (!/^[-a-zA-Z0-9_]{1,64}$/.test(reviewRequest.taskId)) throw new Error('这条进展的任务标识不完整，请刷新后再试。');

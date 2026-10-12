@@ -10,10 +10,10 @@ import httpx
 from PIL import Image
 import pytest
 
-from wearing.device_gateway import DeviceGateway, GatewayScope, GatewayError
-from wearing.private_media import InputGate, MediaError, PrivateMediaHost, PrivateSession, create_app, parse_input
-from wearing.private_media_sources import AndroidScreencapSource, CapturedFrame, SourceError, X11Source
-from wearing.connectors.remote.adapter import NativeAdapter
+from pajio.device_gateway import DeviceGateway, GatewayScope, GatewayError
+from pajio.private_media import InputGate, MediaError, PrivateMediaHost, PrivateSession, create_app, parse_input
+from pajio.private_media_sources import AndroidScreencapSource, CapturedFrame, SourceError, X11Source
+from pajio.connectors.remote.adapter import NativeAdapter
 
 
 SCOPE = GatewayScope('tenant_test','daily','actor_test','connector_test','computer_test')
@@ -96,7 +96,7 @@ def test_text_is_not_placed_in_subprocess_argv_or_error(monkeypatch):
     def run(args,**kw):
         calls.append((args,kw))
         return b''
-    monkeypatch.setattr('wearing.private_media_sources._run',run)
+    monkeypatch.setattr('pajio.private_media_sources._run',run)
     secret = "p' $dollar `tick` 中文"
     X11Source().apply({'action':'text','text':secret})
     with pytest.raises(SourceError, match='android_private_input_unavailable'):
@@ -110,9 +110,9 @@ def test_text_is_not_placed_in_subprocess_argv_or_error(monkeypatch):
 
 
 def test_x11_text_uses_shared_unicode_cadence_and_codepoint_limit(monkeypatch):
-    from wearing.linux_computer_helper import text_input_command
+    from pajio.linux_computer_helper import text_input_command
     calls = []
-    monkeypatch.setattr('wearing.private_media_sources._run',
+    monkeypatch.setattr('pajio.private_media_sources._run',
                         lambda args, **kwargs: calls.append((args, kwargs)))
     # Astral characters count once, matching Array.from in the native viewer.
     text = '😊' * 32
@@ -133,7 +133,7 @@ def test_x11_text_uses_shared_unicode_cadence_and_codepoint_limit(monkeypatch):
 ])
 def test_x11_text_rejects_entire_request_before_any_native_input(monkeypatch, text, code):
     calls = []
-    monkeypatch.setattr('wearing.private_media_sources._run',
+    monkeypatch.setattr('pajio.private_media_sources._run',
                         lambda *args, **kwargs: calls.append((args, kwargs)))
     with pytest.raises(SourceError, match='^' + code + '$'):
         X11Source().apply({'action':'text', 'text':text})
@@ -141,7 +141,7 @@ def test_x11_text_rejects_entire_request_before_any_native_input(monkeypatch, te
 
 
 def test_ready_advertises_limits_and_android_keeps_original_byte_budget(gate, tmp_path):
-    from wearing.private_media_android import AndroidScrcpySource
+    from pajio.private_media_android import AndroidScrcpySource
     source = X11Source()
     sent = []
     session = PrivateSession(gate, SCOPE, 'session_test', 3, 1, source, None)
@@ -203,7 +203,7 @@ async def test_explicit_return_waits_for_inflight_native_frame(gate,tmp_path):
 @pytest.mark.asyncio
 @pytest.mark.parametrize('revoked',[False,True])
 async def test_return_lock_wait_cannot_override_timeout_or_revocation(gate,tmp_path,monkeypatch,revoked):
-    from wearing.connectors.remote import adapter as module
+    from pajio.connectors.remote import adapter as module
     monkeypatch.setattr(module,'RETURN_LOCK_WAIT_SECONDS',.1)
     cleared=[]
     async def clear(scope,session):
@@ -386,8 +386,8 @@ async def test_public_api_offer_routes_only_authenticated_scope(monkeypatch):
     from fastapi import FastAPI, Request
     from fastapi.exceptions import RequestValidationError
     from fastapi.responses import JSONResponse
-    from wearing.device_access_api import install_device_access_routes
-    import wearing.private_media_access as signaling
+    from pajio.device_access_api import install_device_access_routes
+    import pajio.private_media_access as signaling
     actor = 'b'*64
     calls = []
     async def offer(store,identity,owner,resource,**values):
@@ -421,7 +421,7 @@ async def test_public_api_offer_routes_only_authenticated_scope(monkeypatch):
 
 
 def test_scrcpy_requires_guard_and_official_server_digest(tmp_path):
-    from wearing.private_media_android import AndroidScrcpySource
+    from pajio.private_media_android import AndroidScrcpySource
     path=tmp_path/'server'
     path.write_bytes(b'wrong binary')
     source=AndroidScrcpySource(serial='synthetic',server=path)
@@ -433,7 +433,7 @@ def test_scrcpy_requires_guard_and_official_server_digest(tmp_path):
 
 
 def test_unicode_delivery_uses_private_nonce_socket_not_argv_broadcast_or_clipboard(monkeypatch,tmp_path):
-    from wearing.private_media_android import AndroidScrcpySource,IME,PRIVATE_IME_SHA256
+    from pajio.private_media_android import AndroidScrcpySource,IME,PRIVATE_IME_SHA256
     source=AndroidScrcpySource(serial='synthetic',server=tmp_path/'unused',unicode_ime=True)
     source.set_guard(lambda:None)
     calls=[]; packets=[]
@@ -474,7 +474,7 @@ def test_unicode_delivery_uses_private_nonce_socket_not_argv_broadcast_or_clipbo
 
 @pytest.mark.parametrize('obstacle',[None,'ime_mismatch','process_present','unverified_process_list'])
 def test_ime_lost_release_ack_requires_verified_cleanup_and_can_retry(monkeypatch,tmp_path,obstacle):
-    from wearing.private_media_android import AndroidScrcpySource,PRIVATE_IME_SHA256
+    from pajio.private_media_android import AndroidScrcpySource,PRIVATE_IME_SHA256
     source=AndroidScrcpySource(serial='synthetic',server=tmp_path/'unused',unicode_ime=True)
     source.previous_ime='org.keyboard/.IME';source.ime_apk='/data/app/test/base.apk';source.ime_uid=10001
     state={'obstacle':obstacle};calls=[]
@@ -523,7 +523,7 @@ async def test_closed_session_retries_only_cleanup_and_retains_pause_until_prove
 
 
 def test_unicode_uncertain_ack_has_no_automatic_retry(monkeypatch,tmp_path):
-    from wearing.private_media_android import AndroidScrcpySource,PRIVATE_IME_SHA256
+    from pajio.private_media_android import AndroidScrcpySource,PRIVATE_IME_SHA256
     source=AndroidScrcpySource(serial='synthetic',server=tmp_path/'unused',unicode_ime=True)
     source.set_guard(lambda:None);source.previous_ime='org.keyboard/.IME';source.ime_apk='/data/app/test/base.apk';source.ime_uid=10001
     sends=[]
@@ -540,7 +540,7 @@ def test_unicode_uncertain_ack_has_no_automatic_retry(monkeypatch,tmp_path):
 
 @pytest.mark.parametrize('initialized',[False,True])
 def test_private_input_rejects_replaced_installed_apk_before_transmitting(monkeypatch,tmp_path,initialized):
-    from wearing.private_media_android import AndroidScrcpySource,IME
+    from pajio.private_media_android import AndroidScrcpySource,IME
     source=AndroidScrcpySource(serial='synthetic',server=tmp_path/'unused',unicode_ime=True)
     source.set_guard(lambda:None)
     if initialized:
@@ -570,7 +570,7 @@ def test_scrcpy_framed_h264_rotation_and_decoder_cleanup(tmp_path):
     import struct
     import threading
     from fractions import Fraction
-    from wearing.private_media_android import AndroidScrcpySource
+    from pajio.private_media_android import AndroidScrcpySource
     encoder=av.CodecContext.create('libx264','w')
     encoder.width,encoder.height,encoder.pix_fmt=160,120,'yuv420p'
     encoder.time_base=Fraction(1,24)
@@ -622,8 +622,8 @@ async def test_capture_fps_does_not_count_repeated_cached_android_frame(gate):
 
 
 def test_static_scrcpy_refresh_reads_new_pixels_and_preserves_timestamp(monkeypatch,tmp_path):
-    from wearing.private_media_android import AndroidScrcpySource
-    from wearing.private_media_sources import AndroidScreencapSource
+    from pajio.private_media_android import AndroidScrcpySource
+    from pajio.private_media_sources import AndroidScreencapSource
     source=AndroidScrcpySource(serial='synthetic',server=tmp_path/'unused')
     source.set_guard(lambda:None)
     monkeypatch.setattr(source,'_start',lambda:None)
@@ -647,8 +647,8 @@ def test_static_scrcpy_refresh_reads_new_pixels_and_preserves_timestamp(monkeypa
 
 @pytest.mark.parametrize('failure',['capture','rotation'])
 def test_static_refresh_never_returns_expired_pixels_on_failure(monkeypatch,tmp_path,failure):
-    from wearing.private_media_android import AndroidScrcpySource
-    from wearing.private_media_sources import AndroidScreencapSource
+    from pajio.private_media_android import AndroidScrcpySource
+    from pajio.private_media_sources import AndroidScreencapSource
     source=AndroidScrcpySource(serial='synthetic',server=tmp_path/'unused')
     source.set_guard(lambda:None)
     monkeypatch.setattr(source,'_start',lambda:None)

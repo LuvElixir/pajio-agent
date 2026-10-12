@@ -3,7 +3,7 @@ import subprocess
 
 import pytest
 
-from wearing.private_media_sources import SourceError, X11Source
+from pajio.private_media_sources import SourceError, X11Source
 
 
 class LegacyPointerBackend:
@@ -45,7 +45,7 @@ class LegacyPointerBackend:
 @pytest.fixture
 def pointer_backend(monkeypatch):
     backend = LegacyPointerBackend()
-    monkeypatch.setattr('wearing.private_media_sources.subprocess.run', backend)
+    monkeypatch.setattr('pajio.private_media_sources.subprocess.run', backend)
     return backend
 
 
@@ -77,7 +77,7 @@ def test_repeated_tap_at_current_position_keeps_move_before_click(pointer_backen
 
 @pytest.mark.parametrize('target', [(30, 40), (31, 41), (50, 60)])
 def test_swipe_allows_stationary_or_rounded_duplicate_steps(pointer_backend, monkeypatch, target):
-    monkeypatch.setattr('wearing.private_media_sources.time.sleep', lambda _: None)
+    monkeypatch.setattr('pajio.private_media_sources.time.sleep', lambda _: None)
     source = X11Source()
     source.apply({'action': 'swipe', 'x': 30, 'y': 40, 'to_x': target[0], 'to_y': target[1], 'duration_ms': 150})
     assert pointer_backend.events[0] == ('move', (30, 40))

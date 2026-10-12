@@ -1,6 +1,6 @@
 # 文件夹文档直接编辑与恢复
 
-2026-10-08。供 ZCode 只读 App / 后端代码，对齐 Web、Desktop 文件编辑。实现为 `src/wearing/workspace_text.py`、`clients/mobile/src/workspace-text.ts`、`WorkspaceTextEditor.tsx`；`PersonalHub.tsx` 仅在文件阅读段增加入口和连接参数。旧文件列表、分页、搜索、导入、分享接口不变。
+2026-10-08。供 ZCode 只读 App / 后端代码，对齐 Web、Desktop 文件编辑。实现为 `src/pajio/workspace_text.py`、`clients/mobile/src/workspace-text.ts`、`WorkspaceTextEditor.tsx`；`PersonalHub.tsx` 仅在文件阅读段增加入口和连接参数。旧文件列表、分页、搜索、导入、分享接口不变。
 
 ## 范围与产品入口
 

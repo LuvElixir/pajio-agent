@@ -1,0 +1,25 @@
+[Unit]
+Description=Pajio authenticated device relay
+Wants=network-online.target
+After=network-online.target
+RequiresMountsFor=/var/lib/pajio
+
+[Service]
+Type=exec
+User=pajio
+Group=pajio
+WorkingDirectory=/var/lib/pajio
+ExecStart=/opt/pajio/venv/bin/pajio tenant relay --root /var/lib/pajio/instance --port 443 --cert /var/lib/pajio/relay-tls/relay-cert.pem --key /var/lib/pajio/relay-tls/relay-key.pem
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/var/lib/pajio
+
+[Install]
+WantedBy=multi-user.target

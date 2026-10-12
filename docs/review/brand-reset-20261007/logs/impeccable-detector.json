@@ -5,7 +5,7 @@
     "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
     "severity": "advisory",
     "category": "quality",
-    "file": "/Users/archieliew/Documents/facet/src/wearing/web/mobile-host.css",
+    "file": "/Users/archieliew/Documents/pajio/src/pajio/web/mobile-host.css",
     "line": 34,
     "snippet": "border-radius: 20px is outside the DESIGN.md rounded scale",
     "ignoreValue": "20px"
@@ -16,7 +16,7 @@
     "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
     "severity": "advisory",
     "category": "quality",
-    "file": "/Users/archieliew/Documents/facet/src/wearing/web/mobile-host.css",
+    "file": "/Users/archieliew/Documents/pajio/src/pajio/web/mobile-host.css",
     "line": 34,
     "snippet": "border-radius: 6px is outside the DESIGN.md rounded scale",
     "ignoreValue": "6px"
@@ -27,7 +27,7 @@
     "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
     "severity": "advisory",
     "category": "quality",
-    "file": "/Users/archieliew/Documents/facet/src/wearing/web/mobile-host.css",
+    "file": "/Users/archieliew/Documents/pajio/src/pajio/web/mobile-host.css",
     "line": 44,
     "snippet": "font-size: 32px is off the DESIGN.md type ramp",
     "ignoreValue": "32px"
@@ -38,7 +38,7 @@
     "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
     "severity": "advisory",
     "category": "quality",
-    "file": "/Users/archieliew/Documents/facet/src/wearing/web/mobile-host.css",
+    "file": "/Users/archieliew/Documents/pajio/src/pajio/web/mobile-host.css",
     "line": 52,
     "snippet": "border-radius: 18px is outside the DESIGN.md rounded scale",
     "ignoreValue": "18px"
@@ -49,7 +49,7 @@
     "description": "A border-radius value is outside the DESIGN.md rounded scale. Use a documented radius token or update the design system if the new shape is intentional.",
     "severity": "advisory",
     "category": "quality",
-    "file": "/Users/archieliew/Documents/facet/src/wearing/web/mobile-host.css",
+    "file": "/Users/archieliew/Documents/pajio/src/pajio/web/mobile-host.css",
     "line": 60,
     "snippet": "border-radius: 999px is outside the DESIGN.md rounded scale",
     "ignoreValue": "999px"
@@ -60,7 +60,7 @@
     "description": "A literal font-size is off the type ramp documented in DESIGN.md typography. Use a documented size step or update the design system if the new step is intentional.",
     "severity": "advisory",
     "category": "quality",
-    "file": "/Users/archieliew/Documents/facet/src/wearing/web/mobile-host.css",
+    "file": "/Users/archieliew/Documents/pajio/src/pajio/web/mobile-host.css",
     "line": 61,
     "snippet": "font-size: 18px is off the DESIGN.md type ramp",
     "ignoreValue": "18px"

@@ -3,11 +3,11 @@ import json
 
 import httpx
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.hermes import HermesClient
-from wearing.onboarding import ProfileValues, SaveOnboarding
-from wearing.service import ACTIVE
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.hermes import HermesClient
+from pajio.onboarding import ProfileValues, SaveOnboarding
+from pajio.service import ACTIVE
 from test_goals import GoalWire
 from test_identity_export_documents import unpack
 

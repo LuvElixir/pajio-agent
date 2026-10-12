@@ -6,7 +6,7 @@ was cloned from a reviewed clean template.
 
 ## Inputs and integration
 
-`wearing.cloud.device_enrollment` exposes:
+`pajio.cloud.device_enrollment` exposes:
 
 ```python
 settings = EnrollmentSpec.model_validate_json(spec_file.read_text())
@@ -42,7 +42,7 @@ Its `enrollment-plan`, `enroll` and `enrollment-status` actions use these APIs.
 For example, with reviewed private files and a previously reserved request:
 
 ```sh
-python -m wearing.cloud.device_operator enrollment-plan \
+python -m pajio.cloud.device_operator enrollment-plan \
   --root /private/operator-ledger --ssh-config /private/ssh-config \
   --host reviewed-proxmox --node pve01 \
   --admission-sources /private/admission-sources.json \
@@ -59,7 +59,7 @@ not generated device IDs and must be replaced with the real reviewed ledger
 values. No additional device is admitted by this command.
 
 There is no alternative ad-hoc deployment path in this module.
-`python -m wearing.cloud.device_enrollment --remote` is only
+`python -m pajio.cloud.device_enrollment --remote` is only
 the privileged, fixed SSH child entry point and reads its protocol from stdin.
 
 ## Prerequisites
@@ -193,7 +193,7 @@ inspection. Their enrollment records are `verified`, with
 `enrollment_ready=true` and `product_ready=false`.
 
 The retained private evidence directory is
-`.wearing/on-prem/20261009/personal-compute/`. It is not a public artifact folder
+`.pajio/on-prem/20261009/personal-compute/`. It is not a public artifact folder
 and contains separate private configuration files; only reviewed, redacted proof
 records should be shared. Relevant acceptance records are:
 

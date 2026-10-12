@@ -7,13 +7,13 @@ import jsonschema
 import pytest
 from pydantic import ValidationError
 
-from wearing.app import create_app
-from wearing.capture import CaptureBook, CaptureDraft
-from wearing.config import Settings
-from wearing.life import LifeBook, LifeDraft
-from wearing.life_proxy import TOOLS, dispatch
-from wearing.schedules import ScheduleBook, ScheduleCoordinator, ScheduleDraft
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.capture import CaptureBook, CaptureDraft
+from pajio.config import Settings
+from pajio.life import LifeBook, LifeDraft
+from pajio.life_proxy import TOOLS, dispatch
+from pajio.schedules import ScheduleBook, ScheduleCoordinator, ScheduleDraft
+from pajio.store import Store
 from test_schedules import clock, rig, spec
 
 
@@ -256,7 +256,7 @@ async def test_capture_waits_for_organizing_then_uses_latest_record(rig, tmp_pat
 async def test_api_life_change_roundtrip_and_time_schedule_compatibility(tmp_path, clock):
     app = create_app(Settings(tmp_path))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
-        client.headers["X-Wearing-Token"] = (await client.get("/api/bootstrap")).json()["token"]
+        client.headers["X-Pajio-Token"] = (await client.get("/api/bootstrap")).json()["token"]
         response = await client.post("/api/schedules", json={"schedule": watch().model_dump(), "request_key": "watch"})
         assert response.status_code == 201
         item = response.json()

@@ -4,8 +4,8 @@ import os
 
 import pytest
 
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.relay import (
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.relay import (
     ConnectionRequest, PairRequest, PollRequest, RelayError, RelayStore, instance_relay,
 )
 
@@ -101,7 +101,7 @@ def test_corrupt_missing_unsafe_and_unreadable_config_never_use_fallback(tmp_pat
     assert store.human_access_ready is True
     def denied(_):
         raise PermissionError('synthetic inaccessible operator file')
-    monkeypatch.setattr('wearing.cloud.relay.read_private', denied)
+    monkeypatch.setattr('pajio.cloud.relay.read_private', denied)
     assert store.human_access_ready is False
 
 

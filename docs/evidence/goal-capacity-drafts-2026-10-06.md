@@ -31,7 +31,7 @@ QA 8789 真实浏览器操作：
 
 ![新目标的推进空间](images/goal-capacity-options-20261006.png)
 
-主入口 8765 更新前做私有 SQLite 备份，并确认没有活动任务、引擎未运行。更新后原 4 条对话的完整 JSON 相同，目标记录一致；goal_policy 与草稿资源可用。profile 源码为 v19，下一次引擎启动应用。私有记录见 `.wearing/qa/capacity-drafts-20261006/local-upgrade.json`。开发消息与目标只写入 QA。
+主入口 8765 更新前做私有 SQLite 备份，并确认没有活动任务、引擎未运行。更新后原 4 条对话的完整 JSON 相同，目标记录一致；goal_policy 与草稿资源可用。profile 源码为 v19，下一次引擎启动应用。私有记录见 `.pajio/qa/capacity-drafts-20261006/local-upgrade.json`。开发消息与目标只写入 QA。
 
 ## 实际边界
 

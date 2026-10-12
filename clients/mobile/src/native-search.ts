@@ -50,7 +50,7 @@ export class NativeSearchApi {
     signal?.addEventListener('abort', abort, {once: true}); if (signal?.aborted) abort();
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {signal: controller.signal, redirect: 'error',
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity}});
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity}});
       const value = await response.json().catch(() => {throw failure();});
       if (!response.ok) throw new ApiError(object(value) && text(value.detail) ? value.detail : '搜索暂时不可用，请稍后重试。', response.status);
       return value;

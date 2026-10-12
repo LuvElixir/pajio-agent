@@ -20,10 +20,10 @@
 7. Node 角色动效回归、JS syntax 与 `git diff --check` 通过。保持折带 W 与 3D 角色资产不变。
 8. 当前 `8765` 已重新启动最终代码；runtime running、Hermes reachable、profile v11，六项 life/schedule 工具实际注册。真实用户安排数量仍为 0，测试数据全在隔离目录。正式页面已刷新并实际打开新表单，但未提交测试安排。
 
-私有回执：`.wearing/qa/event-intentions-20261005/live-check.json`、`local-acceptance.json`；修改前 SQLite 备份 `before-event-intentions.sqlite3` 权限 0600。截图：`images/event-intentions-20261005/event-form-desktop.png`、`event-form-mobile.png`、`event-receipt.png`，均为隔离验收数据。正式页仅做 DOM/可见画面核对，没有保留用户历史对话截图。
+私有回执：`.pajio/qa/event-intentions-20261005/live-check.json`、`local-acceptance.json`；修改前 SQLite 备份 `before-event-intentions.sqlite3` 权限 0600。截图：`images/event-intentions-20261005/event-form-desktop.png`、`event-form-mobile.png`、`event-receipt.png`，均为隔离验收数据。正式页仅做 DOM/可见画面核对，没有保留用户历史对话截图。
 
 ## 设计与边界
 
-沿用既有 Impeccable 设计语言，在原表单中按触发方式显示相关字段，主动作仍为“交给 Wearing”。高级响应节奏折叠；切换详情清除上一次保存提示。Hook 的既有 20px 详情标题提示按已记录的局部层级判为误报，不改变字体或加忽略配置。详见 `docs/design-schedules.md`。
+沿用既有 Impeccable 设计语言，在原表单中按触发方式显示相关字段，主动作仍为“交给 Pajio”。高级响应节奏折叠；切换详情清除上一次保存提示。Hook 的既有 20px 详情标题提示按已记录的局部层级判为误报，不改变字体或加忽略配置。详见 `docs/design-schedules.md`。
 
 本轮没有外部微信/支付宝/邮箱事件、系统推送、费用硬上限、GoalBook 事件关联或通用事件 Webhook。当前为单实例 SQLite，独立租户 VM 边界不变；事件去重不等于外部订单 exactly-once。服务需运行；超时批次会跳过，暂停期间的变化不会恢复补做。媒体整理完成后的自动写回不会单独唤醒第二轮。

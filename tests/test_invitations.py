@@ -9,8 +9,8 @@ import uuid
 import pytest
 from sqlalchemy import select, update
 
-from wearing.cloud.control import ControlError, ControlStore, digest, invitations, members, ownership, tenants, users
-from wearing.cloud.invitations import InvitationError, InvitationStore, code_hash, issue_to_file
+from pajio.cloud.control import ControlError, ControlStore, digest, invitations, members, ownership, tenants, users
+from pajio.cloud.invitations import InvitationError, InvitationStore, code_hash, issue_to_file
 
 ISSUER = 'https://identity.example'
 
@@ -273,7 +273,7 @@ def test_account_deletion_and_transaction_failure_do_not_partially_admit(invitat
     ops, web, _ = invitation_lab
     code, _ = issue(ops)
     with ops.transaction(mutating=True) as db:
-        db.execute(text("CREATE TRIGGER synthetic_failure BEFORE INSERT ON wearing_tenant_ownership BEGIN SELECT RAISE(ABORT,'synthetic'); END"))
+        db.execute(text("CREATE TRIGGER synthetic_failure BEFORE INSERT ON pajio_tenant_ownership BEGIN SELECT RAISE(ABORT,'synthetic'); END"))
     with pytest.raises(DBAPIError):
         InvitationStore(web).redeem_hash(code_hash(code), issuer=ISSUER, subject='new')
     with ops.transaction() as db:

@@ -19,12 +19,12 @@ function memory() {
 function api(handler: (body?: Record<string, unknown>) => Response | Promise<Response>) {
   const calls: unknown[] = [];
   const client = new BriefPreferenceApi(connection, (async (url, init) => {
-    assert.equal(new Headers(init?.headers).get('X-Wearing-Identity'), 'daily');
+    assert.equal(new Headers(init?.headers).get('X-Pajio-Identity'), 'daily');
     assert.equal(init?.redirect, 'error'); assert.ok(init?.signal);
     if (String(url).endsWith('/api/bootstrap')) return Response.json({token: 'csrf-synthetic', identities: [{id: 'daily'}]});
     const body = init?.body ? JSON.parse(String(init.body)) : undefined;
     calls.push(body);
-    if (body) assert.equal(new Headers(init?.headers).get('X-Wearing-Token'), 'csrf-synthetic');
+    if (body) assert.equal(new Headers(init?.headers).get('X-Pajio-Token'), 'csrf-synthetic');
     return handler(body);
   }) as typeof fetch);
   return {client, calls};

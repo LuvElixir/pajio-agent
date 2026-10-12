@@ -4,15 +4,15 @@ import sqlite3
 
 import pytest
 from pydantic import ValidationError
-from wearing.goals import GoalBook, GoalError
-from wearing.life import LifeBook
-from wearing.life_proxy import dispatch
-from wearing.store import Store
+from pajio.goals import GoalBook, GoalError
+from pajio.life import LifeBook
+from pajio.life_proxy import dispatch
+from pajio.store import Store
 
 
 @pytest.fixture
 def rig(tmp_path):
-    store = Store(tmp_path / 'wearing.sqlite3')
+    store = Store(tmp_path / 'pajio.sqlite3')
     book = GoalBook(store)
     goal = book.create('daily', '泉州两天方案', '只看测试资料，未授权预订', '三个有来源的选项', 3)
     source = store.create_message('改为厦门三天，其他约定不变，先不要启动。')

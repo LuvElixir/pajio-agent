@@ -2,9 +2,9 @@
 
 ## 本次完成
 
-- 新增 `wearing engine install/status/model`，网页本地安装/启动/关闭入口；保留远程手动连接。
+- 新增 `pajio engine install/status/model`，网页本地安装/启动/关闭入口；保留远程手动连接。
 - 官方源码固定到 `367441274c48a03d12ee9f8d3d9ccd9bc1585392`，下载 SHA-256 `2edfd027b3c76489dd9e4324ba67237b5883914408f795472da5aac4dcb032f9`。
-- 复用官方 PM：先 tools-only（暂不下载浏览器与 CUA 驱动），再 web/messaging extras。PM 管理 Python 3.14 和锁定的依赖环境；Wearing 从其官方路径解析函数获取解释器位置。
+- 复用官方 PM：先 tools-only（暂不下载浏览器与 CUA 驱动），再 web/messaging extras。PM 管理 Python 3.14 和锁定的依赖环境；Pajio 从其官方路径解析函数获取解释器位置。
 - 本机开发 Mac 已完成实际安装；真实 Gateway 曾在随机回环端口 59087 响应带 Bearer 的 `/v1/capabilities`，然后正常关闭。未发送任何模型请求，没有复用当前 Codex 会话凭据。
 - 凭据保留服务器端，登录通过官方终端向导；初始工具列表为空。持有中的任务阻止切换/关闭引擎；进程清理只针对自己创建的 Popen 句柄，不按持久 PID 猜测进程。
 - 源码下载校验、危险归档路径、并发安装、失败信息、配置保留、未登录拦截、进程退出、密钥不回传和活动运行保护均有测试。
@@ -15,7 +15,7 @@
 
 新素材 720×720 / 24fps / 120 帧 / 5 秒 / 无声。帧间最大平均差值由 2.454 降至 0.783；循环边界差值 0.755，新首尾头部均值 193.704 / 193.851。同步更新首帧封面与 `v=2` 媒体 URL。此次没有额外生成费用。
 
-完整解码及接缝六帧目视检查通过。浏览器连续约 16 秒读到三次循环切换，每次 readyState=4、视频未隐藏、未暂停；页面截图 `screenshots/personal-loop-v2.png`，逐次记录见 `design/motion/wearing-companion/output/browser-loop-v2.json`。1440px 桌面与 390px 手机宽度检查接入面板和模型未登录提示；原用户记录保留。
+完整解码及接缝六帧目视检查通过。浏览器连续约 16 秒读到三次循环切换，每次 readyState=4、视频未隐藏、未暂停；页面截图 `screenshots/personal-loop-v2.png`，逐次记录见 `design/motion/pajio-companion/output/browser-loop-v2.json`。1440px 桌面与 390px 手机宽度检查接入面板和模型未登录提示；原用户记录保留。
 
 ## 验证范围
 

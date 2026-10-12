@@ -12,12 +12,12 @@ import pytest
 from test_conversation_sources import sources, exclude  # noqa: F401
 from test_session_recall_guard import A, case, admit  # noqa: F401
 from test_goals import GoalWire, due, report
-from wearing.config import Settings
-from wearing.goals import GoalBook
-from wearing.hermes import HermesClient
-from wearing.service import ACTIVE, TaskService
-from wearing.conversation_sources import SourceError
-from wearing.session_recall_guard import RecallConfig, RecallGuard
+from pajio.config import Settings
+from pajio.goals import GoalBook
+from pajio.hermes import HermesClient
+from pajio.service import ACTIVE, TaskService
+from pajio.conversation_sources import SourceError
+from pajio.session_recall_guard import RecallConfig, RecallGuard
 
 
 @pytest.mark.parametrize('queued_before_exclusion', [False, True])
@@ -31,7 +31,7 @@ async def test_exclusion_never_resumes_a_goal_engine_history(sources, queued_bef
 
     async def transport(request):
         if request.url.path.endswith('capabilities'):
-            return httpx.Response(200, json={'features': {}, 'wearing': {'session_recall_guard': 'sources-v1'}})
+            return httpx.Response(200, json={'features': {}, 'pajio': {'session_recall_guard': 'sources-v1'}})
         return await wire(request)
 
     client = HermesClient(Settings(store.path.parent, hermes_key='fixture'), httpx.MockTransport(transport))
@@ -69,7 +69,7 @@ async def test_new_generation_goal_can_recall_other_authorized_sources(sources):
 
     async def transport(request):
         if request.url.path.endswith('capabilities'):
-            return httpx.Response(200, json={'features': {}, 'wearing': {'session_recall_guard': 'sources-v1'}})
+            return httpx.Response(200, json={'features': {}, 'pajio': {'session_recall_guard': 'sources-v1'}})
         return await wire(request)
 
     client = HermesClient(Settings(store.path.parent, hermes_key='fixture'), httpx.MockTransport(transport))

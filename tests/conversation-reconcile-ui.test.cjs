@@ -24,7 +24,7 @@ function fixture() {
       this.content.firstElementChild = makeNode(`${message.kind === 'goal_step' ? 'goal-turn' : 'task-turn'}-${message.turn.id}`, html);
     }}),
   }};
-  const source = fs.readFileSync('src/wearing/web/app.js', 'utf8');
+  const source = fs.readFileSync('src/pajio/web/app.js', 'utf8');
   vm.runInNewContext(source.slice(source.indexOf('const turnHTML ='), source.indexOf('async function loadConversation')), context);
   return {root, render: context.reconcileConversation, created: () => created};
 }

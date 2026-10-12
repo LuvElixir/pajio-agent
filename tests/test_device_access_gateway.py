@@ -8,12 +8,12 @@ import sys
 
 import pytest
 
-from wearing.device_gateway import DeviceGateway, GatewayScope, GatewayError
-from wearing.cloud.relay import RelayStore, RelayError, PairRequest, PollRequest, ConnectionRequest, ClaimRequest, ResourceControl
-from wearing.config import write_private_json
-from wearing.connectors.remote.adapter import NativeAdapter
-from wearing.connectors.remote.client import Connector
-from wearing.phone_proxy import DeviceLock, lock_path, guarded_phone_action
+from pajio.device_gateway import DeviceGateway, GatewayScope, GatewayError
+from pajio.cloud.relay import RelayStore, RelayError, PairRequest, PollRequest, ConnectionRequest, ClaimRequest, ResourceControl
+from pajio.config import write_private_json
+from pajio.connectors.remote.adapter import NativeAdapter
+from pajio.connectors.remote.client import Connector
+from pajio.phone_proxy import DeviceLock, lock_path, guarded_phone_action
 
 READ = 'phone.mobile_take_screenshot'
 WRITE = 'phone.mobile_click_on_screen_at_coordinates'
@@ -70,7 +70,7 @@ def test_native_lock_cross_process_phone_compatibility_and_exception_cleanup(hos
 import sys
 from pathlib import Path
 Path.home = lambda: Path(sys.argv[1])
-from wearing.phone_proxy import DeviceLock, DeviceBusy, lock_path
+from pajio.phone_proxy import DeviceLock, DeviceBusy, lock_path
 if sys.argv[3] == 'hold-filelock':
     from filelock import FileLock
     with FileLock(lock_path(sys.argv[2]), timeout=0):
@@ -123,7 +123,7 @@ with gate.native_lock('synthetic_startup'):
 print('stdlib gateway startup and lock passed')
 '''
     result = subprocess.run([sys.executable, '-S', '-c', code,
-                             str(Path(__file__).resolve().parents[1] / 'src/wearing'), str(tmp_path)],
+                             str(Path(__file__).resolve().parents[1] / 'src/pajio'), str(tmp_path)],
                             capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == 'stdlib gateway startup and lock passed'
@@ -339,7 +339,7 @@ def test_physical_disconnect_pauses_even_while_connector_remains_online(relay):
 @pytest.mark.asyncio
 async def test_actual_poll_loop_keeps_physical_connectivity_when_agent_is_paused(relay,tmp_path,monkeypatch):
     import asyncio
-    from wearing.connectors.remote import client as module
+    from pajio.connectors.remote import client as module
     store,bundle,connection=relay
     class Adapter:
         human_access_ready=True

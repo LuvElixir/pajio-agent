@@ -19,11 +19,11 @@ function memory() {
 function client(handler: (body?: ListRequest) => Response | Promise<Response>) {
   const calls: (ListRequest | undefined)[] = [];
   const api = new TaskListApi(connection, (async (url, init) => {
-    assert.equal(new Headers(init?.headers).get('X-Wearing-Identity'), 'daily');
+    assert.equal(new Headers(init?.headers).get('X-Pajio-Identity'), 'daily');
     assert.equal(init?.redirect, 'error'); assert.ok(init?.signal);
     if (String(url).endsWith('/api/bootstrap')) return Response.json({token: 'synthetic-csrf', identities: [{id: 'daily'}]});
     const body = init?.body ? JSON.parse(String(init.body)) : undefined; calls.push(body);
-    if (body) assert.equal(new Headers(init?.headers).get('X-Wearing-Token'), 'synthetic-csrf');
+    if (body) assert.equal(new Headers(init?.headers).get('X-Pajio-Token'), 'synthetic-csrf');
     return handler(body);
   }) as typeof fetch);
   return {api, calls};

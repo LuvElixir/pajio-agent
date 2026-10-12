@@ -34,8 +34,8 @@ test('saving sends credentials in a body to the bound service with identity and 
   assert.equal(calls.length, 2);
   assert.equal(calls[1].init?.method, 'PUT');
   assert.ok(!calls[1].url.includes(secret));
-  assert.equal(new Headers(calls[1].init?.headers).get('X-Wearing-Token'), 'csrf-test');
-  assert.equal(new Headers(calls[1].init?.headers).get('X-Wearing-Identity'), 'daily');
+  assert.equal(new Headers(calls[1].init?.headers).get('X-Pajio-Token'), 'csrf-test');
+  assert.equal(new Headers(calls[1].init?.headers).get('X-Pajio-Identity'), 'daily');
   assert.equal(calls[1].init?.redirect, 'error');
   assert.equal(JSON.parse(String(calls[1].init?.body)).secret, secret);
 });

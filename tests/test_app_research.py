@@ -2,12 +2,12 @@ import json
 
 import pytest
 
-from wearing.app_research import APP_TOOLS, MAX_LINES, MAX_TEXT, PHONE_FRAME, PHONE_READ, app_receipt_items
-from wearing.research import ResearchBook
+from pajio.app_research import APP_TOOLS, MAX_LINES, MAX_TEXT, PHONE_FRAME, PHONE_READ, app_receipt_items
+from pajio.research import ResearchBook
 
 
 def observation(rows=None, **extra):
-    return {"ok": True, "elements": rows or [], "_wearing_observation": {
+    return {"ok": True, "elements": rows or [], "_pajio_observation": {
         "id": "a" * 32, "resource_id": "phone_" + "b" * 20, "observed_at": "2026-10-06T01:00:00+00:00"}, **extra}
 
 
@@ -65,5 +65,5 @@ def test_app_observations_persist_per_run_and_identity(tmp_path):
 
 
 def test_bad_observation_identity_is_rejected():
-    data = observation([row("text")]); data["_wearing_observation"]["resource_id"] = "../../outside"
+    data = observation([row("text")]); data["_pajio_observation"]["resource_id"] = "../../outside"
     assert app_receipt_items(PHONE_READ, "tool.completed", result=data) == []

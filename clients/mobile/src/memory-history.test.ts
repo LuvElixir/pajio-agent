@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {ApiError, MemoryChange, MemorySnapshot, WearingApi} from './core';
+import {ApiError, MemoryChange, MemorySnapshot, PajioApi} from './core';
 import {applyMemoryChange, memoryHistoryChanges, memoryUndoRequest, validMemoryHistory, type MemoryHistory, type MemoryHistoryItem} from './memory-history';
 
 const before = 'a'.repeat(64), after = 'b'.repeat(64), id = '1'.repeat(32);
@@ -20,7 +20,7 @@ test('history only accepts bounded acknowledged user changes; old snapshots rema
     assert.equal(validMemoryHistory(invalid, snapshot().targets!.user), false);
   }
   const legacy = snapshot(); delete legacy.targets!.user.history; delete legacy.targets!.memory.history;
-  const api = new WearingApi(connection, async () => Response.json(legacy));
+  const api = new PajioApi(connection, async () => Response.json(legacy));
   assert.deepEqual(await api.memory(), legacy);
   assert.equal(memoryUndoRequest('user', legacy, id), null);
 });
@@ -72,29 +72,29 @@ test('unconfirmed mutation and failed conflict refresh never claim success or re
 
 test('undo API sends exact scoped command and never retries a 403 mutation', async () => {
   const sent: RequestInit[] = [];
-  const api = new WearingApi(connection, (async (url, init) => {
+  const api = new PajioApi(connection, (async (url, init) => {
     if (String(url).endsWith('/api/bootstrap')) return bootstrap();
     sent.push(init!); return Response.json({detail: 'changed authorization'}, {status: 403});
   }) as typeof fetch);
   await assert.rejects(api.changeMemory(command), /changed authorization/);
   assert.equal(sent.length, 1); assert.deepEqual(JSON.parse(String(sent[0].body)), command);
-  assert.equal(new Headers(sent[0].headers).get('X-Wearing-Identity'), 'daily');
+  assert.equal(new Headers(sent[0].headers).get('X-Pajio-Identity'), 'daily');
 });
 
 test('malformed or cross-identity undo receipt remains unconfirmed', async () => {
   for (const changed of [{...snapshot(), identity_id: 'other'}, {...snapshot(), targets: {...snapshot().targets, user: {...snapshot().targets!.user, history: history([{...change, source: 'agent'} as never])}}}]) {
-    const api = new WearingApi(connection, (async url => String(url).endsWith('/api/bootstrap') ? bootstrap() : Response.json(changed)) as typeof fetch);
+    const api = new PajioApi(connection, (async url => String(url).endsWith('/api/bootstrap') ? bootstrap() : Response.json(changed)) as typeof fetch);
     assert.equal((await applyMemoryChange(api, command)).state, 'unconfirmed');
   }
   let calls = 0;
-  const api = new WearingApi(connection, async () => {calls++; throw Error('must not call');});
+  const api = new PajioApi(connection, async () => {calls++; throw Error('must not call');});
   await assert.rejects(api.changeMemory({...command, action: 'undo', history_id: '../other'}));
   assert.equal(calls, 0);
 });
 
 test('clear receipt replaces both entries and history; no client-created undo survives', async () => {
   const empty = snapshot(); empty.targets!.user.entries = []; empty.targets!.user.history = history([]);
-  const api = new WearingApi(connection, (async url => String(url).endsWith('/api/bootstrap') ? bootstrap() : Response.json(empty)) as typeof fetch);
+  const api = new PajioApi(connection, (async url => String(url).endsWith('/api/bootstrap') ? bootstrap() : Response.json(empty)) as typeof fetch);
   const result = await applyMemoryChange(api, {target: 'user', action: 'clear', revision: after});
   assert.equal(result.state, 'confirmed');
   if (result.state === 'confirmed') {assert.deepEqual(result.snapshot.targets!.user.history!.items, []); assert.equal(memoryUndoRequest('user', result.snapshot, id), null);}

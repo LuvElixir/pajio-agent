@@ -6,8 +6,8 @@ import types
 
 import pytest
 
-from wearing import model_bridge
-from wearing.runtime import HermesRuntime, RuntimeError
+from pajio import model_bridge
+from pajio.runtime import HermesRuntime, RuntimeError
 
 
 def fake_upstream(monkeypatch, tmp_path, *, apply_fails=False, validation_fails=False):

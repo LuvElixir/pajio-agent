@@ -13,7 +13,7 @@
 
 完整回归：334 passed，18 个依赖专用 PostgreSQL 环境的用例 skipped；JavaScript 语法与现有角色动画回归通过。
 
-本机私有验收目录：`.wearing/qa/device-permissions-20261004/`。包含回归输出、Hermes 运行记录、包文件清单与部署保留检查。此目录含私有环境数据，不打入发布包。
+本机私有验收目录：`.pajio/qa/device-permissions-20261004/`。包含回归输出、Hermes 运行记录、包文件清单与部署保留检查。此目录含私有环境数据，不打入发布包。
 
 ## 实际环境范围
 

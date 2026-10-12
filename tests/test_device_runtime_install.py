@@ -14,7 +14,7 @@ def installer():
 
 @pytest.fixture
 def bundle(tmp_path,installer):
-    files=installer.LINUX|installer.COMMON|{'wearing-0.2.0-py3-none-any.whl','dependency-1.0-py3-none-any.whl'}
+    files=installer.LINUX|installer.COMMON|{'pajio-0.2.0-py3-none-any.whl','dependency-1.0-py3-none-any.whl'}
     manifest={'version':1,'kind':'linux','files':{}}
     for name in files:
         body=(name+'\n').encode();(tmp_path/name).write_bytes(body)
@@ -24,7 +24,7 @@ def bundle(tmp_path,installer):
 
 def test_every_dependency_byte_and_manifest_hash_checked(installer,bundle):
     path,manifest,sha=bundle
-    assert installer.verify_bundle(path,sha)[1]=='wearing-0.2.0-py3-none-any.whl'
+    assert installer.verify_bundle(path,sha)[1]=='pajio-0.2.0-py3-none-any.whl'
     (path/'dependency-1.0-py3-none-any.whl').write_text('tamper')
     with pytest.raises(ValueError,match='runtime_file_changed'):installer.verify_bundle(path,sha)
 
@@ -56,7 +56,7 @@ def test_android_port_input_rejected_before_any_host_or_vm_action(tmp_path):
 
 def test_upload_preparation_refuses_world_writable_or_symlink(tmp_path):
     import ast
-    source=(ROOT/'src/wearing/cloud/device_delivery_ssh.py').read_text()
+    source=(ROOT/'src/pajio/cloud/device_delivery_ssh.py').read_text()
     tree=ast.parse(source)
     prepare=next(node.value.value for node in ast.walk(tree) if isinstance(node,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='prepare' for t in node.targets))
     target=tmp_path/'upload';target.mkdir();target.chmod(0o777)
@@ -118,7 +118,7 @@ def test_partial_bundle_copy_is_removed_and_retry_reaches_venv(installer,bundle,
 
 def test_retry_reuses_only_exact_regular_uploaded_files(tmp_path):
     import sys
-    from wearing.cloud.device_delivery_ssh import UPLOAD_CHECK
+    from pajio.cloud.device_delivery_ssh import UPLOAD_CHECK
     directory=tmp_path/'bundle';directory.mkdir();file=directory/'asset.whl';file.write_bytes(b'public pinned data')
     expected={file.name:hashlib.sha256(file.read_bytes()).hexdigest()}
     def check():return subprocess.run([sys.executable,'-c',UPLOAD_CHECK,str(directory)],input=json.dumps(expected),text=True,capture_output=True).returncode
@@ -156,7 +156,7 @@ def test_large_image_hashing_is_bounded_on_sender_and_receiver(tmp_path):
     env={**os.environ,'PYTHONPATH':str(ROOT/'src')}
     script='''import json,resource,sys,tracemalloc
 from pathlib import Path
-from wearing.cloud.device_delivery_ssh import upload_digests
+from pajio.cloud.device_delivery_ssh import upload_digests
 tracemalloc.start()
 values=upload_digests(Path(sys.argv[1]))
 peak=tracemalloc.get_traced_memory()[1]
@@ -166,7 +166,7 @@ print(json.dumps({'digests':values,'peak':peak,'rss':rss}))
     value=json.loads(subprocess.run([sys.executable,'-c',script,str(tmp_path)],env=env,check=True,capture_output=True,text=True,timeout=30).stdout)
     assert value['peak']<2*1024*1024
     assert value['rss']/(1024 if sys.platform=='darwin' else 1)<192*1024
-    from wearing.cloud.device_delivery_ssh import UPLOAD_CHECK
+    from pajio.cloud.device_delivery_ssh import UPLOAD_CHECK
     checked='import tracemalloc,resource;tracemalloc.start()\n'+UPLOAD_CHECK+'''\nprint(json.dumps({'peak':tracemalloc.get_traced_memory()[1],'rss':resource.getrusage(resource.RUSAGE_SELF).ru_maxrss}))\n'''
     result=subprocess.run([sys.executable,'-c',checked,str(tmp_path)],input=json.dumps(value['digests']),env=env,check=True,capture_output=True,text=True,timeout=30)
     measured=json.loads(result.stdout)

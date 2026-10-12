@@ -11,7 +11,7 @@ import pytest
 def installer(monkeypatch):
     original = builtins.__import__
     def no_enrollment(name, *args, **kwargs):
-        if name == 'wearing.cloud.device_enrollment_remote':
+        if name == 'pajio.cloud.device_enrollment_remote':
             raise ModuleNotFoundError('A adopted VM has no enrollment module')
         return original(name, *args, **kwargs)
     monkeypatch.setattr(builtins, '__import__', no_enrollment)

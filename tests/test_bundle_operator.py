@@ -6,8 +6,8 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
-from wearing.cloud.bundle_activation import ActivationError
-from wearing.cloud.bundle_operator import BundleOperator, BundleReservation, HOST
+from pajio.cloud.bundle_activation import ActivationError
+from pajio.cloud.bundle_operator import BundleOperator, BundleReservation, HOST
 
 
 def reservation():

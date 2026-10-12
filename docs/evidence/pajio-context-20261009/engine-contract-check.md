@@ -1,12 +1,12 @@
 # Chat import engine contract verification — 2026-10-09
 
-The final review found one startup blocker: `wearing_life` registered `chat_import_search` and `chat_import_read`, but `engine_runner.py` compared discovered names against an older exact allowlist. A fresh engine therefore rejected its own tool registration before readiness. The allowlist now includes both tools. A fast regression compares the actual `life_proxy.TOOLS` registry against the same startup contract without requiring an installed Hermes engine; the existing subprocess integration test also compares the discovered capability names with that registry.
+The final review found one startup blocker: `pajio_life` registered `chat_import_search` and `chat_import_read`, but `engine_runner.py` compared discovered names against an older exact allowlist. A fresh engine therefore rejected its own tool registration before readiness. The allowlist now includes both tools. A fast regression compares the actual `life_proxy.TOOLS` registry against the same startup contract without requiring an installed Hermes engine; the existing subprocess integration test also compares the discovered capability names with that registry.
 
-Only `src/wearing/engine_runner.py` and `tests/test_engine_integration.py` changed for this repair. Existing unrelated dirty changes in those files were preserved. App source and the previously built APK were unchanged.
+Only `src/pajio/engine_runner.py` and `tests/test_engine_integration.py` changed for this repair. Existing unrelated dirty changes in those files were preserved. App source and the previously built APK were unchanged.
 
 ## Commands and results
 
-All commands ran from `/Users/archieliew/Documents/facet` with the installed pinned Hermes interpreter. Commands below are the commands actually executed, not proposed reruns.
+All commands ran from `/Users/archieliew/Documents/pajio` with the installed pinned Hermes interpreter. Commands below are the commands actually executed, not proposed reruns.
 
 ### Initial broad check: 31 passed, 1 failed
 
@@ -14,7 +14,7 @@ All commands ran from `/Users/archieliew/Documents/facet` with the installed pin
 uv run pytest -q tests/test_engine_integration.py tests/test_chat_imports.py tests/test_context_routes_integration.py
 ```
 
-Exit code 1; 47.06 seconds. The `life=True` subprocess scenario passed. The only failed parameter was `[True-False-False-False]` (`connectors=True`, `life=False`): the pre-existing `wearing_phone` MCP connection closed on all three discovery attempts, and the engine exited before readiness with `RuntimeError: Pajio phone connector did not expose the expected tools`. This was not the corrected life-tool allowlist failure. The phone branch was not rerun or repaired in this check.
+Exit code 1; 47.06 seconds. The `life=True` subprocess scenario passed. The only failed parameter was `[True-False-False-False]` (`connectors=True`, `life=False`): the pre-existing `pajio_phone` MCP connection closed on all three discovery attempts, and the engine exited before readiness with `RuntimeError: Pajio phone connector did not expose the expected tools`. This was not the corrected life-tool allowlist failure. The phone branch was not rerun or repaired in this check.
 
 - Full captured pytest output: [initial-31-pass-1-fail-pytest.log](engine-contract-logs/initial-31-pass-1-fail-pytest.log).
 - Verbatim failure subprocess output: [initial-phone-connection-failed-engine.log](engine-contract-logs/initial-phone-connection-failed-engine.log).
@@ -30,7 +30,7 @@ uv run pytest -q 'tests/test_engine_integration.py::test_real_adapter_exposes_on
 Exit code 0; 17.33 seconds. Covers the real life MCP subprocess, engine readiness, authenticated capability listing, synthetic chat imports, source/owner isolation, deletion and replay, real application routes, export, and tenant deletion boundaries. This run occurred after adding the two tool names, before extracting the unchanged allowlist into `expected_life_tool_names()` and adding the fast registry regression below.
 
 - Full captured pytest output: [scoped-67-pytest.log](engine-contract-logs/scoped-67-pytest.log).
-- Verbatim life subprocess output, including `WEARING_ENGINE_READY`: [scoped-67-life-engine.log](engine-contract-logs/scoped-67-life-engine.log).
+- Verbatim life subprocess output, including `PAJIO_ENGINE_READY`: [scoped-67-life-engine.log](engine-contract-logs/scoped-67-life-engine.log).
 
 ### Final registry and real life subprocess check: 2 passed
 
@@ -57,18 +57,18 @@ After the initial archival task, a separate authorized follow-up diagnosed the p
 
 The failure was a new dependency-boundary regression: `phone_proxy.py` imports `device_gateway.py`; the latter had introduced a top-level `filelock` dependency. The separately managed Hermes interpreter has no `filelock`. Starting the actual `phone_proxy.py` script with an empty temporary data directory reproduced `ModuleNotFoundError: No module named 'filelock'` before the driver or registry could be loaded. The earlier broad test had suppressed this child stderr and surfaced only `Connection closed`.
 
-The diagnostic command used `uv run python` to resolve `HermesRuntime(Path('.wearing')).python`, create `tempfile.TemporaryDirectory(prefix='pajio-phone-import-')`, and execute:
+The diagnostic command used `uv run python` to resolve `HermesRuntime(Path('.pajio')).python`, create `tempfile.TemporaryDirectory(prefix='pajio-phone-import-')`, and execute:
 
 ```python
 subprocess.run(
-    [str(runtime.python), str(Path('src/wearing/phone_proxy.py').resolve()), temporary],
+    [str(runtime.python), str(Path('src/pajio/phone_proxy.py').resolve()), temporary],
     capture_output=True, text=True, timeout=20,
 )
 ```
 
 The captured traceback is archived in [phone-managed-import-before-fix.log](engine-contract-logs/phone-managed-import-before-fix.log). This is a terminal-output transcript; the temporary path was intentionally not a live data directory.
 
-The minimal repair removes `filelock` from `device_gateway.py` and uses the same nonblocking OS advisory lock as the existing phone controller: `fcntl.flock` on POSIX, or one-byte `msvcrt.locking` on Windows, imported only on the applicable platform. The path remains `action_lock_path(resource_id)` under `.wearing/phone-locks`; the local proxy and the remote adapter's `phone_proxy.py` child therefore use the same lock. Closing the descriptor releases the lock even when the operation raises. The lock file is not unlinked, avoiding concurrent contenders opening different inodes. No dependency was installed into Hermes.
+The minimal repair removes `filelock` from `device_gateway.py` and uses the same nonblocking OS advisory lock as the existing phone controller: `fcntl.flock` on POSIX, or one-byte `msvcrt.locking` on Windows, imported only on the applicable platform. The path remains `action_lock_path(resource_id)` under `.pajio/phone-locks`; the local proxy and the remote adapter's `phone_proxy.py` child therefore use the same lock. Closing the descriptor releases the lock even when the operation raises. The lock file is not unlinked, avoiding concurrent contenders opening different inodes. No dependency was installed into Hermes.
 
 The connector integration fixture now uses only a temporary, paused synthetic phone registry. It references the existing pinned driver's static package, not the live registry, and supplies a temporary `adb` stub that exits with code 88 and records any attempted call. The test asserts that this stub was never invoked. It performs MCP initialize/list-tools discovery only; it does not call `mobile_list_devices` or any phone operation.
 
@@ -98,4 +98,4 @@ The managed-interpreter post-fix import probe succeeded while reporting `fileloc
 
 The final phone and life subprocess outputs were copied verbatim to [phone-startup-fixed-engine.log](engine-contract-logs/phone-startup-fixed-engine.log) and [phone-startup-fixed-life-engine.log](engine-contract-logs/phone-startup-fixed-life-engine.log). Their source paths, hashes, synthetic registry, and unused ADB-stub check are in [phone-startup-fixed-manifest.json](engine-contract-logs/phone-startup-fixed-manifest.json).
 
-This follow-up changed only `src/wearing/device_gateway.py`, `tests/test_device_access_gateway.py`, and the isolated fixture in `tests/test_engine_integration.py`, plus these evidence files. It did not modify App code, install dependencies, restart production, access real account content, enumerate real devices, or perform real phone actions. These checks ran on macOS; the Windows locking branch is implemented but was not executed here.
+This follow-up changed only `src/pajio/device_gateway.py`, `tests/test_device_access_gateway.py`, and the isolated fixture in `tests/test_engine_integration.py`, plus these evidence files. It did not modify App code, install dependencies, restart production, access real account content, enumerate real devices, or perform real phone actions. These checks ran on macOS; the Windows locking branch is implemented but was not executed here.

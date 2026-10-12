@@ -16,7 +16,7 @@
 
 数值来源为 `../interaction-tokens.json`，App、Web、Desktop 和认证页同步核验。选中语言全产品统一，radio、checkbox、switch、tab 保持正确语义。详细盘点见 `login-selection-audit-20261010.md`。
 
-字标复用已批准 `src/wearing/web/pajio-wordmark.svg`；此版本无需新位图。旧生成素材仅保留在本机生成历史，不随登录发布。
+字标复用已批准 `src/pajio/web/pajio-wordmark.svg`；此版本无需新位图。旧生成素材仅保留在本机生成历史，不随登录发布。
 
 ## 对照检查
 

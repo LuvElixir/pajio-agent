@@ -6,13 +6,13 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from wearing.app import create_app
-from wearing.artifacts import ArtifactBook
-from wearing.briefing_api import BriefingBook, BriefingError, CreateBriefing
-from wearing.briefing_preferences import BriefingPreferences, PreferenceError, SavePreferences
-from wearing.config import Settings
-from wearing.life import LifeBook, LifeDraft
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.artifacts import ArtifactBook
+from pajio.briefing_api import BriefingBook, BriefingError, CreateBriefing
+from pajio.briefing_preferences import BriefingPreferences, PreferenceError, SavePreferences
+from pajio.config import Settings
+from pajio.life import LifeBook, LifeDraft
+from pajio.store import Store
 
 
 @pytest.fixture(autouse=True)
@@ -68,7 +68,7 @@ def test_generation_snapshots_current_preferences_and_does_not_read_unselected_f
     store, book = setup(tmp_path)
     LifeBook(store).create('daily', LifeDraft(kind='note', title='Selected synthetic note'), 'note-one')
     book.preferences.save('daily', save(sources=['note'], interests=['设计'], priorities='上线计划', max_items=1))
-    monkeypatch.setattr('wearing.briefing_api.list_files', lambda *_args, **_kwargs: pytest.fail('unselected files read'))
+    monkeypatch.setattr('pajio.briefing_api.list_files', lambda *_args, **_kwargs: pytest.fail('unselected files read'))
     row = book.reserve('daily', draft(preferences_revision=1))
     assert [item['id'] for item in json.loads(row['sources'])] == ['note']
     assert json.loads(row['preferences'])['priorities'] == '上线计划'
@@ -97,7 +97,7 @@ def test_old_daily_table_and_old_request_replay_are_preserved(tmp_path):
 
 async def test_new_version_after_completion_uses_new_preferences(tmp_path):
     from test_briefings import NoNetworkHermes
-    from wearing.service import TaskService
+    from pajio.service import TaskService
 
     store, book = setup(tmp_path)
     hermes = NoNetworkHermes()
@@ -117,7 +117,7 @@ def test_partial_source_failure_preserves_success_and_never_leaks_error(tmp_path
     _, book = setup(tmp_path)
     LifeBook(book.store).create('daily', LifeDraft(kind='note', title='Synthetic usable note'), 'note-one')
     def failed(*_args, **_kwargs): raise OSError('/private/SECRET/path')
-    monkeypatch.setattr('wearing.briefing_api.list_files', failed)
+    monkeypatch.setattr('pajio.briefing_api.list_files', failed)
     result = book.settings('daily')
     states = {item['id']: item['state'] for item in result['available_sources']}
     assert states['note'] == 'available' and states['files'] == 'failed' and states['feishu'] == 'unavailable'
@@ -152,10 +152,10 @@ async def test_real_routes_csrf_static_order_identity_and_read_only_settings(tmp
             assert state['preferences']['revision'] == 0 and not store.list()
             assert (await http.post(path, json=save().model_dump())).status_code == 403
             token = (await http.get('/api/bootstrap')).json()['token']
-            headers = {'X-Wearing-Token': token}
+            headers = {'X-Pajio-Token': token}
             response = await http.post(path, json=save(priorities='Only this identity').model_dump(), headers=headers)
             assert response.status_code == 200 and response.json()['revision'] == 1
-            assert (await http.get(path, headers={'X-Wearing-Identity': other})).json()['preferences']['priorities'] == ''
+            assert (await http.get(path, headers={'X-Pajio-Identity': other})).json()['preferences']['priorities'] == ''
             assert (await http.post(path, json=save().model_dump(), headers={**headers, 'Origin': 'null'})).status_code == 403
             assert (await http.post(path, json={**save().model_dump(), 'identity_id': other}, headers=headers)).status_code == 422
             assert not store.list()

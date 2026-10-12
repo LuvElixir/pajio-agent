@@ -25,7 +25,7 @@ test('read requests include authenticated identity and expected tenant without s
   const api = new NativeSearchApi(connection, (async (url, init) => {
     const parsed = new URL(String(url)); seen.push(parsed);
     const headers = new Headers(init?.headers);
-    assert.equal(headers.get('authorization'), 'Bearer ' + 'a'.repeat(64)); assert.equal(headers.get('x-pajio-expected-tenant'), 'tenant_qa'); assert.equal(headers.get('x-wearing-identity'), 'daily');
+    assert.equal(headers.get('authorization'), 'Bearer ' + 'a'.repeat(64)); assert.equal(headers.get('x-pajio-expected-tenant'), 'tenant_qa'); assert.equal(headers.get('x-pajio-identity'), 'daily');
     assert.equal(init?.redirect, 'error'); assert.ok(init?.signal); assert.equal(init?.body, undefined); assert.ok(!parsed.href.includes('a'.repeat(64)));
     return Response.json(parsed.pathname.endsWith('/7') ? detail : page);
   }) as typeof fetch);

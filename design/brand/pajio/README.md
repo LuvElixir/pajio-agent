@@ -39,4 +39,4 @@ uv run --no-project --with cairosvg --with pillow python design/brand/pajio/buil
 
 `index.html` 是日夜与衣橱可交互的品牌板，不连接用户数据；图标定稿前仅展示已确认的字标、单星与角色。`preview.py` 仅在回环地址按白名单提供品牌资产与既有小熊图片。
 
-App 的显示名称及权限说明改为 Pajio；现有 bundle ID、数据目录、HTTP 头、协议名称和穿搭键保持兼容。技术名称 `wearing` 并非用户可见品牌。正式安装包需重新构建，Expo Go 不会替换自身应用图标。名称、字标与资产已落地不代表已发布应用商店或已完成商标注册。
+App 的显示名称及权限说明改为 Pajio；现有 bundle ID、数据目录、HTTP 头、协议名称和穿搭键保持兼容。技术名称 `pajio` 并非用户可见品牌。正式安装包需重新构建，Expo Go 不会替换自身应用图标。名称、字标与资产已落地不代表已发布应用商店或已完成商标注册。

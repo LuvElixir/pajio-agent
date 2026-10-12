@@ -73,7 +73,7 @@ export class TaskListApi {
   private async request(path: string, body?: ListRequest, retry = true): Promise<unknown> {
     const timer = new AbortController(), timeout = setTimeout(() => timer.abort(), 15000);
     try {
-      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method: body ? 'POST' : 'GET', redirect: 'error', signal: timer.signal, headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(body ? {'Content-Type': 'application/json', 'X-Wearing-Token': this.token} : {})}, ...(body ? {body: JSON.stringify(body)} : {})});
+      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method: body ? 'POST' : 'GET', redirect: 'error', signal: timer.signal, headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(body ? {'Content-Type': 'application/json', 'X-Pajio-Token': this.token} : {})}, ...(body ? {body: JSON.stringify(body)} : {})});
       if (body && response.status === 403 && retry) {await this.bootstrap(); return this.request(path, body, false);}
       if (!response.ok) throw new ApiError(response.status === 409 ? '清单已有变化，操作内容仍保留。请读取最新内容后核对。' : '清单暂时无法读写，请稍后重试。', response.status);
       return await response.json();

@@ -19,8 +19,8 @@ import uuid
 
 from filelock import FileLock
 
-from wearing.cloud.tencent import TencentCLI, TencentError, TencentQuoteRequest, inspect_account, quote
-from wearing.config import write_private_json
+from pajio.cloud.tencent import TencentCLI, TencentError, TencentQuoteRequest, inspect_account, quote
+from pajio.config import write_private_json
 
 
 VERSIONS = {"vpc": "2017-03-12", "cvm": "2017-03-12", "tat": "2020-10-28", "cbs": "2017-03-12"}
@@ -91,20 +91,20 @@ class Trial:
         self.state["admin_cidr"] = admin_cidr
         self.save()
         suffix = self.state["deployment_id"][:12]
-        tags = [{"Key": "wearing-deployment", "Value": self.state["deployment_id"]},
-                {"Key": "wearing-tenant", "Value": self.request.selection.tenant_id}]
+        tags = [{"Key": "pajio-deployment", "Value": self.state["deployment_id"]},
+                {"Key": "pajio-tenant", "Value": self.request.selection.tenant_id}]
         resources = self.state["resources"]
         vpc = self.write("network", "vpc", "CreateVpc", {
-            "VpcName": "wearing-trial-" + suffix, "CidrBlock": "10.12.0.0/16", "Tags": tags})["Vpc"]
+            "VpcName": "pajio-trial-" + suffix, "CidrBlock": "10.12.0.0/16", "Tags": tags})["Vpc"]
         resources["vpc_id"] = vpc["VpcId"]
         self.save()
         subnet = self.write("subnet", "vpc", "CreateSubnet", {
-            "VpcId": vpc["VpcId"], "SubnetName": "wearing-trial-" + suffix,
+            "VpcId": vpc["VpcId"], "SubnetName": "pajio-trial-" + suffix,
             "CidrBlock": "10.12.1.0/24", "Zone": self.request.zone, "Tags": tags})["Subnet"]
         resources["subnet_id"] = subnet["SubnetId"]
         self.save()
         group = self.write("security-group", "vpc", "CreateSecurityGroup", {
-            "GroupName": "wearing-trial-" + suffix, "GroupDescription": "Wearing isolated operator trial",
+            "GroupName": "pajio-trial-" + suffix, "GroupDescription": "Pajio isolated operator trial",
             "ProjectId": "0", "Tags": tags})["SecurityGroup"]
         resources["security_group_id"] = group["SecurityGroupId"]
         self.save()
@@ -125,12 +125,12 @@ class Trial:
         if not key.exists():
             if self.state["operations"].get("ssh-key"):
                 raise TencentError("原管理密钥缺失；不生成另一把代替。")
-            subprocess.run(["ssh-keygen", "-q", "-t", "rsa", "-b", "3072", "-N", "", "-C", "wearing-trial-" + suffix,
+            subprocess.run(["ssh-keygen", "-q", "-t", "rsa", "-b", "3072", "-N", "", "-C", "pajio-trial-" + suffix,
                             "-f", str(key)], check=True, capture_output=True)
         if key.is_symlink() or key.stat().st_mode & 0o077:
             raise TencentError("SSH 私钥必须私有保存。")
         response = self.write("ssh-key", "cvm", "ImportKeyPair", {
-            "KeyName": "wearing_" + suffix, "ProjectId": 0, "PublicKey": key.with_suffix(".pub").read_text().strip(),
+            "KeyName": "pajio_" + suffix, "ProjectId": 0, "PublicKey": key.with_suffix(".pub").read_text().strip(),
             "TagSpecification": [{"ResourceType": "keypair", "Tags": tags}]})
         resources["key_id"] = response["KeyId"]
         self.state["phase"] = "network_ready"
@@ -140,13 +140,13 @@ class Trial:
         r = self.state["resources"]
         if any(not r.get(k) for k in ("vpc_id", "subnet_id", "security_group_id", "key_id")):
             raise TencentError("专用网络/密钥尚未准备完成。")
-        tags = [{"Key": "wearing-deployment", "Value": self.state["deployment_id"]},
-                {"Key": "wearing-tenant", "Value": self.request.selection.tenant_id}]
+        tags = [{"Key": "pajio-deployment", "Value": self.state["deployment_id"]},
+                {"Key": "pajio-tenant", "Value": self.request.selection.tenant_id}]
         return {**self.request.inquiry_params(),
                 "VirtualPrivateCloud": {"VpcId": r["vpc_id"], "SubnetId": r["subnet_id"]},
                 "SecurityGroupIds": [r["security_group_id"]], "LoginSettings": {"KeyIds": [r["key_id"]]},
-                "InstanceName": "wearing-trial-" + self.state["deployment_id"][:12],
-                "ClientToken": "wearing-" + self.state["deployment_id"],
+                "InstanceName": "pajio-trial-" + self.state["deployment_id"][:12],
+                "ClientToken": "pajio-" + self.state["deployment_id"],
                 "TagSpecification": [{"ResourceType": "instance", "Tags": tags}],
                 "EnhancedService": {"AutomationService": {"Enabled": True},
                                     "MonitorService": {"Enabled": True}, "SecurityService": {"Enabled": True}}}

@@ -366,7 +366,7 @@ mod tests {
             LOCAL_SERVER,
             "http://localhost:8765",
             "http://[::1]:8765/",
-            "https://wearing.example/",
+            "https://pajio.example/",
         ] {
             assert!(server_url(s).is_ok(), "{s}");
         }
@@ -399,7 +399,7 @@ mod tests {
         assert!(!native_caller("main", &server_url(DEFAULT_SERVER).unwrap()));
         assert!(!native_caller(
             "main",
-            &server_url("https://wearing.example").unwrap()
+            &server_url("https://pajio.example").unwrap()
         ));
         assert!(!native_caller(
             "original-1",
@@ -481,7 +481,7 @@ mod tests {
         let temp = tempfile::tempdir().unwrap();
         let path = temp.path().join("connection.json");
         let value = Connection {
-            url: "https://wearing.example/".into(),
+            url: "https://pajio.example/".into(),
         };
         save(&path, &value).unwrap();
         assert_eq!(load(&path).unwrap().url, value.url);
@@ -539,7 +539,7 @@ mod tests {
         .is_err());
     }
     #[test]
-    fn handshake_requires_a_wearing_response() {
+    fn handshake_requires_a_pajio_response() {
         assert!(probe_response(
             "200 OK",
             r#"{"version":"0.2.0","deployment":"local"}"#,
@@ -556,7 +556,7 @@ mod tests {
     }
     #[test]
     fn handshake_does_not_follow_redirects() {
-        assert!(probe_response("302 Found", "", "Location: https://wearing.example/\r\n").is_err());
+        assert!(probe_response("302 Found", "", "Location: https://pajio.example/\r\n").is_err());
     }
     #[test]
     fn handshake_bounds_response_size() {

@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('vm');
 
-const source = fs.readFileSync('src/wearing/web/views.js', 'utf8');
+const source = fs.readFileSync('src/pajio/web/views.js', 'utf8');
 // 截取主点击委托（含本轮三个闭环分支）至搜索段落之前。
 const start = source.indexOf('document.addEventListener("click", async event => {');
 const end = source.indexOf('/* ---------- 对话搜索');
@@ -14,9 +14,9 @@ function setup() {
   const calls = {openPanel: [], loadKeeps: 0, quickCapture: 0, render: [], notice: [], openTask: []};
   const lifeContent = {dataset: {viewKey: 'today:daily'}};
   const context = {
-    window: {WearingLife: {quickCapture: () => calls.quickCapture++},
-      WearingViews: {render: (view, container) => calls.render.push([view, container])},
-      WearingActivity: {openTask: async id => calls.openTask.push(id)}},
+    window: {PajioLife: {quickCapture: () => calls.quickCapture++},
+      PajioViews: {render: (view, container) => calls.render.push([view, container])},
+      PajioActivity: {openTask: async id => calls.openTask.push(id)}},
     document: {addEventListener: (name, fn) => {if (name === 'click') context.__handler = fn;}},
     $: id => (id === 'life-content' ? lifeContent : {dataset: {}, hidden: true}),
     openPanel: id => calls.openPanel.push(id),
@@ -59,7 +59,7 @@ test('ongoing-goals entry opens the keeps panel and loads real goals', async () 
 test('loadKeeps failure surfaces honest feedback, panel stays open', async () => {
   const source2 = handlerSource;
   const context = {
-    window: {WearingLife: {}, WearingViews: {}, WearingActivity: {}},
+    window: {PajioLife: {}, PajioViews: {}, PajioActivity: {}},
     document: {addEventListener: (name, fn) => {if (name === 'click') context.__handler = fn;}},
     $: id => ({dataset: {}, hidden: true}),
     openPanel: id => {},
@@ -75,7 +75,7 @@ test('loadKeeps failure surfaces honest feedback, panel stays open', async () =>
 
 
 // ---- life.js 409 双选择（保留我的输入 / 采用最新内容）副作用 ----
-const lifeSource = fs.readFileSync('src/wearing/web/life.js', 'utf8');
+const lifeSource = fs.readFileSync('src/pajio/web/life.js', 'utf8');
 const fnStart = lifeSource.indexOf('function apply409Choice');
 const fnEnd = lifeSource.indexOf('el("life-latest").addEventListener');
 assert.ok(fnStart > 0 && fnEnd > fnStart, 'apply409Choice slice found');

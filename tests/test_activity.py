@@ -5,14 +5,14 @@ import json
 import httpx
 import pytest
 
-from wearing.activity import ActivityBook, ActivityError, ActivityQueryError
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.confirmations import ConfirmationBook, MARKER
-from wearing.goals import GoalBook
-from wearing.hermes import HermesClient
-from wearing.schedules import ScheduleBook
-from wearing.store import IdentityError, Store, now
+from pajio.activity import ActivityBook, ActivityError, ActivityQueryError
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.confirmations import ConfirmationBook, MARKER
+from pajio.goals import GoalBook
+from pajio.hermes import HermesClient
+from pajio.schedules import ScheduleBook
+from pajio.store import IdentityError, Store, now
 
 
 @pytest.fixture
@@ -317,7 +317,7 @@ async def test_http_auth_validation_identity_and_no_engine_behavior(tmp_path):
     settings = Settings(tmp_path)
     hermes = HermesClient(settings, httpx.MockTransport(engine))
     app = create_app(settings, hermes=hermes, engine_autostart=False, local_devices=False)
-    from wearing.cloud.worker import TenantBoundary
+    from pajio.cloud.worker import TenantBoundary
     app.add_middleware(TenantBoundary, tenant_id="fixture", gateway_key="fixture-internal")
     book = app.state.activity
     original = task(book, output="已保留结果")
@@ -326,7 +326,7 @@ async def test_http_auth_validation_identity_and_no_engine_behavior(tmp_path):
     with book.store.connection() as db:
         events = list(db.execute("SELECT * FROM events"))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
-        client.headers.update({"Authorization": "Bearer fixture-internal", "X-Wearing-Tenant": "fixture",
+        client.headers.update({"Authorization": "Bearer fixture-internal", "X-Pajio-Tenant": "fixture",
                                "X-Pajio-Storage-Scope": "a" * 64})
         token = (await client.get("/api/bootstrap")).json()["token"]
         result = (await client.get("/api/activity")).json()
@@ -340,17 +340,17 @@ async def test_http_auth_validation_identity_and_no_engine_behavior(tmp_path):
         for query in ({"limit": 0}, {"limit": 101}, {"cursor": "bad"}, {"bucket": "done"}, {"since": "old"}):
             assert (await client.get("/api/activity", params=query)).status_code == 422
         assert (await client.get("/api/activity", params={"cursor": page["next_cursor"]},
-                                 headers={"X-Wearing-Identity": other})).status_code == 422
+                                 headers={"X-Pajio-Identity": other})).status_code == 422
         item = next(i for i in result["items"] if i["task_id"] == original["id"])
         body = {"items": [seen(item)]}
         assert (await client.post("/api/activity/seen", json=body)).status_code == 403
-        headers = {"X-Wearing-Token": token}
+        headers = {"X-Pajio-Token": token}
         for invalid in ({"items": []}, {"items": [seen(item)] * 101}, {"items": [{"task_id": 3, "version": item["version"]}]},
                         {"items": [{"task_id": item["task_id"], "version": "old"}]}, {**body, "everything": True}):
             assert (await client.post("/api/activity/seen", json=invalid, headers=headers)).status_code == 422
-        assert (await client.get("/api/activity", headers={"X-Wearing-Identity": other})).json()["total"] == 0
+        assert (await client.get("/api/activity", headers={"X-Pajio-Identity": other})).json()["total"] == 0
         assert (await client.post("/api/activity/seen", json=body,
-                                 headers={**headers, "X-Wearing-Identity": other})).status_code == 409
+                                 headers={**headers, "X-Pajio-Identity": other})).status_code == 409
         assert (await client.post("/api/activity/seen", json=body, headers=headers)).json()["unread"] == 0
         assert (await client.get("/api/activity", params={"cursor": page["next_cursor"]})).status_code == 409
     assert calls == []

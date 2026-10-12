@@ -18,9 +18,9 @@ def run(argv,**kwargs):
 
 def install(bundle,vmid):
     if os.geteuid()!=0 or not 100<=vmid<=45535:raise ValueError('operator_android_vmid_required')
-    from wearing import mobile
-    from wearing.config import write_private_json
-    from wearing.private_media_android import SCRCPY_SHA256,PRIVATE_IME_SHA256
+    from pajio import mobile
+    from pajio.config import write_private_json
+    from pajio.private_media_android import SCRCPY_SHA256,PRIVATE_IME_SHA256
     bundle=Path(bundle);target=Path('/opt/pajio-native');u=pwd.getpwnam('pajio-phone');home=Path(u.pw_dir)
     if home!=Path('/home/pajio-phone') or u.pw_shell!='/usr/sbin/nologin':raise ValueError('phone_account_changed')
     owner=json.loads(Path('/etc/pajio-native/device-owner.json').read_text());serial='127.0.0.1:'+str(20000+vmid);rid=mobile.resource_id(serial)

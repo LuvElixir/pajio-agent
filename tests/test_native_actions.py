@@ -3,8 +3,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 import json
 import pytest
-from wearing.native_actions import NativeActions, NativeActionError
-from wearing.store import Store
+from pajio.native_actions import NativeActions, NativeActionError
+from pajio.store import Store
 
 PHONE, SECRET, SESSION = 'a' * 32, 'b' * 64, 'c' * 32
 POLICY = {'calendars': [{'id': 'cal', 'title': '测试日历', 'writable': True}],
@@ -141,7 +141,7 @@ def test_concurrent_idempotent_submit_single_admission(env):
 def test_http_route_mutations_use_current_identity_not_body(env):
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
-    from wearing.native_actions_api import install_native_action_routes
+    from pajio.native_actions_api import install_native_action_routes
     book, _, _ = env
     app = FastAPI()
     @app.middleware('http')

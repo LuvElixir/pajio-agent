@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {afterEach, beforeEach, test} from 'node:test';
-import {connectionEndpoint, connectionHeaders, endpoint, pairingConnection, scopeOf, WearingApi, type Connection} from './core';
+import {connectionEndpoint, connectionHeaders, endpoint, pairingConnection, scopeOf, PajioApi, type Connection} from './core';
 
 const now = Date.parse('2026-10-07T10:00:00.000Z');
 const token = 'a'.repeat(43);
@@ -28,7 +28,7 @@ test('ordinary endpoint validation still refuses LAN HTTP even in a development 
     assert.throws(() => endpoint(address));
     assert.throws(() => connectionEndpoint({endpoint: address, identity: 'daily'}));
   }
-  assert.equal(endpoint('https://wearing.example/'), 'https://wearing.example/');
+  assert.equal(endpoint('https://pajio.example/'), 'https://pajio.example/');
   assert.equal(endpoint('http://127.0.0.1:8765/'), 'http://127.0.0.1:8765/');
 });
 
@@ -67,7 +67,7 @@ test('an expired connection retains its local scope but cannot send a network re
   assert.equal(scopeOf(expired), 'http://192.168.1.25:8795/|daily');
   assert.throws(() => connectionHeaders(expired), /已过期/);
   let calls = 0;
-  const api = new WearingApi(expired, (async () => {calls++; return Response.json({});}) as typeof fetch);
+  const api = new PajioApi(expired, (async () => {calls++; return Response.json({});}) as typeof fetch);
   await assert.rejects(api.bootstrap(), /已过期/); assert.equal(calls, 0);
 });
 
@@ -76,7 +76,7 @@ test('scope is stable across token renewal and never contains bearer credentials
   assert.equal(scopeOf(first), scopeOf(second));
   assert.equal(scopeOf(first).includes(token), false);
   assert.notEqual(scopeOf(first), scopeOf({...first, identity: 'another'}));
-  assert.deepEqual(connectionHeaders({endpoint: 'https://wearing.example/', identity: 'daily'}), {});
+  assert.deepEqual(connectionHeaders({endpoint: 'https://pajio.example/', identity: 'daily'}), {});
 });
 
 test('deep link parameters become a normalized connection and duplicate or missing fields fail closed', () => {
@@ -91,13 +91,13 @@ test('deep link parameters become a normalized connection and duplicate or missi
 test('native bootstrap and subsequent reads/writes use bearer headers without URL credentials', async () => {
   const seen: {path: string; method: string; headers: Headers}[] = [];
   const asset = 'asset_' + 'a'.repeat(32);
-  const api = new WearingApi(paired(), (async (input, init) => {
+  const api = new PajioApi(paired(), (async (input, init) => {
     const url = new URL(String(input));
     assert.equal(url.href.includes(token), false);
     assert.equal(url.username, ''); assert.equal(url.password, '');
     const headers = new Headers(init?.headers);
     assert.equal(headers.get('Authorization'), 'Bearer ' + token);
-    assert.equal(headers.get('X-Wearing-Identity'), 'daily');
+    assert.equal(headers.get('X-Pajio-Identity'), 'daily');
     seen.push({path: url.pathname, method: init?.method ?? 'GET', headers});
     if (url.pathname === '/api/bootstrap') return Response.json({version: '0.2.0', deployment: 'local', token: 'write-token', identities: [{id: 'daily', name: '日常'}]});
     if (url.pathname === '/api/life') return Response.json({items: [], version: 1});
@@ -108,13 +108,13 @@ test('native bootstrap and subsequent reads/writes use bearer headers without UR
   await api.upload({id: 'original', name: 'a.m4a', mime: 'audio/mp4', size: 4}, new Blob(['audio']), 'same-upload-key');
   await api.transcribe(asset);
   assert.deepEqual(seen.map(({method}) => method), ['GET', 'GET', 'POST', 'POST']);
-  assert.equal(seen[2].headers.get('X-Wearing-Token'), 'write-token');
+  assert.equal(seen[2].headers.get('X-Pajio-Token'), 'write-token');
 });
 
 test('expiry is checked again on every request after a successful bootstrap', async () => {
   let calls = 0;
   const connection = paired();
-  const api = new WearingApi(connection, (async () => {
+  const api = new PajioApi(connection, (async () => {
     calls++; return Response.json({version: '0.2.0', deployment: 'local', token: 'write', identities: [{id: 'daily'}]});
   }) as typeof fetch);
   await api.bootstrap(); Date.now = () => Date.parse(connection.development!.expiresAt);

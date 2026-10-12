@@ -2,7 +2,7 @@ import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {router, useLocalSearchParams} from 'expo-router';
 import {ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
-import {pairingConnection, WearingApi} from '../core';
+import {pairingConnection, PajioApi} from '../core';
 import {storage} from '../storage';
 import {serviceFetch} from '../transport';
 import {AppThemeProvider, useAppTheme, useThemedStyles, type AppColors} from '../app-theme';
@@ -40,7 +40,7 @@ function ConnectScreen() {
     const connection = pairing.connection;
     try {
       // Verification is read-only. Pairing never records or sends a draft.
-      await new WearingApi(connection, serviceFetch).bootstrap();
+      await new PajioApi(connection, serviceFetch).bootstrap();
       if (!live.current || selected.current !== connection) return;
       await storage.put('connection', connection);
       if (live.current && selected.current === connection) router.replace('/');

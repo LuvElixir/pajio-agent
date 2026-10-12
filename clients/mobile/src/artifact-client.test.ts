@@ -39,7 +39,7 @@ test('native document transport verifies UTF8 bytes and freezes the original ide
   const {api, calls, copy} = harness(); copy.identity = 'other'; copy.session!.accessToken = 'z'.repeat(64);
   const document = await api.document('art_1'); assert.equal(document.html, html); assert.equal(document.metadata.checks.content, 'not_verified');
   assert.deepEqual(calls.map(call => call.path), ['/api/artifacts/art_1', '/api/artifacts/art_1/preview']);
-  for (const {headers} of calls) {assert.equal(headers.get('X-Wearing-Identity'), 'daily'); assert.equal(headers.get('Authorization'), 'Bearer ' + 'a'.repeat(64));}
+  for (const {headers} of calls) {assert.equal(headers.get('X-Pajio-Identity'), 'daily'); assert.equal(headers.get('Authorization'), 'Bearer ' + 'a'.repeat(64));}
 });
 test('mismatched MIME, size or content hash never reaches the preview', async () => {
   for (const [body, headers] of [

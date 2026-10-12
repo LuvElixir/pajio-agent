@@ -4,8 +4,8 @@ import re
 import httpx
 import pytest
 
-from wearing.cloud.mobile_auth import session_storage_scope
-from wearing.cloud.worker import TenantBoundary
+from pajio.cloud.mobile_auth import session_storage_scope
+from pajio.cloud.worker import TenantBoundary
 from test_gateway import ISSUER, ORIGIN, lab
 from test_mobile_gateway import authorize
 
@@ -71,7 +71,7 @@ async def test_worker_storage_scope_is_validated_only_after_internal_auth_and_st
         seen.append(scope)
 
     gate = TenantBoundary(inner, 'tenant_A', 'k' * 64)
-    credentials = [(b'authorization', b'Bearer ' + b'k' * 64), (b'x-wearing-tenant', b'tenant_A')]
+    credentials = [(b'authorization', b'Bearer ' + b'k' * 64), (b'x-pajio-tenant', b'tenant_A')]
     path = '/api/voice/stream' if kind == 'websocket' else '/api/bootstrap'
     for values, allowed in [([], True), ([b'a' * 64], True), ([b'a' * 63], False),
                             ([b'A' * 64], False), ([b'z' * 64], False),
@@ -105,7 +105,7 @@ async def test_private_worker_without_account_scope_keeps_read_access_but_no_nam
         # Existing private preview forwarding deliberately has no OIDC account.
         async with httpx.AsyncClient(transport=workers.apps[39001], base_url=ORIGIN) as client:
             headers = {'Authorization': 'Bearer ' + (a / 'gateway.key').read_text().strip(),
-                       'X-Wearing-Tenant': 'tenant_A'}
+                       'X-Pajio-Tenant': 'tenant_A'}
             response = await client.get('/api/bootstrap', headers=headers)
             assert response.status_code == 200
             assert response.json()['storage_scope'] is None

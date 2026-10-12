@@ -160,7 +160,7 @@ export class PersonalHubApi {
     if (signal?.aborted) controller.abort();
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity},
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity},
         signal: controller.signal, redirect: 'error',
       });
       if (!response.ok) throw new ApiError(response.status === 401 ? '连接已到期，请重新连接后查看。' : response.status === 404 ? '文件已移动或不存在，请刷新列表。' : response.status === 403 ? '当前身份没有读取权限，请检查连接与身份。' : response.status === 409 ? '文件列表已变化或过期，请重新读取。' : response.status === 413 ? '文件夹层级或数量较多，请缩小查找范围后重试。' : '暂时无法读取，请稍后再试。', response.status);

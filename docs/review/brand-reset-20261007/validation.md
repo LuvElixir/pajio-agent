@@ -56,7 +56,7 @@ node --test tests/mobile-host-ui.test.cjs tests/native-composer-ui.test.cjs test
 2026-10-07 补齐一次手动 detector 检查。Impeccable context 显示本会话没有自动设计检查 hook，因此只对本轮 App 容器 CSS 执行一次；原生审查规范明确说明 `detect.mjs` 不适用于原生 TSX，未扩大到其他页面。
 
 ```sh
-node /Users/archieliew/.agents/skills/impeccable/scripts/detect.mjs --json src/wearing/web/mobile-host.css
+node /Users/archieliew/.agents/skills/impeccable/scripts/detect.mjs --json src/pajio/web/mobile-host.css
 ```
 
 结果：退出码 **2**，共 **6 项 advisory**，没有更高严重级别条目，stderr 为空。完整输出见 [impeccable-detector.json](logs/impeccable-detector.json) 和 [stderr 日志](logs/impeccable-detector.stderr.log)。

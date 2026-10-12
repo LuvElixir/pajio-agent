@@ -1,12 +1,12 @@
 # 持续目标第一条流程验收
 
-日期：2026-10-03。范围：本地 Wearing 0.2、固定 Hermes `367441274c48a03d12ee9f8d3d9ccd9bc1585392`。本次没有升级底座、开通云实例、执行真实支付或操作设备业务。
+日期：2026-10-03。范围：本地 Pajio 0.2、固定 Hermes `367441274c48a03d12ee9f8d3d9ccd9bc1585392`。本次没有升级底座、开通云实例、执行真实支付或操作设备业务。
 
 ## 自动化检查
 
 `uv run --offline pytest -q`：139 项通过，其中持续目标 22 项。覆盖明确启动、持久轮次、用户修订失效旧计划、暂停、断线、服务重建后查询原运行、提交不明确时不重发、两份服务实例的原子任务占用、身份分区、CSRF、无效报告、重复结论、待发送消息优先及人工核对。
 
-`node tests/test_web_motion.cjs` 通过；`node --check src/wearing/web/app.js` 通过。动画源码与资产未更换，没有增加播放控件。
+`node tests/test_web_motion.cjs` 通过；`node --check src/pajio/web/app.js` 通过。动画源码与资产未更换，没有增加播放控件。
 
 ## 真实模型
 
@@ -14,9 +14,9 @@
 
 第一次试验的模型在单轮里自称“第二轮完成”，虽然格式正确，不能算两轮验收通过。补充明确的 `current_round`、额度预占含义及空历史规则后，用新的目标与会话复验。
 
-第二次验收用时 36.1 秒：第一轮 A = 100 − 30 = 70，报告 continue；Wearing 按保存的等待时间自动提交第二轮；第二轮 B = 120 − 70 = 50，报告 review。最终目标为 needs_review，used_steps=2/max_steps=2，两次任务均为 completed_unverified。没有人工在中间追加“继续”，也没有自动记录目标成功。算术结果可直接核对；这只证明真实模型与本地持续流程接通，不代表跨天经营能力或复杂研究质量已通过。
+第二次验收用时 36.1 秒：第一轮 A = 100 − 30 = 70，报告 continue；Pajio 按保存的等待时间自动提交第二轮；第二轮 B = 120 − 70 = 50，报告 review。最终目标为 needs_review，used_steps=2/max_steps=2，两次任务均为 completed_unverified。没有人工在中间追加“继续”，也没有自动记录目标成功。算术结果可直接核对；这只证明真实模型与本地持续流程接通，不代表跨天经营能力或复杂研究质量已通过。
 
-本机诊断记录：`.wearing/qa/personal-continuity-evidence/live-result.json`（失败样本）、`live-result-v2.json`（复验）。这些诊断文件不进入分发包。
+本机诊断记录：`.pajio/qa/personal-continuity-evidence/live-result.json`（失败样本）、`live-result-v2.json`（复验）。这些诊断文件不进入分发包。
 
 ## 浏览器与现有数据
 
@@ -24,7 +24,7 @@
 
 设计检查将新增的 17px/20px/13px 调整到既有 15px/22px/12px 字级，修正错误反馈位置与滚动时的关闭入口。没有用自动忽略规则压掉警告。最终静态检测剩余 44 项，均在本轮新增样式之前：响应式字号与既有局部材料色/圆角属于当前界面，按上下文保留；没有本轮新增行的告警。它们保留在本机审计 JSON 中，未伪称全站零问题。当前品牌和动画不改动。
 
-8765 已备份并重启到新代码，执行引擎恢复可达。迁移前后的 tasks（5）、messages（4）、events（17）、identities（2）逐表内容 SHA-256 一致；新目标表为空，没有把旧想法转换成自动任务。备份：`.wearing/backups/before-personal-continuity-20261003T031038Z.sqlite3`。
+8765 已备份并重启到新代码，执行引擎恢复可达。迁移前后的 tasks（5）、messages（4）、events（17）、identities（2）逐表内容 SHA-256 一致；新目标表为空，没有把旧想法转换成自动任务。备份：`.pajio/backups/before-personal-continuity-20261003T031038Z.sqlite3`。
 
 `uv build --offline` 成功。分发源码包含新说明、契约和研究材料；wheel 中的 goals/app/service/store 代码及 HTML/JS/CSS 与当前源码逐字节一致。
 

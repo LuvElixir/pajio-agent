@@ -20,7 +20,7 @@
 
 写入先取得本页历史锁，再调用原有 MemoryStore `_mutate`；在 upstream 文件锁内重新检查 revision、准备一条 pending 历史，再交由 upstream 原子写原记忆文件。只有 upstream 成功返回后才将历史标为 committed。中途断电或磁盘错误留下的 pending 不会被展示为成功记录，也不会允许撤销；接口的 `unconfirmed_changes` 提醒客户端重新核对当前内容，不自动重放。历史文件和重命名所在目录均 fsync。两份原记忆文件仍是唯一当前状态，没有第二套记忆引擎。
 
-现有 `GET /api/memory`（引擎 `GET /v1/wearing/memory`）每个 `targets.user`、`targets.memory` 新增：
+现有 `GET /api/memory`（引擎 `GET /v1/pajio/memory`）每个 `targets.user`、`targets.memory` 新增：
 
 ```json
 {

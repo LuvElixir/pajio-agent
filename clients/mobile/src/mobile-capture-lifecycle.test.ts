@@ -69,7 +69,7 @@ function fixture(names = ['beginCaptureWrite', 'changeForm', 'save', 'activateCo
     keepMedia: async (_uri: string, media: Media) => ({...media, size: 25}),
     Picker: {launchImageLibraryAsync: async () => ({canceled: false, assets: [{uri: 'file://synthetic', mimeType: 'image/jpeg', fileName: '合成.jpg', width: 20, height: 20}]})},
     feedbackAfterSynchronization, feedbackAfterSyncFailure,
-    WearingApi: class {
+    PajioApi: class {
       async bootstrap() {apiState.bootstraps++;if (apiState.bootstrapFailure) throw apiState.bootstrapFailure; return {identities: []};}
       async snapshot() {apiState.snapshots++;return {items: structuredClone(apiState.items), version: apiState.version};}
       async update(base: RecordItem, patch: Partial<RecordItem>) {apiState.updates++;if (apiState.updateFailure) throw apiState.updateFailure;const receipt = {...base, ...patch, revision: base.revision + 1};apiState.items = [receipt];apiState.version++;return receipt;}
@@ -269,7 +269,7 @@ test('actual synchronize blocks bootstrap and queued mutations until the current
 });
 test('activation reset during an outstanding bootstrap cannot flush old work even when the connection object is reused',async()=>{
  const h=fixture(['synchronize','local']);const item=syntheticRecord();await h.mutations.enqueue(scopeOf(daily),item,{completed:true});
- const pending=deferred<{identities:never[]}>();h.WearingApi.prototype.bootstrap=async()=>pending.promise;
+ const pending=deferred<{identities:never[]}>();h.PajioApi.prototype.bootstrap=async()=>pending.promise;
  const syncing=h.synchronize(daily);await settle();h.provisioningGate.current.activate(daily);pending.resolve({identities:[]});await syncing;
  assert.equal(h.apiState.updates,0);assert.equal(h.apiState.snapshots,0);assert.equal(h.state.connected,false);assert.equal((await h.mutations.items(scopeOf(daily))).length,1);
 });
@@ -292,7 +292,7 @@ test('actual synchronize preserves queued originals and edits without consent or
 test('consent withdrawal during the actual bootstrap prevents late queue flush and connected state', async () => {
   const h = fixture(['synchronize', 'local']), pending = deferred<{identities: never[]}>();
   await h.mutations.enqueue(scopeOf(daily), syntheticRecord(), {completed: true});
-  h.WearingApi.prototype.bootstrap = async () => {h.apiState.bootstraps++; return pending.promise;};
+  h.PajioApi.prototype.bootstrap = async () => {h.apiState.bootstraps++; return pending.promise;};
   const syncing = h.synchronize(daily); await settle();
   assert.equal(h.apiState.bootstraps, 1); assert.equal(h.syncBusy.current, true);
   h.aiConsent.observe(daily, consentReceipt('revoked')); pending.resolve({identities: []}); await syncing;

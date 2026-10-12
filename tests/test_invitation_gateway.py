@@ -12,11 +12,11 @@ from sqlalchemy import select, update
 
 from test_gateway import lab, login, ORIGIN, ISSUER
 from test_invitations import issue
-from wearing.cloud.control import ControlStore, invitations, states
-from wearing.cloud.gateway import create_gateway_app, load_gateway
-from wearing.cloud.invitations import InvitationStore
-from wearing.cloud.mobile_auth import CALLBACK
-from wearing.cloud.join import native_ready
+from pajio.cloud.control import ControlStore, invitations, states
+from pajio.cloud.gateway import create_gateway_app, load_gateway
+from pajio.cloud.invitations import InvitationStore
+from pajio.cloud.mobile_auth import CALLBACK
+from pajio.cloud.join import native_ready
 
 
 def ticket(response):
@@ -46,7 +46,7 @@ async def test_invited_oidc_creates_private_membership_without_secrets_in_cookie
             assert '创建你的账号' in account.text
             redirect = await post(client, '/join/login', account)
             assert redirect.status_code == 302
-            cookie = client.cookies.get('__Host-wearing-session')
+            cookie = client.cookies.get('__Host-pajio-session')
             assert code not in cookie and hashlib.sha256(code.encode()).hexdigest() not in base64.b64decode(cookie.split('.')[0]).decode()
             assert code not in redirect.headers['location']
             params = provider.authorize(redirect.headers['location'], 'new-user')

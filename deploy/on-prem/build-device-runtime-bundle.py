@@ -28,11 +28,11 @@ def build(kind,assets,output,*,wheel=None,wheel_sha256=None,android_image_assets
         elif name in {'redroid-amd64.tar','redroid-oci-manifest.json'} and android_image_assets is not None:
             selected[name]=Path(android_image_assets)/('oci-manifest.json' if name=='redroid-oci-manifest.json' else name)
         else:selected[name]=assets/name
-    selected.update({p.name:p for p in assets.glob('*.whl') if wheel is None or not p.name.startswith('wearing-')})
+    selected.update({p.name:p for p in assets.glob('*.whl') if wheel is None or not p.name.startswith('pajio-')})
     if (wheel is None)!=(wheel_sha256 is None):raise ValueError('runtime_wheel_pin_required')
     if wheel is not None:
         wheel=Path(wheel)
-        if wheel.is_symlink() or not wheel.is_file() or not wheel.name.startswith('wearing-') or not wheel.name.endswith('.whl'):
+        if wheel.is_symlink() or not wheel.is_file() or not wheel.name.startswith('pajio-') or not wheel.name.endswith('.whl'):
             raise ValueError('runtime_wheel_invalid')
         with wheel.open('rb') as f:
             if hashlib.file_digest(f,'sha256').hexdigest()!=wheel_sha256:raise ValueError('runtime_wheel_changed')

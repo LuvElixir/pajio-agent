@@ -5,12 +5,12 @@ import shutil
 import subprocess
 import sys
 
-from wearing import engine_runner
+from pajio import engine_runner
 
 
 def test_managed_runner_loads_only_host_package(tmp_path):
     foreign = tmp_path / 'host-site-packages'
-    package = foreign / 'wearing'
+    package = foreign / 'pajio'
     package.mkdir(parents=True)
     (package / '__init__.py').write_text('')
     (package / 'bridge_marker.py').write_text("value = 'host bridge'\n")
@@ -26,7 +26,7 @@ spec = importlib.util.spec_from_file_location('runner', sys.argv[1])
 runner = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(runner)
 runner.load_host_package()
-from wearing import bridge_marker
+from pajio import bridge_marker
 import runtime_dependency
 print(json.dumps([bridge_marker.value, runtime_dependency.value, sys.path]))
 '''

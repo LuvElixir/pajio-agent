@@ -5,7 +5,7 @@ import httpx
 from starlette.applications import Starlette
 from starlette.routing import Route
 
-from wearing.cloud.auth_pages import ASSETS, auth_asset, page
+from pajio.cloud.auth_pages import ASSETS, auth_asset, page
 
 
 def test_registration_markup_escapes_untrusted_values_and_keeps_nonce_policy():

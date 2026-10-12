@@ -31,7 +31,7 @@ test('disk failure prevents POST and different pending intent cannot replace ori
 });
 test('cloud request pins tenant identity auth CSRF and rejects redirects',async()=>{
  const seen:RequestInit[]=[];const client=new BriefAutomationClient(connection,(async(url:unknown,init:RequestInit)=>{seen.push(init);return String(url).endsWith('/api/bootstrap')?Response.json({token:'csrf',identities:[{id:'daily'}]}):Response.json(receipt);})as typeof fetch,()=>true);await client.save(command);
- for(const init of seen){const h=init.headers as Record<string,string>;assert.equal(h.Authorization,'Bearer '+connection.session!.accessToken);assert.equal(h['X-Pajio-Expected-Tenant'],'test-team');assert.equal(h['X-Wearing-Identity'],'daily');assert.equal(init.redirect,'error');}assert.equal((seen[1].headers as Record<string,string>)['X-Wearing-Token'],'csrf');
+ for(const init of seen){const h=init.headers as Record<string,string>;assert.equal(h.Authorization,'Bearer '+connection.session!.accessToken);assert.equal(h['X-Pajio-Expected-Tenant'],'test-team');assert.equal(h['X-Pajio-Identity'],'daily');assert.equal(init.redirect,'error');}assert.equal((seen[1].headers as Record<string,string>)['X-Pajio-Token'],'csrf');
 });
 test('foreign or mismatched acknowledgement never clears pending request',async()=>{
  for(const patch of [{identity_id:'foreign'},{revision:5},{request_key:'other'},{local_time:'09:00'}]){const s=storage(),client=new BriefAutomationClient(connection,fetcher(()=>({...receipt,...patch})),()=>true);await assert.rejects(saveAutomation(s.store,client,()=>true,command));assert.deepEqual(s.map.get(autoPendingKey(connection)),command);}

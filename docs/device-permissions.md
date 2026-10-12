@@ -1,8 +1,8 @@
 # 让已接入电脑动手
 
-在云端 Wearing 的设备设置里，点击电脑旁的「让 Wearing 动手」。现有连接器自动同步权限并重新连接，无需下载文件、停止服务或运行命令。已有输入能力的电脑可以通过「调整权限」改回只观察。
+在云端 Pajio 的设备设置里，点击电脑旁的「让 Pajio 动手」。现有连接器自动同步权限并重新连接，无需下载文件、停止服务或运行命令。已有输入能力的电脑可以通过「调整权限」改回只观察。
 
-网页的这次操作授权设备提供输入能力；具体任务通过对话交代。首次执行普通电脑动作时，可选择「交给 Wearing」，一次授权本轮任务在当前应用连续推进。可随时在对话旁点击「我来接管」。任务执行规则见[连续电脑操作](desktop-input.md)。
+网页的这次操作授权设备提供输入能力；具体任务通过对话交代。首次执行普通电脑动作时，可选择「交给 Pajio」，一次授权本轮任务在当前应用连续推进。可随时在对话旁点击「我来接管」。任务执行规则见[连续电脑操作](desktop-input.md)。
 
 权限同步沿用原配对凭据。连接器空闲、旧回执已交回时，云端通过认证心跳交付短期变更。原设备核对固定 HTTPS 入口、CA、租户、身份、资源、当前版本和本机驱动能力上限，先持久保存本机权限上限及待确认记录，再提交云端。两端确认后增加授权版本并重建连接，保留原连接器、令牌、设备 ID、账本和其他手机权限。
 
@@ -13,9 +13,9 @@
 高级手动恢复仍可使用：
 
 ```sh
-wearing connector service stop --root 原连接目录
-wearing connector permissions --root 原连接目录 --bundle wearing-permissions.json
-wearing connector service start --root 原连接目录
+pajio connector service stop --root 原连接目录
+pajio connector permissions --root 原连接目录 --bundle pajio-permissions.json
+pajio connector service start --root 原连接目录
 ```
 
 设备 MCP 通过标准 `tools/list_changed` 更新当前能力；每次调用仍检查实时授权。Mac 已通过真实驱动验收；Windows 使用同一协议，原生常驻及控制仍需真机验收。

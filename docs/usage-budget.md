@@ -50,7 +50,7 @@
 ```python
 import json
 from pathlib import Path
-from wearing.usage import UsageBook
+from pajio.usage import UsageBook
 
 # 两条路径均使用该租户实际部署路径；不能指向另一个租户或新建空账本。
 runtime_data = Path("/path/to/existing/tenant/data")

@@ -8,19 +8,19 @@ import sqlite3
 import httpx
 import pytest
 
-from wearing import background_principals as principals
-from wearing.app import create_app
-from wearing.cloud.worker import TenantBoundary
-from wearing.config import Settings
-from wearing.goals import GoalBook, GoalError
-from wearing.hermes import HermesClient
-from wearing.life import LifeBook, LifeDraft
-from wearing.life_proxy import dispatch
-from wearing.native_actions import NativeActions, NativeActionError
-from wearing.native_actions_tools import dispatch as native_dispatch
-from wearing.schedules import ScheduleBook, ScheduleDraft, ScheduleError
-from wearing.service import ACTIVE, TaskService
-from wearing.store import Store
+from pajio import background_principals as principals
+from pajio.app import create_app
+from pajio.cloud.worker import TenantBoundary
+from pajio.config import Settings
+from pajio.goals import GoalBook, GoalError
+from pajio.hermes import HermesClient
+from pajio.life import LifeBook, LifeDraft
+from pajio.life_proxy import dispatch
+from pajio.native_actions import NativeActions, NativeActionError
+from pajio.native_actions_tools import dispatch as native_dispatch
+from pajio.schedules import ScheduleBook, ScheduleDraft, ScheduleError
+from pajio.service import ACTIVE, TaskService
+from pajio.store import Store
 from test_goals import GoalWire, report
 
 A, B = 'a'*64, 'b'*64
@@ -32,8 +32,8 @@ INTENT = dict(objective='核对系统日历', boundaries='只读取合成数据'
 @pytest.fixture
 def rig(tmp_path, monkeypatch):
     clock = [STAMP]
-    monkeypatch.setattr('wearing.goals.now', lambda: clock[0])
-    monkeypatch.setattr('wearing.schedules.now', lambda: clock[0])
+    monkeypatch.setattr('pajio.goals.now', lambda: clock[0])
+    monkeypatch.setattr('pajio.schedules.now', lambda: clock[0])
     store = Store(tmp_path/'synthetic.sqlite3')
     schedules = ScheduleBook(store)
     return store, schedules.goals, schedules, clock
@@ -230,8 +230,8 @@ async def test_actual_cloud_api_uses_gateway_owner_not_body_or_current_phone(tmp
     app = create_app(Settings(tmp_path), local_devices=False, engine_autostart=False)
     app.add_middleware(TenantBoundary, tenant_id='synthetic', gateway_key='internal-fixture-key')
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver',
-        headers={'Authorization':'Bearer internal-fixture-key','X-Wearing-Tenant':'synthetic','X-Pajio-Storage-Scope':A}) as client:
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        headers={'Authorization':'Bearer internal-fixture-key','X-Pajio-Tenant':'synthetic','X-Pajio-Storage-Scope':A}) as client:
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         created = await client.post('/api/goals', json={**INTENT,'request_key':'api-goal-12345678'})
         assert created.status_code == 201
         goal = created.json()
@@ -261,7 +261,7 @@ async def test_cloud_constructor_without_boundary_never_assigns_local_authority(
     # become a verified scope and the installer must not fall back to local.
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver',
                                 headers={'X-Pajio-Storage-Scope': A}) as client:
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         created = await client.post('/api/schedules', json={'schedule':schedule().model_dump(),'request_key':'no-boundary'})
         assert created.status_code == 201
         assert principal(app.state.store, 'schedule', created.json()['id']) is None

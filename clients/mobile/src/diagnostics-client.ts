@@ -47,7 +47,7 @@ export class DiagnosticsClient {
     const controller = new AbortController(), cancel = () => controller.abort(), timer = setTimeout(cancel, 12000);
     signal?.addEventListener('abort', cancel); if (signal?.aborted) cancel();
     try {
-      const response = await this.fetcher(new URL('/api/diagnostics', connectionEndpoint(this.connection)).toString(), {method: 'GET', headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity}, signal: controller.signal, redirect: 'error'});
+      const response = await this.fetcher(new URL('/api/diagnostics', connectionEndpoint(this.connection)).toString(), {method: 'GET', headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity}, signal: controller.signal, redirect: 'error'});
       if (!response.ok) throw new ApiError(response.status === 401 ? '登录已失效，可先导出本机诊断，再重新登录。' : '没有取得服务诊断，可先导出本机诊断。', response.status);
       const text = await response.text(); if (text.length > 100000) throw invalid();
       if (controller.signal.aborted) throw new ApiError('这次读取已取消，可以再次生成诊断。', 408);

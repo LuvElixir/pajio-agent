@@ -36,7 +36,7 @@ test('original requests bind current identity in headers and reject invalid iden
   assert.equal(new URL(source.uri).search, '');
   assert.equal(source.uri.includes('aaaaaaa'), false);
   assert.equal(source.headers.Authorization, 'Bearer ' + 'a'.repeat(48));
-  assert.equal(source.headers['X-Wearing-Identity'], 'work');
+  assert.equal(source.headers['X-Pajio-Identity'], 'work');
   let seen: RequestInit | undefined;
   const bytes = await downloadRemoteOriginal(configured, asset, (async (_url, init) => {seen = init; return new Response(new Uint8Array([1, 2]), {headers: {'content-type': asset.mime}});}) as typeof fetch);
   assert.deepEqual(bytes, new Uint8Array([1, 2]));

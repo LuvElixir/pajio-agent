@@ -1,6 +1,6 @@
 {
   "device": "iPhone Air, iOS 27.0",
-  "bundle_id": "io.luckyloading.wearing.mobile",
+  "bundle_id": "io.luckyloading.pajio.mobile",
   "configuration": "Release, arm64, signed",
   "source_sync_manifest": "d6a45143cec4db1ec65c3dd929feca2b525a0165c8892891e56cbcf5ba3d7cbc",
   "focus_delta_manifest": "862d2f4e6b64e9d84942a95905a30453995da8adcf12ef39b09a67975fa00e3f",

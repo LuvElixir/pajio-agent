@@ -2,7 +2,7 @@ import asyncio
 import json
 from types import SimpleNamespace
 
-from wearing.feishu_receiver import FeishuReceiver
+from pajio.feishu_receiver import FeishuReceiver
 
 
 class Input:

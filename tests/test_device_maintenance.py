@@ -1,7 +1,7 @@
 import pytest
 
-from wearing.cloud.device_maintenance import DeviceMaintenance, guard
-from wearing.cloud.relay import RelayError, PollRequest, ResourceControl
+from pajio.cloud.device_maintenance import DeviceMaintenance, guard
+from pajio.cloud.relay import RelayError, PollRequest, ResourceControl
 from test_device_relay import paired, queue, claim, TOKEN
 
 OP = 'a' * 32

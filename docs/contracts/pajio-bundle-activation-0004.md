@@ -7,7 +7,7 @@ the separately reviewed operator adapter.
 
 ## Immutable binding and redemption
 
-`control.bundles` (`wearing_bundles`) contains `id`, `tenant_id`, `instance_id`,
+`control.bundles` (`pajio_bundles`) contains `id`, `tenant_id`, `instance_id`,
 `host`, `reservation_sha256`, `worker_plan_sha256`, `members_json`,
 `reservation_expires_at`, and `created_at`. IDs are 32 lowercase hex. SHA values
 are 64 lowercase hex. Members are an object with exactly `core`, `linux`, and
@@ -26,7 +26,7 @@ Existing null-bundle invitations can remain readable for legacy compatibility;
 new PostgreSQL INSERTs without a bundle are rejected by a trigger.
 
 A successful authenticated redemption creates membership, private ownership,
-consumes the invitation and inserts exactly one `wearing_bundle_activations`
+consumes the invitation and inserts exactly one `pajio_bundle_activations`
 event in the same transaction. Invitation and bundle IDs are individually
 unique. An insertion failure rolls back all four effects. A same-subject retry
 returns the same activation ID; an already-admitted user does not consume a
@@ -47,14 +47,14 @@ valid authority; it is not proof that a provider action failed or can be retried
 | `activation_release` | event TEXT, worker TEXT, generation INT |
 
 `ControlStore(..., activation=True)` is exclusive of operator and registration.
-Its LOGIN may inherit only `wearing_activation`, a restricted NOLOGIN role. It
+Its LOGIN may inherit only `pajio_activation`, a restricted NOLOGIN role. It
 has no direct platform table or column access, route/membership/session writes,
 or user creation ability. It can execute only the four lease functions. The web
 role can execute owner status and existing admission functions. Registration
 retains only its original fixed functions. Startup verifies exact function
 bodies, grants, owner, search_path, FORCE RLS and immutable-scope triggers.
 
-Owner status takes trusted gateway `wearing.user_id` and `wearing.tenant_id`
+Owner status takes trusted gateway `pajio.user_id` and `pajio.tenant_id`
 transaction scope after current-session validation. It rechecks active private
 ownership, exact sole member, revision, membership digest, route and deletion
 fences. It returns only `state`, `members`, `updated_at`, `reason`, `retry_after`;
@@ -107,7 +107,7 @@ or unknown-phase replay is provided.
 
 ## Production deployment — 2026-10-10
 
-The reviewed `wearing_control_0004` migration and compatible controller modules
+The reviewed `pajio_control_0004` migration and compatible controller modules
 were deployed on 2026-10-10 (Asia/Shanghai). Real web, registration, operator and
 activation PostgreSQL role checks passed, including the separate non-root
 activation service account. The activation unit remains disabled and inactive;

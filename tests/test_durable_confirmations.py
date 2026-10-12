@@ -7,16 +7,16 @@ from types import ModuleType, SimpleNamespace
 import httpx
 import pytest
 
-from wearing.config import Settings
-from wearing.app import create_app
-from wearing.confirmations import request_confirmation, card_for
-from wearing.confirmation_guard import ConfirmationGuard, install_confirmation_guard
-from wearing.durable_confirmations import DurableConfirmations, ConfirmationError, MARKER, PREFIX
-from wearing.hermes import HermesClient, HermesError
-from wearing.life import LifeBook, LifeDraft
-from wearing.life_proxy import dispatch
-from wearing.service import TaskService, TaskError
-from wearing.store import Store
+from pajio.config import Settings
+from pajio.app import create_app
+from pajio.confirmations import request_confirmation, card_for
+from pajio.confirmation_guard import ConfirmationGuard, install_confirmation_guard
+from pajio.durable_confirmations import DurableConfirmations, ConfirmationError, MARKER, PREFIX
+from pajio.hermes import HermesClient, HermesError
+from pajio.life import LifeBook, LifeDraft
+from pajio.life_proxy import dispatch
+from pajio.service import TaskService, TaskError
+from pajio.store import Store
 from test_lifecycle import HermesStub
 
 CARD = {"title": "更新这条测试笔记？", "action": "修改隔离测试身份里的合成笔记。", "impact": "只改变这条笔记的标题。", "confirm_label": "更新笔记"}
@@ -24,7 +24,7 @@ CARD = {"title": "更新这条测试笔记？", "action": "修改隔离测试身
 
 @pytest.fixture
 def ledger(tmp_path):
-    store = Store(tmp_path / "wearing.sqlite3")
+    store = Store(tmp_path / "pajio.sqlite3")
     book = DurableConfirmations(store)
     original = store.create_message("修改测试笔记")
     original = store.update(original["id"], status="running", run_id="run_source")
@@ -262,7 +262,7 @@ class GuardedStub(HermesStub):
     starts = 0
     async def __call__(self, request):
         if request.url.path == "/v1/capabilities":
-            return httpx.Response(200, json={"features": {"run_approval": True}, "wearing": {"confirmation_guard": "durable-v1" if self.guard else None}})
+            return httpx.Response(200, json={"features": {"run_approval": True}, "pajio": {"confirmation_guard": "durable-v1" if self.guard else None}})
         if request.method == "POST" and request.url.path == "/v1/runs":
             self.starts += 1
             self.calls.append(("POST", "/v1/runs", json.loads(request.content), {}))
@@ -273,7 +273,7 @@ class GuardedStub(HermesStub):
 async def test_service_live_original_and_expired_resume_are_distinct_and_idempotent(tmp_path):
     stub = GuardedStub()
     client = HermesClient(Settings(tmp_path, hermes_key="test"), httpx.MockTransport(stub))
-    store = Store(tmp_path / "wearing.sqlite3")
+    store = Store(tmp_path / "pajio.sqlite3")
     service = TaskService(store, client)
     try:
         task = store.create_message("test")
@@ -332,7 +332,7 @@ async def test_changed_remote_waiter_blocks_old_http_approval(ledger):
 
 @pytest.mark.parametrize("answer,state", [("cancel", "needs_recheck"), ("decline", "denied"), ("accept", "approved")])
 async def test_mcp_cancel_preserves_recovery_while_explicit_denial_closes(tmp_path, answer, state):
-    store = Store(tmp_path / "wearing.sqlite3")
+    store = Store(tmp_path / "pajio.sqlite3")
     task = store.create_message("测试确认")
     store.update(task["id"], status="running", run_id="run_test")
     async def elicit(*_): return SimpleNamespace(action=answer)
@@ -357,7 +357,7 @@ async def test_confirmation_api_scopes_mutations_redacts_tasks_and_retries(tmp_p
     try:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
             boot = (await client.get('/api/bootstrap')).json()
-            headers = {'X-Wearing-Token': boot['token'], 'X-Wearing-Identity': 'daily'}
+            headers = {'X-Pajio-Token': boot['token'], 'X-Pajio-Identity': 'daily'}
             listing = await client.get('/api/confirmations', headers=headers)
             assert listing.status_code == 200
             row = listing.json()['items'][0]
@@ -365,7 +365,7 @@ async def test_confirmation_api_scopes_mutations_redacts_tasks_and_retries(tmp_p
             body = {'revision': row['revision'], 'request_key': 'api_confirmation_01'}
             url = f"/api/confirmations/{proposal['id']}/resume"
             assert (await client.post(url, json=body)).status_code == 403
-            foreign = {**headers, 'X-Wearing-Identity': other}
+            foreign = {**headers, 'X-Pajio-Identity': other}
             assert (await client.get('/api/confirmations', headers=foreign)).json() == {'items': []}
             assert (await client.post(url, headers=foreign, json=body)).status_code == 404
             stale = await client.post(url, headers=headers, json={**body, 'revision': 999})

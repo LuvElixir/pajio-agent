@@ -4,11 +4,11 @@ import json
 from datetime import datetime, timezone
 import httpx
 import pytest
-from wearing.store import Store
-from wearing.life import LifeBook, LifeDraft
-from wearing.calendar_series import CalendarSeriesBook
-from wearing.notifications import NotificationConfig, NotificationService, NotificationError
-from wearing.record_reminders import ReminderError, WINDOW
+from pajio.store import Store
+from pajio.life import LifeBook, LifeDraft
+from pajio.calendar_series import CalendarSeriesBook
+from pajio.notifications import NotificationConfig, NotificationService, NotificationError
+from pajio.record_reminders import ReminderError, WINDOW
 
 PROJECT = '12345678-abcd-1234-abcd-123456789abc'
 INSTALL = 'reminder-fixture-001'
@@ -179,7 +179,7 @@ async def test_settings_cas_frozen_key_and_atomic_receipt(env):
 
 async def test_http_owner_only_from_trusted_scope_and_strict_fields(env):
     from fastapi import FastAPI, Request
-    from wearing.record_reminders_api import install_record_reminder_routes
+    from pajio.record_reminders_api import install_record_reminder_routes
     service, life, clock, _ = env; record = make(life, clock)
     app = FastAPI()
     @app.middleware('http')

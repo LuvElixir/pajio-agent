@@ -5,9 +5,9 @@ const assert = require("node:assert");
 const fs = require("node:fs");
 const vm = require("node:vm");
 
-const module_ = fs.readFileSync("src/wearing/web/remote-device.js", "utf8");
-const app = fs.readFileSync("src/wearing/web/app.js", "utf8");
-const html = fs.readFileSync("src/wearing/web/index.html", "utf8");
+const module_ = fs.readFileSync("src/pajio/web/remote-device.js", "utf8");
+const app = fs.readFileSync("src/pajio/web/app.js", "utf8");
+const html = fs.readFileSync("src/pajio/web/index.html", "utf8");
 
 test("compiles; wiring; privacy/invariant assertions", () => {
   new vm.Script(module_);
@@ -15,7 +15,7 @@ test("compiles; wiring; privacy/invariant assertions", () => {
   assert.match(html, /remote-device\.js\?v=6/);
   assert.match(html, /id="remote-device-panel"/);
   assert.match(app, /data-rd-open data-rd-resource/);
-  assert.match(app, /window\.WearingRemoteDevice\?\.reset\(\);/);
+  assert.match(app, /window\.PajioRemoteDevice\?\.reset\(\);/);
   assert.doesNotMatch(module_, /localStorage|sessionStorage|navigator\.clipboard/);
   assert.match(module_, /type="password" autocomplete="new-password"/);
   // 审查#1：send 分支用 field，不遮蔽 sendInput。
@@ -65,7 +65,7 @@ function harness({apiImpl, pcBreak} = {}) {
   const timerErrors = [];
   const gates = [];
   const context = {
-    window: {WearingIds: {uuid: () => "0123456789abcdef0123456789abcdef"}, WearingDeletion: {workAllowed: () => true, registerWorkGate(g) {gates.push(g);}},
+    window: {PajioIds: {uuid: () => "0123456789abcdef0123456789abcdef"}, PajioDeletion: {workAllowed: () => true, registerWorkGate(g) {gates.push(g);}},
       addEventListener(type, fn) {(element("window").listeners[type] = element("window").listeners[type] || []).push(fn);}},
     RTCPeerConnection: function(config) {
       if (pcBreak === "constructor") {const e = new Error("SECRET constructor ice:… sdp:…"); e.name = "NotSupportedError"; throw e;}
@@ -89,13 +89,13 @@ function harness({apiImpl, pcBreak} = {}) {
       body: {classList: {contains: () => false}}, hidden: false, activeElement: null,
     },
   };
-  context.window.WearingStore = {get: () => null, set: () => true, remove: () => true};
+  context.window.PajioStore = {get: () => null, set: () => true, remove: () => true};
   vm.createContext(context);
   vm.runInNewContext(module_, context);
   const flush = () => new Promise(r => setTimeout(r, 8));
   const fire = (id, type, event) => {for (const fn of element(id).listeners[type] || []) fn(event);};
-  return {context, calls, elements, element, pcs, channels, flush, fire, gates, timerErrors, mod: context.window.WearingRemoteDevice,
-    sessionOf: () => context.window.WearingRemoteDevice._test.currentSession()};
+  return {context, calls, elements, element, pcs, channels, flush, fire, gates, timerErrors, mod: context.window.PajioRemoteDevice,
+    sessionOf: () => context.window.PajioRemoteDevice._test.currentSession()};
 }
 const accessOf = (over = {}) => ({resource_id: "dev_main", supported: true, state: "agent_ready", control_generation: 7, session_id: null, epoch: 0,
   gateway_epoch: null, device_confirmed: false, expires_at: null, ...over});

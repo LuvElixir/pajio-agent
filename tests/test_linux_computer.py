@@ -10,9 +10,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from wearing.desktop_input import DesktopFrames, DesktopApproval, action_hash
-from wearing.linux_computer import LinuxComputerBackend, LinuxComputerError, run_helper
-from wearing.linux_computer_helper import (LinuxDesktop, Refused, geometry, key_chord,
+from pajio.desktop_input import DesktopFrames, DesktopApproval, action_hash
+from pajio.linux_computer import LinuxComputerBackend, LinuxComputerError, run_helper
+from pajio.linux_computer_helper import (LinuxDesktop, Refused, geometry, key_chord,
     view_id, text_input_command, accessible_input_text)
 
 
@@ -200,7 +200,7 @@ def test_reparented_xfce_client_geometry_ignores_relative_decoration_offsets():
 
 
 def test_wayland_and_missing_bus_fail_closed(monkeypatch,desktop):
-    from wearing import linux_computer_helper as module
+    from pajio import linux_computer_helper as module
     monkeypatch.setattr(module,'sys',SimpleNamespace(platform='linux'))
     monkeypatch.setenv('DISPLAY',':10');monkeypatch.setenv('XDG_SESSION_TYPE','wayland')
     with pytest.raises(Refused,match='x11_session'):desktop.host.status()

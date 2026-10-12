@@ -5,7 +5,7 @@ import sys
 import textwrap
 import pytest
 import yaml
-from wearing.memory_controls import revision, settings_snapshot, set_memory_enabled, mutate_memory
+from pajio.memory_controls import revision, settings_snapshot, set_memory_enabled, mutate_memory
 
 
 def test_settings_pause_is_atomic_cas_and_preserves_all_other_configuration(tmp_path):
@@ -50,17 +50,17 @@ def test_paused_clear_only_selected_target_and_stale_edit_rejected():
 
 def test_pinned_runtime_reads_flags_and_blocks_memory_tool_after_pause(tmp_path):
     root = Path(__file__).parents[1]
-    installed = root / '.wearing/runtime/installed.json'
+    installed = root / '.pajio/runtime/installed.json'
     if not installed.exists(): pytest.skip('Pinned engine unavailable')
     meta = json.loads(installed.read_text()); python = Path(meta['python'])
     if not python.is_file(): pytest.skip('Managed interpreter unavailable')
-    source = root / '.wearing/runtime' / ('hermes-agent-' + meta['revision'])
+    source = root / '.pajio/runtime' / ('hermes-agent-' + meta['revision'])
     code = r'''
 import os, sys
 from pathlib import Path
 sys.path.insert(0,sys.argv[1]);sys.path.insert(1,sys.argv[2])
 os.environ['HERMES_HOME']=sys.argv[3]
-from wearing.memory_controls import settings_snapshot,set_memory_enabled,revision,mutate_memory
+from pajio.memory_controls import settings_snapshot,set_memory_enabled,revision,mutate_memory
 from tools.memory_tool import load_on_disk_store,_memory_target_error,ENTRY_DELIMITER,_scan_memory_content
 from agent.system_prompt import _memory_parts
 from types import SimpleNamespace
@@ -119,7 +119,7 @@ def edit(store, home, action, target='user', **fields):
 
 
 def history(store, home, target='user'):
-    from wearing.memory_controls import memory_history
+    from pajio.memory_controls import memory_history
     return memory_history(home, target, store.entries[target], enabled=store.enabled)
 
 

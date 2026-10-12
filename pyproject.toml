@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "wearing"
+name = "pajio"
 version = "0.2.0"
 description = "A device-first personal agent workspace built around Hermes"
 requires-python = ">=3.11"
@@ -36,30 +36,30 @@ capture = ["av>=15,<17", "websockets>=15,<17"]
 private-media = ["aiortc>=1.14,<2", "mss>=10,<11"]
 
 [project.scripts]
-wearing = "wearing.cli:main"
+pajio = "pajio.cli:main"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/wearing"]
+packages = ["src/pajio"]
 # Include web assets explicitly, regardless of inherited VCS ignore rules.
-exclude = ["src/wearing/web/**"]
+exclude = ["src/pajio/web/**"]
 
 [tool.hatch.build.targets.wheel.force-include]
-"THIRD_PARTY_NOTICES.md" = "wearing/THIRD_PARTY_NOTICES.md"
-"src/wearing/web" = "wearing/web"
-"deploy/control/postgres-roles.sql" = "wearing/cloud/postgres-roles.sql"
+"THIRD_PARTY_NOTICES.md" = "pajio/THIRD_PARTY_NOTICES.md"
+"src/pajio/web" = "pajio/web"
+"deploy/control/postgres-roles.sql" = "pajio/cloud/postgres-roles.sql"
 
 [tool.hatch.build.targets.sdist]
-include = ["src/wearing", "tests", "pyproject.toml", "uv.lock", "README.md", "PRODUCT.md", "DESIGN.md", "docs/getting-started.md", "docs/engine-productization.md", "docs/identity-foundation.md", "docs/personal-continuity.md", "docs/evidence/personal-continuity-2026-10-03.md", "docs/research/personal-agent-definition-2026-10-03.md", "docs/research/personal-agent-source-manifest-2026-10-03.json", "docs/saas-architecture-2026-10-03.md", "docs/contracts", "docs/research/saas-source-review-2026-10-03.md", "docs/research/saas-source-manifest-2026-10-03.json", "THIRD_PARTY_NOTICES.md"]
+include = ["src/pajio", "tests", "pyproject.toml", "uv.lock", "README.md", "PRODUCT.md", "DESIGN.md", "docs/getting-started.md", "docs/engine-productization.md", "docs/identity-foundation.md", "docs/personal-continuity.md", "docs/evidence/personal-continuity-2026-10-03.md", "docs/research/personal-agent-definition-2026-10-03.md", "docs/research/personal-agent-source-manifest-2026-10-03.json", "docs/saas-architecture-2026-10-03.md", "docs/contracts", "docs/research/saas-source-review-2026-10-03.md", "docs/research/saas-source-manifest-2026-10-03.json", "THIRD_PARTY_NOTICES.md"]
 
 [tool.hatch.build.targets.sdist.force-include]
-"src/wearing/web" = "src/wearing/web"
+"src/pajio/web" = "src/pajio/web"
 "docs/evidence/goal-conversation-2026-10-03.md" = "docs/evidence/goal-conversation-2026-10-03.md"
 "docs/personal-memory.md" = "docs/personal-memory.md"
 "docs/evidence/personal-memory-2026-10-03.md" = "docs/evidence/personal-memory-2026-10-03.md"
 "docs/progress.md" = "docs/progress.md"
 "docs/tenant-runtime.md" = "docs/tenant-runtime.md"
 "docs/evidence/tenant-worker-2026-10-03.md" = "docs/evidence/tenant-worker-2026-10-03.md"
-"deploy/tenant/wearing-tenant.service" = "deploy/tenant/wearing-tenant.service"
+"deploy/tenant/pajio-tenant.service" = "deploy/tenant/pajio-tenant.service"
 "deploy/tenant/bootstrap.py" = "deploy/tenant/bootstrap.py"
 "deploy/vm/tencent-trial.py" = "deploy/vm/tencent-trial.py"
 "docs/gateway-runtime.md" = "docs/gateway-runtime.md"
@@ -74,7 +74,7 @@ include = ["src/wearing", "tests", "pyproject.toml", "uv.lock", "README.md", "PR
 "docs/evidence/tencent-vm-2026-10-03.md" = "docs/evidence/tencent-vm-2026-10-03.md"
 "docs/device-connectors.md" = "docs/device-connectors.md"
 "docs/evidence/remote-device-2026-10-03.md" = "docs/evidence/remote-device-2026-10-03.md"
-"deploy/tenant/wearing-device-relay.service" = "deploy/tenant/wearing-device-relay.service"
+"deploy/tenant/pajio-device-relay.service" = "deploy/tenant/pajio-device-relay.service"
 "docs/private-cloud-entry.md" = "docs/private-cloud-entry.md"
 "docs/evidence/private-cloud-entry-2026-10-03.md" = "docs/evidence/private-cloud-entry-2026-10-03.md"
 "docs/device-pairing.md" = "docs/device-pairing.md"

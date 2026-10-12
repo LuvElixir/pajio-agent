@@ -8,10 +8,10 @@ import sqlite3
 import httpx
 import pytest
 
-from wearing.app import create_app
-from wearing.cloud.worker import TenantBoundary
-from wearing.config import Settings
-from wearing.workspace_upload import MAX_IMPORT_BYTES
+from pajio.app import create_app
+from pajio.cloud.worker import TenantBoundary
+from pajio.config import Settings
+from pajio.workspace_upload import MAX_IMPORT_BYTES
 
 
 KEY = "document-import-001"
@@ -24,7 +24,7 @@ async def upload_app(tmp_path):
     app = create_app(Settings(tmp_path))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         bootstrap = (await client.get("/api/bootstrap")).json()
-        client.headers.update({"X-Wearing-Token": bootstrap["token"], "X-Wearing-Identity": "daily"})
+        client.headers.update({"X-Pajio-Token": bootstrap["token"], "X-Pajio-Identity": "daily"})
         yield app, client, app.state.runtime.workspace
     await app.state.service.hermes.close()
 
@@ -43,7 +43,7 @@ def imports(app):
 
 async def test_import_requires_session_token_and_rejects_foreign_origin_before_write(upload_app):
     app, client, root = upload_app
-    for headers in ({"X-Wearing-Token": ""}, {"X-Wearing-Token": "stale-token"}, {"Origin": "https://unrelated.example"}):
+    for headers in ({"X-Pajio-Token": ""}, {"X-Pajio-Token": "stale-token"}, {"Origin": "https://unrelated.example"}):
         response = await upload(client, headers=headers)
         assert response.status_code == 403
     assert not imports(app)
@@ -58,12 +58,12 @@ async def test_tenant_boundary_requires_correct_instance_auth_and_tenant(tmp_pat
         assert (await upload(client)).status_code == 401
         client.headers["Authorization"] = "Bearer instance-test-key"
         assert (await upload(client)).status_code == 403
-        client.headers["X-Wearing-Tenant"] = "tenant_other"
+        client.headers["X-Pajio-Tenant"] = "tenant_other"
         assert (await upload(client)).status_code == 403
-        client.headers["X-Wearing-Tenant"] = "tenant_test"
+        client.headers["X-Pajio-Tenant"] = "tenant_test"
         token = (await client.get("/api/bootstrap")).json()["token"]
         assert (await upload(client)).status_code == 403  # Auth does not waive CSRF.
-        client.headers["X-Wearing-Token"] = token
+        client.headers["X-Pajio-Token"] = token
         assert (await upload(client)).status_code == 201
         client.headers["Authorization"] = "Bearer wrong-key"
         assert (await upload(client)).status_code == 401
@@ -99,14 +99,14 @@ async def test_identity_boundaries_include_reused_request_keys_and_download(uplo
     response = await upload(client)
     path = response.json()["file"]["path"]
     other = app.state.store.save_identity("另一测试身份")["id"]
-    client.headers["X-Wearing-Identity"] = other
+    client.headers["X-Pajio-Identity"] = other
     assert (await client.get("/api/workspace/file", params={"path": path})).status_code == 404
     assert (await upload(client, identity="daily")).status_code == 409
     assert (await upload(client, data=b"other-identity-only")).status_code == 201
     assert (await client.get("/api/workspace/file", params={"path": path})).content == b"other-identity-only"
     assert (root / path).read_bytes() == BODY
     assert {row["identity_id"] for row in imports(app)} == {"daily", other}
-    client.headers["X-Wearing-Identity"] = "unknown-identity"
+    client.headers["X-Pajio-Identity"] = "unknown-identity"
     assert (await upload(client)).status_code == 404
     assert len(imports(app)) == 2
 

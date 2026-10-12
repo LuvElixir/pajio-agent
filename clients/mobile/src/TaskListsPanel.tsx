@@ -3,7 +3,7 @@ import {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {ActivityIndicator, StyleSheet, Text, TextInput, View} from 'react-native';
 import * as Crypto from 'expo-crypto';
 import {ArrowDown, ArrowLeft, ArrowUp, ChevronRight, RefreshCw} from 'lucide-react-native';
-import {scopeOf, WearingApi, type Connection, type RecordItem} from './core';
+import {scopeOf, PajioApi, type Connection, type RecordItem} from './core';
 import {storage} from './storage';
 import {serviceFetch} from './transport';
 import {useAppTheme, useThemedStyles, type AppColors} from './app-theme';
@@ -17,7 +17,7 @@ export default function TaskListsPanel(props: Props) {return <TaskListsSession k
 function TaskListsSession({connection, onRecord, onChanged, onBack}: Props) {
   const {colors: c} = useAppTheme(), s = useThemedStyles(styles), scope = scopeOf(connection);
   const api = useMemo(() => new TaskListApi(connection, serviceFetch), [connection]);
-  const recordApi = useMemo(() => new WearingApi(connection, serviceFetch), [connection]);
+  const recordApi = useMemo(() => new PajioApi(connection, serviceFetch), [connection]);
   const changes = useMemo(() => new TaskListChanges(storage, api), [api]);
   const edits = useMemo(() => new RecordMutations(storage, () => Crypto.randomUUID()), []);
   const [catalog, setCatalog] = useState<ListCatalog | null>(null), [page, setPage] = useState<ListPage | null>(null);

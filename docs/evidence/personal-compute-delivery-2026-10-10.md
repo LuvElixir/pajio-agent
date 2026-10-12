@@ -1,6 +1,6 @@
 # Pajio personal compute 交付证据
 
-日期：2026-10-10，Asia/Shanghai。对应 [推进顺序与范围](../plans/pajio-personal-compute-delivery-2026-10-10.md)。本记录只汇总合成验收账户，不包含登录凭据、私密画面或用户输入内容。原始私有证据位于项目忽略目录 `.wearing/on-prem/20261009/personal-compute/`。
+日期：2026-10-10，Asia/Shanghai。对应 [推进顺序与范围](../plans/pajio-personal-compute-delivery-2026-10-10.md)。本记录只汇总合成验收账户，不包含登录凭据、私密画面或用户输入内容。原始私有证据位于项目忽略目录 `.pajio/on-prem/20261009/personal-compute/`。
 
 ## 已实际通过
 

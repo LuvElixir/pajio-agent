@@ -5,9 +5,9 @@ import subprocess
 from filelock import FileLock
 import pytest
 
-from wearing.config import write_private_json
-from wearing.connectors.remote.daemon_state import desired, set_desired
-from wearing.connectors.remote.service import ConnectorService, ServiceError, linux_user_unit
+from pajio.config import write_private_json
+from pajio.connectors.remote.daemon_state import desired, set_desired
+from pajio.connectors.remote.service import ConnectorService, ServiceError, linux_user_unit
 
 
 @pytest.fixture
@@ -21,7 +21,7 @@ def linux_service(tmp_path,monkeypatch):
     write_private_json(root/'connector.json',config)
     home=tmp_path/'home';home.mkdir()
     monkeypatch.setattr(Path,'home',lambda:home)
-    monkeypatch.setattr('wearing.connectors.remote.service.platform.system',lambda:'Linux')
+    monkeypatch.setattr('pajio.connectors.remote.service.platform.system',lambda:'Linux')
     monkeypatch.setenv('DISPLAY',':10');monkeypatch.setenv('DBUS_SESSION_BUS_ADDRESS','unix:path=/run/user/1001/bus')
     monkeypatch.setenv('OPENAI_API_KEY','provider-secret')
     calls=[];overrides={'dropins':'','foreign':False,'bus_missing':False,'enable_failure':False}
@@ -41,7 +41,7 @@ def linux_service(tmp_path,monkeypatch):
             else:output='LoadState=not-found\nFragmentPath=\nDropInPaths=\n';code=4
         if check and code:raise ServiceError('system unavailable')
         return subprocess.CompletedProcess(argv,code,output,'')
-    monkeypatch.setattr('wearing.connectors.remote.service.command',command)
+    monkeypatch.setattr('pajio.connectors.remote.service.command',command)
     return ConnectorService(root),calls,overrides
 
 
@@ -118,7 +118,7 @@ def test_linux_install_never_overwrites_existing_units_or_assumes_user_bus(linux
 
 
 def test_systemd_unit_escapes_specifiers_and_forbids_newline_injection():
-    unit=linux_user_unit(['/opt/Pajio Space/python','-m','wearing.cli','--root','/home/a/%n $HOME "quoted"'],
+    unit=linux_user_unit(['/opt/Pajio Space/python','-m','pajio.cli','--root','/home/a/%n $HOME "quoted"'],
                          '/home/a',{'DISPLAY':':10','TOKEN':'secret'})
     assert 'ExecStart=:"/opt/Pajio Space/python"' in unit
     assert '/home/a/%%n $HOME \\"quoted\\"' in unit

@@ -1,4 +1,4 @@
-Wearing desktop local technical preview — dependency notices
+Pajio desktop local technical preview — dependency notices
 
 Registry packages resolved on the Mac build host. Dependencies remain upstream-owned. Cargo.lock is the full pinned dependency graph; formal public distribution additionally needs a platform-specific license audit.
 

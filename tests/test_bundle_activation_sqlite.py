@@ -9,9 +9,9 @@ from sqlalchemy import update
 from test_bundle_activation_db import sqlite_bundle, issue_bundle
 from test_gateway import lab, login, ORIGIN, ISSUER
 from test_invitation_gateway import operator, post
-from wearing.cloud.bundle_activation import ActivationError, ActivationStore, public_progress
-from wearing.cloud.control import members, ownership, routes, bundle_activations
-from wearing.cloud.invitations import InvitationStore, code_hash
+from pajio.cloud.bundle_activation import ActivationError, ActivationStore, public_progress
+from pajio.cloud.control import members, ownership, routes, bundle_activations
+from pajio.cloud.invitations import InvitationStore, code_hash
 
 
 def admitted(stores):

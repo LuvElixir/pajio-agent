@@ -12,7 +12,7 @@ Root 操作员报告：App 成功显示 Linux 的合成 Firefox 测试页面，�
 
 1. `clients/mobile/src/remote-viewer-document.ts`：`frameShown` 由 `requestVideoFrameCallback` 更新视频呈现时间；不支持该 API 时使用 `timeupdate`（55–61、115–116 行）。数据通道 `frame` 消息单独更新 geometry 时间（126–130 行）。watch 每 300 ms 检查：画面已展示后，geometry 超过 2500 ms 未更新，**或**视频呈现回调超过 3000 ms 未更新，两者都触发同一个 `stale_video`（134–139 行）。没有“用户多久未输入就停止”的条件。输入门槛更早生效：geometry 必须新于 1800 ms，视频必须新于 2500 ms（41 行）。
 2. `clients/mobile/src/NativeRemoteDevicePanel.tsx`：`stale_video` 映射到操作员看到的固定文案（20–26 行）。收到停止事件后清空 viewer 并请求设备暂停，因此停后无法从组件状态恢复两种帧龄。21 ms 来源于候选连接的 RTT，代码没有以该数字证明视频连续更新。
-3. `src/wearing/private_media.py`：每次捕获都会发送新的 geometry 元数据（276–291 行），视频轨按 source.max_fps 调度，未实现“画面静止就停发”的逻辑。媒体 `/v1/status` 仅暴露 ready、closed、cleared 和清理结果（543–546 行），不保存前一次关闭的分支、帧龄、解码统计。现有安全状态足以确认连接及清理情况，不足以解释该次 stale。
+3. `src/pajio/private_media.py`：每次捕获都会发送新的 geometry 元数据（276–291 行），视频轨按 source.max_fps 调度，未实现“画面静止就停发”的逻辑。媒体 `/v1/status` 仅暴露 ready、closed、cleared 和清理结果（543–546 行），不保存前一次关闭的分支、帧龄、解码统计。现有安全状态足以确认连接及清理情况，不足以解释该次 stale。
 
 源码行号为此诊断读取时的位置；后续改动应以函数名定位。
 

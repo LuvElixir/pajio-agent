@@ -68,8 +68,8 @@ export class RemoteDeviceApi {
     try {
       const endpoint = connectionEndpoint(this.connection);
       const response = await this.fetcher(new URL(path, endpoint).toString(), {method: body === undefined ? 'GET' : 'POST', signal: abort.signal, redirect: 'error',
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity,
-          ...(body === undefined ? {} : {'Content-Type': 'application/json', 'X-Wearing-Token': this.csrf, Origin: new URL(endpoint).origin})},
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity,
+          ...(body === undefined ? {} : {'Content-Type': 'application/json', 'X-Pajio-Token': this.csrf, Origin: new URL(endpoint).origin})},
         ...(body === undefined ? {} : {body: JSON.stringify(body)})});
       const value: unknown = await response.json().catch(() => {throw invalid();});
       if (!response.ok) {

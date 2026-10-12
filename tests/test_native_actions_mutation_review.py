@@ -10,8 +10,8 @@ from pathlib import Path
 
 import pytest
 from test_native_actions import env, PHONE, SECRET, SESSION, POLICY
-from wearing import native_actions_tools
-from wearing.native_actions import NativeActionError
+from pajio import native_actions_tools
+from pajio.native_actions import NativeActionError
 
 ROOT = Path(__file__).resolve().parents[1]
 MOBILE = ROOT / 'clients/mobile'

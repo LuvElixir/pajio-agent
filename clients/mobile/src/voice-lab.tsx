@@ -10,10 +10,10 @@ import {colors as c} from './experience/tokens';
 import {voiceErrorMessage} from './voice-diagnostics';
 
 // Intentionally separate from storage.ts: this route must never open a user's database.
-const QA_DATABASE = 'wearing-voice-qa.db';
+const QA_DATABASE = 'pajio-voice-qa.db';
 function qaStore() {
-  const runtime = globalThis as typeof globalThis & {__wearingVoiceQaStateV1?: SqliteState};
-  const state = runtime.__wearingVoiceQaStateV1 ??= createSqliteState();
+  const runtime = globalThis as typeof globalThis & {__pajioVoiceQaStateV1?: SqliteState};
+  const state = runtime.__pajioVoiceQaStateV1 ??= createSqliteState();
   return createSqliteStore(() => SQLite.openDatabaseAsync(QA_DATABASE, {useNewConnection: true}), state);
 }
 

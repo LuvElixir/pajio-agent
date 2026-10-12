@@ -1,16 +1,15 @@
 {
   "expo": {
     "name": "Pajio",
-    "slug": "wearing-mobile",
+    "slug": "pajio-mobile",
     "version": "0.2.0",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "scheme": [
-      "pajio",
-      "wearing"
+      "pajio"
     ],
     "ios": {
-      "bundleIdentifier": "io.luckyloading.wearing.mobile",
+      "bundleIdentifier": "io.luckyloading.pajio.mobile",
       "buildNumber": "9",
       "supportsTablet": true,
       "infoPlist": {
@@ -23,7 +22,7 @@
       }
     },
     "android": {
-      "package": "io.luckyloading.wearing.mobile",
+      "package": "io.luckyloading.pajio.mobile",
       "predictiveBackGestureEnabled": true,
       "blockedPermissions": [
         "android.permission.READ_MEDIA_IMAGES",

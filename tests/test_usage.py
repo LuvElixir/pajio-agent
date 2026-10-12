@@ -1,8 +1,8 @@
 from concurrent.futures import ThreadPoolExecutor
 import sqlite3
 import pytest
-from wearing.usage import UsageBook, UsageError, UsagePolicy
-from wearing.usage_guard import receipt
+from pajio.usage import UsageBook, UsageError, UsagePolicy
+from pajio.usage_guard import receipt
 
 
 def book(tmp_path, **kwargs):
@@ -92,7 +92,7 @@ def test_default_local_mode_is_not_restricted_and_unknown_not_zero(tmp_path, mon
 
 @pytest.mark.asyncio
 async def test_speech_guard_stops_before_provider_and_preserves_cancel_charge(tmp_path, monkeypatch):
-    from wearing.usage_speech import guarded_recognition
+    from pajio.usage_speech import guarded_recognition
     monkeypatch.setenv('PAJIO_TRIAL_LIMITS', '1')
     b = book(tmp_path, policy=UsagePolicy(speech_calls=1, speech_ms=180_000))
     seen = []
@@ -103,7 +103,7 @@ async def test_speech_guard_stops_before_provider_and_preserves_cancel_charge(tm
         raise __import__('asyncio').CancelledError()
     with pytest.raises(__import__('asyncio').CancelledError):
         await guarded_recognition(chunks(), 'fake', data_dir=tmp_path, identity='daily', request_key='one', recognize=recognize)
-    from wearing.speech import SpeechError
+    from pajio.speech import SpeechError
     with pytest.raises(SpeechError) as error:
         await guarded_recognition(chunks(), 'fake', data_dir=tmp_path, identity='daily', request_key='two', recognize=recognize)
     assert error.value.code == 'quota_exhausted'

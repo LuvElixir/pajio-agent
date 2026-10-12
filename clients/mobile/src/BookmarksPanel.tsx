@@ -4,7 +4,7 @@ import {Text, View} from 'react-native';
 import {TextInput} from 'react-native-paper';
 import * as Crypto from 'expo-crypto';
 import * as Linking from 'expo-linking';
-import {ApiError, scopeOf, WearingApi, type Connection, type Outbox, type Pending, type RecordItem} from './core';
+import {ApiError, scopeOf, PajioApi, type Connection, type Outbox, type Pending, type RecordItem} from './core';
 import {storage} from './storage';
 import {serviceFetch} from './transport';
 import {accountWorkAllowed, registerAccountWork} from './account-work';
@@ -52,7 +52,7 @@ function Bookmarks(props: Props) {
     // This keyed screen belongs to one connection; explicit refresh/search own later reads.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  async function retry(entry: Pending) {if (locked.current || !boundary.current()) return; locked.current = true; setBusy(true); try {await outbox.retry(scope, entry.id); await outbox.flush(scope, new WearingApi(connection, bookmarkFetch(serviceFetch,boundary.current,boundary.signal())), boundary.current);} catch (e) {if(boundary.current())setError(e instanceof Error?e.message:'同步暂未完成。');} finally {locked.current=false;if(boundary.current()){setBusy(false);void refresh();onChanged?.();}}}
+  async function retry(entry: Pending) {if (locked.current || !boundary.current()) return; locked.current = true; setBusy(true); try {await outbox.retry(scope, entry.id); await outbox.flush(scope, new PajioApi(connection, bookmarkFetch(serviceFetch,boundary.current,boundary.signal())), boundary.current);} catch (e) {if(boundary.current())setError(e instanceof Error?e.message:'同步暂未完成。');} finally {locked.current=false;if(boundary.current()){setBusy(false);void refresh();onChanged?.();}}}
   if (creating || selected) return <BookmarkEditor key={selected || 'new'} {...props} mutations={mutations} recordId={selected || undefined} onBack={() => {setCreating(false);setSelected(null);void refresh();}}/>;
   return <View style={{gap:16}}>
     <Text accessibilityRole="header" style={{fontSize:28,fontWeight:'600',color:c.ink}}>链接收藏</Text>
@@ -75,7 +75,7 @@ function BookmarkEditor({connection,outbox,mutations:provided,isCurrent,onChange
   const {colors:c} = useAppTheme(), scope = scopeOf(connection), key = bookmarkDraftKey(scope,recordId), boundary = useBoundary(connection,isCurrent), locked = useRef(false);
   const [mutations] = useState(() => provided || new RecordMutations(storage,Crypto.randomUUID));
   const [form,setForm] = useState<BookmarkEdit | null>(null), [base,setBase] = useState<RecordItem | null>(null), [mutation,setMutation] = useState<RecordMutation | null>(null), [busy,setBusy] = useState(false), [error,setError] = useState(''), [notice,setNotice] = useState('');
-  const api = () => new WearingApi(connection,bookmarkFetch(serviceFetch,boundary.current,boundary.signal()));
+  const api = () => new PajioApi(connection,bookmarkFetch(serviceFetch,boundary.current,boundary.signal()));
   const zone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai';
   useEffect(() => {let live=true; void (async () => {setBusy(true);try {
     const stored = await storage.get<unknown>(key), saved = stored ? bookmarkEdit(stored) : null;

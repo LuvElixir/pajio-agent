@@ -11,13 +11,13 @@ from filelock import FileLock
 import httpx
 import pytest
 
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.relay import (instance_relay, create_relay_app, PairRequest,
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.relay import (instance_relay, create_relay_app, PairRequest,
     ConnectionRequest, PollRequest, ClaimRequest)
-from wearing.config import write_private_json
-from wearing.connectors.remote.client import Connector
-from wearing.connectors.remote.daemon_state import desired, set_desired
-from wearing.connectors.remote.service import ConnectorService, ServiceError, windows_task_xml, ps_quote
+from pajio.config import write_private_json
+from pajio.connectors.remote.client import Connector
+from pajio.connectors.remote.daemon_state import desired, set_desired
+from pajio.connectors.remote.service import ConnectorService, ServiceError, windows_task_xml, ps_quote
 
 TOKEN='a'*64
 READ='phone.mobile_list_elements_on_screen'
@@ -32,7 +32,7 @@ def prepared(tmp_path,monkeypatch):
     write_private_json(root/'connector.json',{**b,'endpoint':'https://relay.example','ca_pem':'TEST CA',
         'token':TOKEN,'connection_id':None,'local_data':str(tmp_path/'local')})
     home=tmp_path/'home';home.mkdir();monkeypatch.setattr(Path,'home',lambda:home)
-    monkeypatch.setattr('wearing.connectors.remote.service.platform.system',lambda:'Darwin')
+    monkeypatch.setattr('pajio.connectors.remote.service.platform.system',lambda:'Darwin')
     return root,tenant,s
 
 
@@ -45,7 +45,7 @@ def fake_system(monkeypatch):
         elif args[1]=='bootout':loaded.discard(args[-1].split('/')[-1])
         code=1 if args[1]=='print' and args[-1].split('/')[-1] not in loaded else 0
         return subprocess.CompletedProcess(args,code,'','')
-    monkeypatch.setattr('wearing.connectors.remote.service.command',invoke)
+    monkeypatch.setattr('pajio.connectors.remote.service.command',invoke)
     return calls
 
 
@@ -79,7 +79,7 @@ def test_task_modified_after_install_is_not_stopped_or_overwritten(prepared,monk
 
 def test_adoption_requires_exact_program_root_and_label(prepared,monkeypatch):
     root,_,_=prepared;calls=fake_system(monkeypatch);s=ConnectorService(root)
-    label='com.wearing.connector.first-test';p=Path.home()/'Library/LaunchAgents'/(label+'.plist');p.parent.mkdir(parents=True)
+    label='com.pajio.connector.first-test';p=Path.home()/'Library/LaunchAgents'/(label+'.plist');p.parent.mkdir(parents=True)
     write_private_json(root/'unrelated.json',{})
     p.write_bytes(plistlib.dumps({'Label':label,'ProgramArguments':['/bin/echo','not this root']}));p.chmod(0o600)
     with pytest.raises(ServiceError,match='没有指向'):s.install(label)
@@ -106,8 +106,8 @@ def test_stale_connected_report_is_not_live_status(prepared,monkeypatch):
 
 
 def test_windows_task_contract_and_quoting():
-    argv=[r'C:\Program Files\Wearing\python.exe','-m','wearing.cli','connector','run','--root',r"C:\Users\O'Brien\Wearing & test"]
-    value=windows_task_xml('test',argv,Path(r'C:\Users\Tester'),'S-1-5-21-123','Wearing test')
+    argv=[r'C:\Program Files\Pajio\python.exe','-m','pajio.cli','connector','run','--root',r"C:\Users\O'Brien\Pajio & test"]
+    value=windows_task_xml('test',argv,Path(r'C:\Users\Tester'),'S-1-5-21-123','Pajio test')
     n=ET.fromstring(value);ns={'t':'http://schemas.microsoft.com/windows/2004/02/mit/task'}
     assert n.findtext('t:Principals/t:Principal/t:RunLevel',namespaces=ns)=='LeastPrivilege'
     assert n.findtext('t:Principals/t:Principal/t:LogonType',namespaces=ns)=='InteractiveToken'
@@ -118,11 +118,11 @@ def test_windows_task_contract_and_quoting():
 
 
 def test_windows_task_for_another_user_cannot_be_stopped(prepared,monkeypatch):
-    root,_,_=prepared;monkeypatch.setattr('wearing.connectors.remote.service.platform.system',lambda:'Windows')
+    root,_,_=prepared;monkeypatch.setattr('pajio.connectors.remote.service.platform.system',lambda:'Windows')
     s=ConnectorService(root);sid='S-1-5-21-123'
     write_private_json(s.manifest,{'root':str(root),'platform':'Windows','label':s.label,'argv':s.argv,'user_sid':sid})
     changed=windows_task_xml(s.label,s.argv,s.home,'S-1-5-21-999',s.marker)
-    monkeypatch.setattr('wearing.connectors.remote.service.powershell',lambda _:subprocess.CompletedProcess([],0,changed,''))
+    monkeypatch.setattr('pajio.connectors.remote.service.powershell',lambda _:subprocess.CompletedProcess([],0,changed,''))
     with pytest.raises(ServiceError,match='不属于'):s.stop()
     assert desired(root)=='running'
 
@@ -137,7 +137,7 @@ async def test_stop_during_claim_does_not_start_native_action(prepared,monkeypat
     node=Connector(root,Adapter());node.connection=s.connect(TOKEN,ConnectionRequest())['connection_id']
     s.poll(TOKEN,PollRequest(connection_id=node.connection,availability={'phone_test':True}))
     c=s.enqueue('daily','phone_test',READ,{})
-    from wearing.connectors.remote import client as module
+    from pajio.connectors.remote import client as module
     original=module.response
     async def stop_on_claim(client,path,payload):
         result=await original(client,path,payload)
@@ -159,7 +159,7 @@ def test_disconnect_is_idempotent_and_fences_only_current_generation(prepared):
     assert not s.inventory('daily')[0]['connected']
     assert s.disconnect(TOKEN,PollRequest(connection_id=conn))['disconnected']
     new=s.connect(TOKEN,ConnectionRequest(previous_connection_id=conn))['connection_id']
-    from wearing.cloud.relay import RelayError
+    from pajio.cloud.relay import RelayError
     with pytest.raises(RelayError):s.disconnect(TOKEN,PollRequest(connection_id=conn))
     s.poll(TOKEN,PollRequest(connection_id=new,availability={'phone_test':True}))
     assert s.enqueue('daily','phone_test',READ,{})
@@ -172,7 +172,7 @@ async def test_graceful_stop_finishes_admitted_action_once_then_disconnects(prep
         async def execute(self,_):
             nonlocal count
             count+=1;started.set();await release.wait();return {'content':[{'type':'text','text':'read only result'}]}
-    monkeypatch.setattr('wearing.connectors.remote.client.client_for',lambda config,root:httpx.AsyncClient(
+    monkeypatch.setattr('pajio.connectors.remote.client.client_for',lambda config,root:httpx.AsyncClient(
         transport=httpx.ASGITransport(app=create_relay_app(tenant)),base_url='https://relay.example',headers={'Authorization':'Bearer '+TOKEN}))
     node=Connector(root,Adapter());task=asyncio.create_task(node.run())
     try:

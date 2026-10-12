@@ -54,5 +54,5 @@ test('write-before-send plus account switch and deletion fence prevent late recr
 });
 test('transport freezes credentials; model payload supplies no owner or destination',async()=>{
   const c=structuredClone(connection),h=client([()=>json(bootstrap),()=>json(result)],c);c.identity='other';c.session!.accessToken='changed';await h.api.exclude(request);
-  assert.equal(h.calls[1].headers.get('authorization'),'Bearer '+'s'.repeat(64));assert.equal(h.calls[1].headers.get('X-Wearing-Identity'),identity);assert.equal(h.calls[1].url,'https://fixture.invalid/api/conversation-sources/exclude');assert.deepEqual(h.calls[1].body,request);
+  assert.equal(h.calls[1].headers.get('authorization'),'Bearer '+'s'.repeat(64));assert.equal(h.calls[1].headers.get('X-Pajio-Identity'),identity);assert.equal(h.calls[1].url,'https://fixture.invalid/api/conversation-sources/exclude');assert.deepEqual(h.calls[1].body,request);
 });

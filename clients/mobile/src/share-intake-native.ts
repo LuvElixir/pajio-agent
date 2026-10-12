@@ -5,7 +5,7 @@ import {Platform} from 'react-native';
 import {storage} from './storage';
 import {IntakeFile, parseShareManifest, SHARE_ID, SHARE_LIMITS, SHARE_MIMES, ShareEntry, ShareIntakeQueue, ShareManifest, shareWebUrl} from './share-intake-model';
 
-export const SHARE_APP_GROUP = 'group.io.luckyloading.wearing.mobile.share';
+export const SHARE_APP_GROUP = 'group.io.luckyloading.pajio.mobile.share';
 const INDEX = 'share-intake:v1', JOURNAL = 'share-intake:android-journal:v1';
 const root = () => new Directory(Paths.document, 'share-intake');
 const mimeExtension: Record<string, string> = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/gif': 'gif', 'image/heic': 'heic', 'image/webp': 'webp', 'application/pdf': 'pdf', 'text/plain': 'txt', 'text/markdown': 'md', 'application/zip': 'zip', 'application/x-zip-compressed': 'zip'};

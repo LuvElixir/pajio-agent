@@ -9,9 +9,9 @@ from sqlalchemy import select, text, update
 from sqlalchemy.exc import DBAPIError
 
 from test_control_postgres import pg
-from wearing.cloud.control import ControlStore, digest, invitations, members, ownership, users
-from wearing.cloud.invitations import InvitationStore, InvitationError, code_hash
-from wearing.cloud.postgres import DatabaseBoundaryError
+from pajio.cloud.control import ControlStore, digest, invitations, members, ownership, users
+from pajio.cloud.invitations import InvitationStore, InvitationError, code_hash
+from pajio.cloud.postgres import DatabaseBoundaryError
 
 
 def fresh(pg):
@@ -31,9 +31,9 @@ def test_pg_check_redemption_private_owner_and_no_direct_web_dml(pg):
     session = pg['web'].session(pg['web'].login(pg['issuer'], 'new'))
     assert pg['web'].private_owner_scope(session, pg['web'].route(session))
     assert api.redeem_hash(hashed, issuer=pg['issuer'], subject='new')['status'] == 'already_member'
-    for statement in ["UPDATE wearing_control.wearing_invitations SET revoked_at=1",
-                      "INSERT INTO wearing_control.wearing_users(id,issuer,subject) VALUES('bad','bad','bad')",
-                      "INSERT INTO wearing_control.wearing_memberships VALUES('bad','bad',true)"]:
+    for statement in ["UPDATE pajio_control.pajio_invitations SET revoked_at=1",
+                      "INSERT INTO pajio_control.pajio_users(id,issuer,subject) VALUES('bad','bad','bad')",
+                      "INSERT INTO pajio_control.pajio_memberships VALUES('bad','bad',true)"]:
         with pytest.raises(DBAPIError):
             with pg['web'].transaction() as db:
                 db.execute(text(statement))
@@ -89,15 +89,15 @@ def test_pg_registration_has_only_fixed_functions_not_web_or_operator_permission
         assert bound == api.get_registration(hashed, issuer=pg['issuer'])
         with pytest.raises(InvitationError):
             api.release_registration(hashed, issuer=pg['issuer'], registration_id=next_intent)
-        for statement in ['SELECT * FROM wearing_control.wearing_users', 'SELECT * FROM wearing_control.wearing_invitations',
-                          "SELECT wearing_control.invitation_redeem('"+'a'*64+"','issuer','subject')",
-                          "SET ROLE wearing_web", "SET ROLE wearing_operator", "SET ROLE inv_owner"]:
+        for statement in ['SELECT * FROM pajio_control.pajio_users', 'SELECT * FROM pajio_control.pajio_invitations',
+                          "SELECT pajio_control.invitation_redeem('"+'a'*64+"','issuer','subject')",
+                          "SET ROLE pajio_web", "SET ROLE pajio_operator", "SET ROLE inv_owner"]:
             with pytest.raises(DBAPIError):
                 with reg.transaction() as db:
                     db.execute(text(statement))
         with pytest.raises(DBAPIError):
             with pg['web'].transaction() as db:
-                db.execute(text("SELECT wearing_control.invitation_get_registration(:h,:i)"), {'h': hashed,'i':pg['issuer']})
+                db.execute(text("SELECT pajio_control.invitation_get_registration(:h,:i)"), {'h': hashed,'i':pg['issuer']})
         assert InvitationStore(pg['web']).redeem_hash(hashed, issuer=pg['issuer'], subject='new')['status']=='admitted'
         for kwargs in ({}, {'operator':True}):
             with pytest.raises(DatabaseBoundaryError):
@@ -109,9 +109,9 @@ def test_pg_registration_has_only_fixed_functions_not_web_or_operator_permission
 def test_pg_function_scope_and_startup_body_public_grant_guard(pg):
     code, _, _ = fresh(pg)
     with pg['web'].transaction() as db:
-        assert db.scalar(text('SELECT wearing_control.invitation_check(:h,:i)'), {'h':code_hash(code),'i':pg['issuer']}) is None
+        assert db.scalar(text('SELECT pajio_control.invitation_check(:h,:i)'), {'h':code_hash(code),'i':pg['issuer']}) is None
     admin = pg['admin_engine']
-    signature='wearing_control.invitation_check(text,text)'
+    signature='pajio_control.invitation_check(text,text)'
     try:
         with admin.begin() as db:
             db.execute(text(f'GRANT EXECUTE ON FUNCTION {signature} TO PUBLIC'))
@@ -130,7 +130,7 @@ def test_pg_redeem_fails_when_issuer_context_is_unset_even_with_code(pg):
     engine = create_engine(pg['app'], hide_parameters=True)
     try:
         with engine.begin() as db:
-            assert db.scalar(text('SELECT wearing_control.invitation_check(:h,:i)'),
+            assert db.scalar(text('SELECT pajio_control.invitation_check(:h,:i)'),
                              {'h':code_hash(code),'i':pg['issuer']}) is None
     finally:
         engine.dispose()
@@ -171,25 +171,25 @@ def test_pg_registration_table_grant_and_runtime_membership_broadening_refused(p
     admin=pg['admin_engine']
     try:
         with admin.begin() as db:
-            db.execute(text('GRANT SELECT ON wearing_control.wearing_invitations TO wearing_registration'))
+            db.execute(text('GRANT SELECT ON pajio_control.pajio_invitations TO pajio_registration'))
         with pytest.raises(DatabaseBoundaryError):
             ControlStore(pg['registration'],registration=True)
     finally:
         with admin.begin() as db:
-            db.execute(text('REVOKE SELECT ON wearing_control.wearing_invitations FROM wearing_registration'))
+            db.execute(text('REVOKE SELECT ON pajio_control.pajio_invitations FROM pajio_registration'))
     try:
         with admin.begin() as db:
-            db.execute(text('GRANT wearing_registration TO wearing_web'))
+            db.execute(text('GRANT pajio_registration TO pajio_web'))
         with pytest.raises(DatabaseBoundaryError):
             ControlStore(pg['app'])
     finally:
         with admin.begin() as db:
-            db.execute(text('REVOKE wearing_registration FROM wearing_web'))
+            db.execute(text('REVOKE pajio_registration FROM pajio_web'))
 
 
 def test_pg_wrong_scope_cannot_redeem_even_when_code_exists(pg):
     code,_,_=fresh(pg)
     with pg['web'].transaction(issuer=pg['issuer'],subject='other') as db:
-        assert db.scalar(text('SELECT wearing_control.invitation_redeem(:h,:i,:s)'),
+        assert db.scalar(text('SELECT pajio_control.invitation_redeem(:h,:i,:s)'),
             {'h':code_hash(code),'i':pg['issuer'],'s':'new'}) is None
     assert InvitationStore(pg['web']).check_code(code,issuer=pg['issuer']) == code_hash(code)

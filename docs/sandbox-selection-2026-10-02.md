@@ -1,4 +1,4 @@
-# Wearing 云端沙盒选型与接入边界
+# Pajio 云端沙盒选型与接入边界
 
 核查日期：2026-10-02。范围：官方文档、仓库元数据及固定提交的文档；未开通服务、创建沙盒、调用模型或实测桌面。推荐进入开发的基线见[整合落地总方案](implementation-blueprint.md)。
 
@@ -12,7 +12,7 @@ E2B Desktop 是云桌面的替换候选。OpenSandbox 是未来自托管候选�
 
 ## 核查到的事实
 
-| 项目 | 官方资料确认的内容 | 对 Wearing 的影响 |
+| 项目 | 官方资料确认的内容 | 对 Pajio 的影响 |
 | --- | --- | --- |
 | Hermes terminal backend | 有 Docker、SSH、Modal、Daytona 等后端；Daytona 的持久模式使用停止与再次启动 | 命令执行先复用；文件保留与进程继续运行分别验收 |
 | Hermes MCP | 支持 stdio / HTTP MCP、工具发现与工具筛选 | 可接现成 Daytona 工具服务，无须先写原生 Agent 引擎适配器 |
@@ -29,7 +29,7 @@ E2B Desktop 是云桌面的替换候选。OpenSandbox 是未来自托管候选�
 
 1. 固定 Hermes、Daytona CLI / SDK 和镜像版本，记录所用云端区域与账户额度。
 2. 在独立 Hermes 配置中接入官方 Daytona MCP，读取实际工具清单。优先暴露本轮需要的工具，检查工具调用目标。
-3. 建立一个测试 sandbox_id，让进程、文件、桌面与人工查看指向同一实例；将其与 Wearing 的 resource_id 关联。
+3. 建立一个测试 sandbox_id，让进程、文件、桌面与人工查看指向同一实例；将其与 Pajio 的 resource_id 关联。
 4. 先完成文件与公开网页任务，再验证停机重启、接管与断线。MCP 若缺少必要能力，用官方 SDK 补该处。
 5. 由一个确定的组件管理该沙盒的创建、启动、停止和清理。原生 terminal backend 与额外连接器不能分别创建实例却被界面显示成同一台电脑。
 6. 验证每种动作的执行位置。云端任务执行失败时，返回失败与原因，不自动改到用户本机执行。

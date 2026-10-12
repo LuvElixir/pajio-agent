@@ -6,12 +6,12 @@ import json
 import httpx
 import pytest
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.goals import GoalBook, GoalCoordinator, GoalError, parse_report
-from wearing.hermes import HermesClient
-from wearing.service import TaskError, TaskService
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.goals import GoalBook, GoalCoordinator, GoalError, parse_report
+from pajio.hermes import HermesClient
+from pajio.service import TaskError, TaskService
+from pajio.store import Store
 
 
 def report(summary="已确认一个输入条件", decision="continue", **changes):
@@ -311,15 +311,15 @@ async def test_api_scoping_csrf_and_conversation_receipts(tmp_path):
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         data = {"objective": "测试持续目标", "boundaries": "仅使用测试数据", "success_criteria": "有真实测试记录", "max_steps": 2}
         assert (await client.post("/api/goals", json=data)).status_code == 403
-        client.headers["X-Wearing-Token"] = (await client.get("/api/bootstrap")).json()["token"]
+        client.headers["X-Pajio-Token"] = (await client.get("/api/bootstrap")).json()["token"]
         assert (await client.post("/api/goals", json={**data, "boundaries": " "})).status_code == 422
         assert (await client.post("/api/goals", json={**data, "max_steps": 1001})).status_code == 422
         goal = (await client.post("/api/goals", json=data)).json()
         other = app.state.store.save_identity("别的身份")
         for path in [f'/api/goals/{goal["id"]}', "/api/goals"]:
-            response = await client.get(path, headers={"X-Wearing-Identity": other["id"]})
+            response = await client.get(path, headers={"X-Pajio-Identity": other["id"]})
             assert "测试持续目标" not in response.text
-        response = await client.post(f'/api/goals/{goal["id"]}/control', headers={"X-Wearing-Identity": other["id"]}, json={"revision": 1, "action": "resume"})
+        response = await client.post(f'/api/goals/{goal["id"]}/control', headers={"X-Pajio-Identity": other["id"]}, json={"revision": 1, "action": "resume"})
         assert response.status_code == 409
         response = await client.post(f'/api/goals/{goal["id"]}/control', json={"revision": 1, "action": "pause", "add_steps": 1})
         assert response.status_code == 422
@@ -333,7 +333,7 @@ async def test_api_scoping_csrf_and_conversation_receipts(tmp_path):
         assert messages[0]["turn"]["output"].startswith("已确认一个输入条件")
         assert '"decision"' not in messages[0]["turn"]["output"]
         assert "payload" not in messages[0]["turn"]
-        assert (await client.get("/api/conversation", headers={"X-Wearing-Identity": other["id"]})).json() == []
+        assert (await client.get("/api/conversation", headers={"X-Pajio-Identity": other["id"]})).json() == []
     await hermes.close()
 
 
@@ -446,7 +446,7 @@ async def test_goal_message_api_scopes_revision_validation_and_cancel_queue(tmp_
     app.state.service.client_resolver = None
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as c:
         token = (await c.get('/api/bootstrap')).json()['token']
-        headers = {'X-Wearing-Token': token}
+        headers = {'X-Pajio-Token': token}
         g = (await c.post('/api/goals', headers=headers, json={'objective':'测试目标关联', 'boundaries':'测试资料', 'success_criteria':'可核对输入'})).json()
         bad = await c.post('/api/conversation', headers=headers, json={'content':'这是一条补充', 'goal_mode':'note'})
         assert bad.status_code == 422
@@ -463,7 +463,7 @@ async def test_goal_message_api_scopes_revision_validation_and_cancel_queue(tmp_
         assert linked['goal_mode'] == 'discuss'
         assert linked['goal_title'] == g['objective']
         other = app.state.store.save_identity('国外场景')
-        cross = await c.post('/api/conversation', headers={**headers,'X-Wearing-Identity':other['id']}, json={'content':'不能跨身份', 'goal_id':g['id']})
+        cross = await c.post('/api/conversation', headers={**headers,'X-Pajio-Identity':other['id']}, json={'content':'不能跨身份', 'goal_id':g['id']})
         assert cross.status_code == 409
         forbidden = await c.post(f'/api/tasks/{task_id}/cancel-message', json={})
         assert forbidden.status_code == 403

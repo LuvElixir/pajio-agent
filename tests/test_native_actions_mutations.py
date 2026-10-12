@@ -4,7 +4,7 @@ import copy
 import pytest
 
 from test_native_actions import env, PHONE, SECRET, SESSION, POLICY, request, claim, finish
-from wearing.native_actions import NativeActions, NativeActionError
+from pajio.native_actions import NativeActions, NativeActionError
 
 
 def enable(book):

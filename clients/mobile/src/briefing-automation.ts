@@ -23,10 +23,10 @@ export class BriefAutomationClient {
   if(!this.active()||this.signal?.aborted)throw new ApiError('当前自动简报连接已停止。',0);
   const controller=new AbortController(),abort=()=>controller.abort(),timer=setTimeout(abort,15000);this.signal?.addEventListener('abort',abort);if(this.signal?.aborted)abort();
   const valid=()=>this.active()&&!this.signal?.aborted&&!controller.signal.aborted;
-  try{const headers={...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity};let token='';
+  try{const headers={...connectionHeaders(this.connection),'X-Pajio-Identity':this.connection.identity};let token='';
    if(body){const boot=await this.fetcher(new URL('/api/bootstrap',connectionEndpoint(this.connection)),{signal:controller.signal,redirect:'error',headers});const value=await boot.json();if(!valid()||!boot.ok||typeof value.token!=='string'||!value.token||!value.identities?.some((i:{id?:string})=>i.id===this.connection.identity))throw fail();token=value.token;}
    if(!valid())throw new ApiError('当前自动简报连接已停止。',0);
-   const response=await this.fetcher(new URL('/api/briefing-automation',connectionEndpoint(this.connection)),{method:body?'POST':'GET',signal:controller.signal,redirect:'error',headers:{...headers,...(body?{'Content-Type':'application/json','X-Wearing-Token':token}:{})},...(body?{body:JSON.stringify(body)}:{})});const value=await response.json();if(!valid())throw new ApiError('当前自动简报连接已停止。',0);if(!response.ok)throw new ApiError(typeof value.detail==='string'?value.detail:'自动简报设置尚未读取或保存。',response.status);return value;
+   const response=await this.fetcher(new URL('/api/briefing-automation',connectionEndpoint(this.connection)),{method:body?'POST':'GET',signal:controller.signal,redirect:'error',headers:{...headers,...(body?{'Content-Type':'application/json','X-Pajio-Token':token}:{})},...(body?{body:JSON.stringify(body)}:{})});const value=await response.json();if(!valid())throw new ApiError('当前自动简报连接已停止。',0);if(!response.ok)throw new ApiError(typeof value.detail==='string'?value.detail:'自动简报设置尚未读取或保存。',response.status);return value;
   }finally{clearTimeout(timer);this.signal?.removeEventListener('abort',abort);}
  }
  async load(){return autoSettings(await this.request(),this.connection.identity);}

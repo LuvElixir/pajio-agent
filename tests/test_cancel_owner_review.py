@@ -4,10 +4,10 @@ import asyncio
 import httpx
 import pytest
 
-from wearing.app import create_app
-from wearing.cloud.worker import TenantBoundary
-from wearing.config import Settings
-from wearing.service import TaskError
+from pajio.app import create_app
+from pajio.cloud.worker import TenantBoundary
+from pajio.config import Settings
+from pajio.service import TaskError
 
 A, B = "a" * 64, "b" * 64
 
@@ -46,8 +46,8 @@ async def test_foreign_owner_cannot_cancel_queued_task_through_http_or_service(t
         await app.state.service.cancel_message(task, identity_id='daily', owner_scope=B)
     assert snapshot(app.state.store, task) == before
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers={
-        'Authorization':'Bearer fixture-key','X-Wearing-Tenant':'fixture','X-Pajio-Storage-Scope':B}) as client:
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        'Authorization':'Bearer fixture-key','X-Pajio-Tenant':'fixture','X-Pajio-Storage-Scope':B}) as client:
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         assert (await client.post(f'/api/tasks/{task}/cancel-message')).status_code == 404
         assert snapshot(app.state.store, task) == before
         client.headers['X-Pajio-Storage-Scope'] = A
@@ -69,8 +69,8 @@ async def test_owner_added_while_waiting_for_service_lock_is_rechecked_before_mu
         return await cancel(*args, **kwargs)
     service.cancel_message = observe
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers={
-        'Authorization':'Bearer fixture-key','X-Wearing-Tenant':'fixture','X-Pajio-Storage-Scope':B}) as client:
-        client.headers['X-Wearing-Token'] = (await client.get('/api/bootstrap')).json()['token']
+        'Authorization':'Bearer fixture-key','X-Pajio-Tenant':'fixture','X-Pajio-Storage-Scope':B}) as client:
+        client.headers['X-Pajio-Token'] = (await client.get('/api/bootstrap')).json()['token']
         async with service.lock:
             pending = asyncio.create_task(client.post(f'/api/tasks/{task}/cancel-message'))
             await asyncio.wait_for(entered.wait(), 2)

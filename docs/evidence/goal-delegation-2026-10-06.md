@@ -4,7 +4,7 @@
 
 ## 交付
 
-- Todo、笔记空态移除「和 Wearing 说一句」及手动新建入口；查看、纠正、完成已有记录保留。App 源码同步移除 Todo 的新建入口；日历本轮不变。
+- Todo、笔记空态移除「和 Pajio 说一句」及手动新建入口；查看、纠正、完成已有记录保留。App 源码同步移除 Todo 的新建入口；日历本轮不变。
 - 新增通用 `goal_create` 工具。Agent 在普通对话中先查已有目标，再整理目标、授权范围、阶段验收和轮次，实际保存后回告。明确要求持续推进时可一并安排开始，只要求记下则保持暂停。
 - 复用 GoalBook、TaskService 和 GoalCoordinator。当前对话结束后由原执行器推进，结果回到原身份对话，没有另造执行循环或旅游等固定流程。
 - 创建与请求回执原子提交；同一 key 不同规格拒绝；同轮同规格换 key 仍去重；重试不重新启动已暂停目标、不加轮。来源从唯一的活动用户对话取得，后台目标、安排及已有目标讨论不能自行新增委托。
@@ -48,4 +48,4 @@
 
 ![笔记回看](images/goal-delegation-20261006/notes-review.png)
 
-私有详细回执：`.wearing/qa/goal-delegation-20261006/live-check.json`、`recheck/live-check.json`、`local-upgrade.json`。不包含到公开文档的凭据。
+私有详细回执：`.pajio/qa/goal-delegation-20261006/live-check.json`、`recheck/live-check.json`、`local-upgrade.json`。不包含到公开文档的凭据。

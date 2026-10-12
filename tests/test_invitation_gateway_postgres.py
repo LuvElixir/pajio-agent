@@ -11,8 +11,8 @@ from sqlalchemy.exc import DBAPIError
 from starlette.requests import Request
 
 from test_control_postgres import pg
-from wearing.cloud.control import OIDCStateCache, digest, states
-from wearing.cloud.join import JoinFlow
+from pajio.cloud.control import OIDCStateCache, digest, states
+from pajio.cloud.join import JoinFlow
 
 
 @pytest.fixture
@@ -31,7 +31,7 @@ def test_rate_uses_delete_insert_without_web_update_grant(pg,flow):
     with pg['web'].transaction(state_hash=digest('join-rate:'+binding)) as db:
         assert db.scalar(select(states.c.value))=='24'
     with pytest.raises(DBAPIError),pg['web'].transaction(state_hash=digest('join-rate:'+binding)) as db:
-        db.execute(text("UPDATE wearing_control.wearing_oidc_states SET value='0'"))
+        db.execute(text("UPDATE pajio_control.pajio_oidc_states SET value='0'"))
 
 
 def test_rate_concurrent_requests_admit_exactly_24(pg,flow):

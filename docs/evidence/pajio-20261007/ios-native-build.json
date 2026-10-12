@@ -23,7 +23,7 @@
     "initial_artifact": {
       "format": "Mach-O arm64 simulator",
       "bundle_display_name": "Pajio",
-      "bundle_identifier": "io.luckyloading.wearing.mobile",
+      "bundle_identifier": "io.luckyloading.pajio.mobile",
       "minimum_ios": "16.4",
       "hermes_bytecode_version": 98,
       "assets_car": true,
@@ -159,19 +159,18 @@
     "native_reference_files_checked": 356,
     "references_to_active_source": 0,
     "app_name": "Pajio",
-    "bundle_identifier": "io.luckyloading.wearing.mobile",
+    "bundle_identifier": "io.luckyloading.pajio.mobile",
     "schemes": [
       "pajio",
-      "wearing",
-      "io.luckyloading.wearing.mobile"
+      "io.luckyloading.pajio.mobile"
     ],
     "icon": "1024x1024 opaque",
     "splash": "72/144/216 px light and dark"
   },
   "completed_at": "2026-10-07T19:06:10.021568+08:00",
   "artifact": {
-    "app_path": "/Users/archieliew/Documents/facet/artifacts/pajio-20261007/ios-simulator/Pajio.app",
-    "archive_path": "/Users/archieliew/Documents/facet/artifacts/pajio-20261007/ios-simulator/Pajio-ios-simulator-arm64.zip",
+    "app_path": "/Users/archieliew/Documents/pajio/artifacts/pajio-20261007/ios-simulator/Pajio.app",
+    "archive_path": "/Users/archieliew/Documents/pajio/artifacts/pajio-20261007/ios-simulator/Pajio-ios-simulator-arm64.zip",
     "archive_bytes": 26586403,
     "archive_sha256": "4af8b6b7e3e9674eced8593d77133e32037c470c646cb54f21ac5f25c802bbf9",
     "app_files": 92,

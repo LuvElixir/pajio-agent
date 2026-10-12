@@ -97,8 +97,8 @@ export class DeviceFilesApi {
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 30000);
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method: body === undefined ? 'GET' : 'POST',
-        redirect: 'error', signal: controller.signal, headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity,
-          ...(body === undefined ? {} : {'X-Wearing-Token': this.token, 'Content-Type': 'application/json'})},
+        redirect: 'error', signal: controller.signal, headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity,
+          ...(body === undefined ? {} : {'X-Pajio-Token': this.token, 'Content-Type': 'application/json'})},
         ...(body === undefined ? {} : {body: JSON.stringify(body)})});
       const data: unknown = await response.json().catch(() => null);
       if (!response.ok) {

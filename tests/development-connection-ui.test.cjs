@@ -2,8 +2,8 @@
 const {test}=require("node:test");
 const assert=require("node:assert/strict");
 const fs=require("node:fs");
-const app=fs.readFileSync("src/wearing/web/app.js","utf8");
-const html=fs.readFileSync("src/wearing/web/index.html","utf8");
+const app=fs.readFileSync("src/pajio/web/app.js","utf8");
+const html=fs.readFileSync("src/pajio/web/index.html","utf8");
 const source=app.slice(app.indexOf("let developmentConnectionEnabled="),app.indexOf('$("inspect-host").addEventListener'));
 function harness(over={},hook){
   const state={deployment:"local",identityEpoch:1,...over.state};
@@ -26,7 +26,7 @@ test("address and key inputs only exist inside an inert development template",()
   assert.doesNotMatch(active,/id="(?:connection-form|hermes-url|hermes-key)"/);
   assert.match(html,/<template id="development-connection-template">/);
   assert.match(app,/configureDevelopmentConnection\(bootstrap\);configureDeployment\(\)/);
-  const views=fs.readFileSync("src/wearing/web/views.js","utf8");
+  const views=fs.readFileSync("src/pajio/web/views.js","utf8");
   assert.doesNotMatch(views,/切换服务地址/);assert.match(views,/row\("身份管理", "切换对话、记忆与文件所属身份"/);
 });
 test("cloud, unknown deployment, remote host, or absent explicit dev opt-in never mount the form",()=>{

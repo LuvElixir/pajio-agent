@@ -7,18 +7,18 @@ import httpx
 import pytest
 import yaml
 
-from wearing.app import create_app
-from wearing.config import Settings, write_private_json
-from wearing.hermes import HermesClient
-from wearing.profile import prepare_profile
-from wearing.runtime import HermesRuntime, HERMES_REVISION, RuntimeError
-from wearing.service import TaskService, TaskError
-from wearing.store import Store, IdentityError
+from pajio.app import create_app
+from pajio.config import Settings, write_private_json
+from pajio.hermes import HermesClient
+from pajio.profile import prepare_profile
+from pajio.runtime import HermesRuntime, HERMES_REVISION, RuntimeError
+from pajio.service import TaskService, TaskError
+from pajio.store import Store, IdentityError
 from test_lifecycle import HermesStub
 
 
 def test_migration_keeps_legacy_session_tasks_events_and_is_repeatable(tmp_path):
-    path = tmp_path / 'wearing.sqlite3'
+    path = tmp_path / 'pajio.sqlite3'
     # The backup from this task is not a fixture: construct the pre-identity schema.
     with sqlite3.connect(path) as db:
         db.executescript('''
@@ -69,12 +69,12 @@ async def test_api_never_reads_or_mutates_another_identity_task_or_file(tmp_path
     app = create_app(Settings(tmp_path))
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
         bootstrap = (await client.get('/api/bootstrap')).json()
-        client.headers['X-Wearing-Token'] = bootstrap['token']
+        client.headers['X-Pajio-Token'] = bootstrap['token']
         original = (await client.post('/api/conversation', json={'content':'private daily idea'})).json()['task']
         created = await client.post('/api/identities', json={'name':'出海','region':'international'})
         assert created.status_code == 201
         other = created.json()['id']
-        client.headers['X-Wearing-Identity'] = other
+        client.headers['X-Pajio-Identity'] = other
         assert (await client.get('/api/conversation')).json() == []
         assert (await client.get('/api/tasks')).json() == []
         for method, suffix in [('GET',''),('POST','/start'),('POST','/stop'),('POST','/refresh'),('POST','/verify'),('POST','/approval'),('POST','/resolve')]:
@@ -94,10 +94,10 @@ async def test_api_never_reads_or_mutates_another_identity_task_or_file(tmp_path
         assert (await client.get('/api/workspace/file?path=daily.txt')).status_code == 404
         assert (await client.get('/api/workspace/file?path=shop.txt')).text == 'shop-only'
         assert (await client.get('/api/workspace/file?identity=daily&path=daily.txt')).status_code == 409
-        client.headers.pop('X-Wearing-Identity')
+        client.headers.pop('X-Pajio-Identity')
         assert (await client.get(f'/api/workspace/file?identity={other}&path=shop.txt')).text == 'shop-only'
         assert len((await client.get('/api/conversation')).json()) == 1
-        client.headers['X-Wearing-Identity']='nonexistent'
+        client.headers['X-Pajio-Identity']='nonexistent'
         assert (await client.get('/api/conversation')).status_code == 404
     await app.state.service.hermes.close()
 
@@ -146,5 +146,5 @@ def test_new_profile_reuses_install_and_model_but_not_memory_devices_or_secrets(
     assert profile['toolsets']==['memory','session_search','web','todo','skills','vision']
     assert not other.status()['computer']['enrolled']
     assert other.env()['HERMES_HOME']==str(other.home)
-    assert other.env()['WEARING_MODEL_ENV']==str(default.home/'.env')
+    assert other.env()['PAJIO_MODEL_ENV']==str(default.home/'.env')
     with pytest.raises(RuntimeError):HermesRuntime(tmp_path,'../../escape')

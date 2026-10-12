@@ -5,10 +5,10 @@ import subprocess
 import pytest
 import yaml
 
-from wearing import android, mobile
-from wearing.config import write_private_json
-from wearing.profile import prepare_profile
-from wearing.runtime import HermesRuntime, RuntimeError
+from pajio import android, mobile
+from pajio.config import write_private_json
+from pajio.profile import prepare_profile
+from pajio.runtime import HermesRuntime, RuntimeError
 
 
 async def test_phone_binding_requires_authorized_selected_device(tmp_path, monkeypatch):
@@ -40,17 +40,17 @@ def test_phone_profile_keeps_only_explicit_connectors_active(tmp_path):
     files, phone = {"command": "files"}, {"command": "phone"}
     result = prepare_profile(home, tmp_path / "source", files, phone)
     config = yaml.safe_load((home / "config.yaml").read_text())
-    assert result["toolsets"] == ["memory", "session_search", "web", "todo", "skills", "vision", "wearing_files", "wearing_phone"]
+    assert result["toolsets"] == ["memory", "session_search", "web", "todo", "skills", "vision", "pajio_files", "pajio_phone"]
     assert config["platform_toolsets"]["api_server"] == result["toolsets"]
     assert config["platform_toolsets"]["cli"] == ["no_mcp"]
     assert config["mcp_servers"]["unrelated"] == {"command": "keep-me"}
     prepare_profile(home, tmp_path / "source", files)
-    assert yaml.safe_load((home / "config.yaml").read_text())["platform_toolsets"]["api_server"] == ["memory", "session_search", "web", "todo", "skills", "vision", "wearing_files"]
+    assert yaml.safe_load((home / "config.yaml").read_text())["platform_toolsets"]["api_server"] == ["memory", "session_search", "web", "todo", "skills", "vision", "pajio_files"]
 
 
 def test_real_mobile_proxy_scopes_schemas_and_blocks_before_device_access(tmp_path):
     """Real MCP protocol, installed driver, synthetic binding; never calls a phone."""
-    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".wearing")
+    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".pajio")
     package = mobile.installed(runtime.root)
     if not runtime.python.is_file() or not package:
         pytest.skip("Prepare the pinned mobile connector to run this integration contract")
@@ -155,7 +155,7 @@ async def main():
     print('MCP multi-device routing, independent locks, pause, offline and receipt privacy passed')
 asyncio.run(main())
 ''')
-    proxy = Path(__file__).resolve().parents[1] / "src/wearing/phone_proxy.py"
+    proxy = Path(__file__).resolve().parents[1] / "src/pajio/phone_proxy.py"
     result = subprocess.run([str(runtime.python), str(script), str(tmp_path), str(proxy)], capture_output=True, text=True, timeout=45)
     assert result.returncode == 0, result.stdout + result.stderr[-4000:]
 
@@ -189,7 +189,7 @@ def test_registry_corruption_is_not_overwritten(tmp_path):
 
 
 def test_native_field_guard_requires_fresh_unique_editable_nonpassword():
-    from wearing.android_text import focused_field
+    from pajio.android_text import focused_field
     xml = '<hierarchy><node class="miui.widget.ClearableEditText" resource-id="android:id/input" package="com.android.settings" focused="true" enabled="true" password="false" text="旧文字" /></hierarchy>'
     assert focused_field(xml, '旧文字')['resource-id'] == 'android:id/input'
     for changed in (xml.replace('focused="true"', 'focused="false"'),
@@ -207,7 +207,7 @@ def test_native_field_guard_requires_fresh_unique_editable_nonpassword():
 def test_native_write_is_single_attempt_with_readback_and_cleanup(monkeypatch, failure):
     import sys
     from types import SimpleNamespace
-    from wearing.android_text import replace_text
+    from pajio.android_text import replace_text
     calls = []
     xml = '<hierarchy><node class="android.widget.EditText" resource-id="app:id/input" package="app" focused="true" enabled="true" password="false" text="before" /></hierarchy>'
     values = iter(['before', 'wrong' if failure == 'mismatch' else '你好'])
@@ -231,7 +231,7 @@ def test_native_write_is_single_attempt_with_readback_and_cleanup(monkeypatch, f
 
 
 def test_native_observation_returns_grounded_coordinates_and_masks_password():
-    from wearing.android_text import describe_hierarchy
+    from pajio.android_text import describe_hierarchy
     xml = '<hierarchy><node class="android.widget.EditText" text="secret" password="true" resource-id="app:id/pw" package="app" bounds="[10,20][110,60]" focused="true" enabled="true"/><node text="外卖" bounds="[30,80][130,120]" clickable="true" enabled="true"/><node text="hidden" bounds="[0,0][0,0]"/></hierarchy>'
     result = describe_hierarchy(xml)
     assert len(result['elements']) == 2
@@ -246,9 +246,9 @@ def test_native_observation_returns_grounded_coordinates_and_masks_password():
 def test_observation_is_bounded_single_read_and_reports_incomplete_screen(monkeypatch, mode):
     import sys
     from types import SimpleNamespace
-    from wearing.android_text import observe
+    from pajio.android_text import observe
     calls = []
-    monkeypatch.setattr('wearing.android_text.time.sleep', lambda _: None)
+    monkeypatch.setattr('pajio.android_text.time.sleep', lambda _: None)
     device = SimpleNamespace(_dev=object(), stop_uiautomator=lambda: calls.append('cleanup'))
     def read(dev, port, method, params, timeout, debug):
         calls.append('read')
@@ -273,12 +273,12 @@ def test_observation_is_bounded_single_read_and_reports_incomplete_screen(monkey
 def test_observation_waits_for_empty_transition_without_repeating_actions(monkeypatch):
     import sys
     from types import SimpleNamespace
-    from wearing.android_text import observe
+    from pajio.android_text import observe
     calls = []
     device = SimpleNamespace(_dev=object(), stop_uiautomator=lambda: calls.append('cleanup'))
     screens = iter(['<hierarchy/>', '<hierarchy><node text="已加载" package="app" bounds="[0,0][20,20]"/></hierarchy>'])
     def read(*args): calls.append('read'); return next(screens)
-    monkeypatch.setattr('wearing.android_text.time.sleep', lambda _: None)
+    monkeypatch.setattr('pajio.android_text.time.sleep', lambda _: None)
     monkeypatch.setitem(sys.modules, 'uiautomator2', SimpleNamespace(connect=lambda *a, **k: device))
     monkeypatch.setitem(sys.modules, 'uiautomator2.core', SimpleNamespace(_jsonrpc_call=read))
     result = observe({'serial': 'synthetic'})
@@ -290,7 +290,7 @@ def test_observation_waits_for_empty_transition_without_repeating_actions(monkey
 def test_decorated_input_reports_readback_without_claiming_verified_or_retyping(monkeypatch, private):
     import sys
     from types import SimpleNamespace
-    from wearing.android_text import replace_text
+    from pajio.android_text import replace_text
     before = '<hierarchy><node class="android.widget.EditText" resource-id="app:id/input" package="app" focused="true" enabled="true" password="false" text="搜索, " /></hierarchy>'
     after = before.replace('搜索, ', '搜索, 泉州').replace('password="false"', f'password="{str(private).lower()}"')
     trees, values = iter([before, after]), iter(['搜索, ', '搜索, 泉州'])

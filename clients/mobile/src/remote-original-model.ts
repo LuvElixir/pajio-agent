@@ -15,7 +15,7 @@ export function remoteOriginalKind(asset: RemoteAsset): 'image' | 'audio' | 'fil
 export function remoteOriginalSource(connection: Connection, asset: RemoteAsset): OriginalSource {
   if (!/^asset_[A-Za-z0-9_-]{1,100}$/.test(asset.id)) throw new ApiError('原件标识无效，请刷新记录。', 422);
   return {uri: new URL('/api/life/assets/' + encodeURIComponent(asset.id), connectionEndpoint(connection)).toString(),
-    headers: {...connectionHeaders(connection), 'X-Wearing-Identity': connection.identity}};
+    headers: {...connectionHeaders(connection), 'X-Pajio-Identity': connection.identity}};
 }
 
 export function audioOriginalState(status: {error?: string | null; playbackState: string; isLoaded: boolean; isBuffering: boolean; playing: boolean}, localError = '') {

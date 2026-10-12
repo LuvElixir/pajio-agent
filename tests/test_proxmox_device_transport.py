@@ -7,8 +7,8 @@ import sys
 
 import pytest
 
-from wearing.cloud.device_provisioning import DeviceSpec, Owner, Policy, Template, fingerprint
-from wearing.cloud.proxmox_devices import REMOTE
+from pajio.cloud.device_provisioning import DeviceSpec, Owner, Policy, Template, fingerprint
+from pajio.cloud.proxmox_devices import REMOTE
 
 
 @pytest.fixture
@@ -184,7 +184,7 @@ def test_remote_host_fence_rejects_binding_reuse_from_another_ledger(host, reuse
 
 
 def test_exact_startup_transport_only_sets_reviewed_onboot(host, monkeypatch):
-    from wearing.cloud.device_delivery_ssh import STARTUP_REMOTE
+    from pajio.cloud.device_delivery_ssh import STARTUP_REMOTE
     execute, configs, states, mutations, item, owner, digest = host
     execute('clone_stopped')
     states[item.vmid] = 'running'
@@ -204,7 +204,7 @@ def test_exact_startup_transport_only_sets_reviewed_onboot(host, monkeypatch):
 
 @pytest.mark.parametrize('change', ['owner', 'lock', 'digest', 'unprivileged'])
 def test_startup_transport_rejects_changed_scope_before_mutation(host, monkeypatch, change):
-    from wearing.cloud.device_delivery_ssh import STARTUP_REMOTE
+    from pajio.cloud.device_delivery_ssh import STARTUP_REMOTE
     execute, configs, _, mutations, item, owner, digest = host
     execute('clone_stopped')
     monkeypatch.setattr(sys.modules[__name__], 'REMOTE', STARTUP_REMOTE)

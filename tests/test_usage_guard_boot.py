@@ -6,8 +6,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from wearing import capture_bridge, engine_runner, usage_guard
-from wearing.usage import UsageError
+from pajio import capture_bridge, engine_runner, usage_guard
+from pajio.usage import UsageError
 
 
 @pytest.mark.parametrize('bridge', [capture_bridge, engine_runner])
@@ -23,7 +23,7 @@ def test_bridge_captures_authority_before_provider_dotenv(tmp_path, monkeypatch,
                    PAJIO_RECALL_DATA_DIR=str(root), PAJIO_RECALL_IDENTITY=identity, PAJIO_RECALL_LOCAL='0')
     for key, value in initial.items():
         monkeypatch.setenv(key, value)
-    monkeypatch.delenv('WEARING_MODEL_ENV', raising=False)
+    monkeypatch.delenv('PAJIO_MODEL_ENV', raising=False)
     monkeypatch.setattr(sys, 'argv', ['bridge', str(tmp_path / 'pinned-source')])
     monkeypatch.setattr(sys, 'path', list(sys.path))
     captured = []
@@ -46,8 +46,8 @@ def test_bridge_captures_authority_before_provider_dotenv(tmp_path, monkeypatch,
         async def serve():
             assert len(captured) == 1
         monkeypatch.setattr(bridge, 'serve', serve)
-        monkeypatch.setattr('wearing.confirmation_guard.install_confirmation_guard', lambda: True)
-        monkeypatch.setattr('wearing.session_recall_guard.install_session_recall_guard', lambda _: True)
+        monkeypatch.setattr('pajio.confirmation_guard.install_confirmation_guard', lambda: True)
+        monkeypatch.setattr('pajio.session_recall_guard.install_session_recall_guard', lambda _: True)
     else:
         monkeypatch.setattr(sys, 'stdin', io.StringIO('{}'))
         monkeypatch.setattr(bridge, 'organize', lambda _: {'output': 'synthetic'})

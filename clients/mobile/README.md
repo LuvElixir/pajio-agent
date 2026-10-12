@@ -1,6 +1,6 @@
-# Wearing mobile
+# Pajio mobile
 
-React Native + Expo 57 的手机客户端开发基础。沿用 Wearing 的角色、字标及同一 `/api/life`、`/api/captures` 记录，不另建数据后台。
+React Native + Expo 57 的手机客户端开发基础。沿用 Pajio 的角色、字标及同一 `/api/life`、`/api/captures` 记录，不另建数据后台。
 
 已在小米 6X Android 9 的 Expo Go 57.0.9 中运行，验证拍照、录音、离线重启与恢复同步；也可运行同源码网页预览；Android/iOS 的 JS/Hermes 运行资源已导出，尚未交付 APK/IPA。完整验收与限制见 [手机客户端](../../docs/mobile-client.md)。
 
@@ -13,7 +13,7 @@ npm run export:web -- --max-workers 2
 npm run preview
 ```
 
-默认预览 http://127.0.0.1:8787/ 只代理本机 http://127.0.0.1:8765/。需要先启动 Wearing 服务。预览服务只监听回环地址，不能作为公网入口。
+默认预览 http://127.0.0.1:8787/ 只代理本机 http://127.0.0.1:8765/。需要先启动 Pajio 服务。预览服务只监听回环地址，不能作为公网入口。
 
 ```sh
 npm run export:android -- --max-workers 2
@@ -28,7 +28,7 @@ npm run export:ios -- --max-workers 2
 
 ## 已接上的测试手机
 
-当前使用官方 Expo Go 开发宿主，电脑保留 Metro 8081 与本地 Wearing 8765。手机可从 Expo Go 最近项目打开 Wearing。USB 断开后无法访问本机服务，已记下的内容会留在本机，重新接通后在前台同步。
+当前使用官方 Expo Go 开发宿主，电脑保留 Metro 8081 与本地 Pajio 8765。手机可从 Expo Go 最近项目打开 Pajio。USB 断开后无法访问本机服务，已记下的内容会留在本机，重新接通后在前台同步。
 
 ```sh
 node node_modules/expo/bin/cli start --localhost --port 8081 --go --max-workers 2
@@ -48,8 +48,8 @@ adb shell am start -a android.intent.action.VIEW -d exp://127.0.0.1:8081
 在仓库根目录启动已经配置的后端与开发桥；将示例 IP 换为 Mac 当前 Wi-Fi 的私人 IPv4。配对文件必须使用新的文件名。
 
 ```sh
-.venv/bin/wearing serve --port 8765 --data-dir .wearing --engine-autostart
-.venv/bin/python -m wearing.dev_mobile --listen 192.168.1.25 --port 8795 --upstream http://127.0.0.1:8765 --identity daily --pairing-file .wearing/mobile-dev/new-session.json
+.venv/bin/pajio serve --port 8765 --data-dir .pajio --engine-autostart
+.venv/bin/python -m pajio.dev_mobile --listen 192.168.1.25 --port 8795 --upstream http://127.0.0.1:8765 --identity daily --pairing-file .pajio/mobile-dev/new-session.json
 ```
 
 在 `clients/mobile` 启动 Metro 并本地生成配对二维码。二维码含临时凭据，不应分享或提交 Git。
@@ -58,15 +58,15 @@ adb shell am start -a android.intent.action.VIEW -d exp://127.0.0.1:8081
 
 ```sh
 REACT_NATIVE_PACKAGER_HOSTNAME=192.168.1.25 ./node_modules/.bin/expo start --go --lan --port 8081
-node scripts/iphone-pairing-qr.cjs ../../.wearing/mobile-dev/new-session.json ../../.wearing/mobile-dev/iphone.pbm exp://192.168.1.25:8081
+node scripts/iphone-pairing-qr.cjs ../../.pajio/mobile-dev/new-session.json ../../.pajio/mobile-dev/iphone.pbm exp://192.168.1.25:8081
 ```
 
 PBM 是可转换为 PNG 的本地二维码图像，未调用外部二维码服务。手机用相机扫描后，Expo Go 显示地址、身份与到期时间，用户点连接后才保存配对。首次麦克风权限打断长按时，允许后再按住一次。
 
 开发桥四小时到期，所有路径均需凭据，只允许指定身份。HTTP 不提供链路加密，仅用于此次可信 Wi-Fi；普通连接和生产版仍要求 HTTPS。Mac 必须保持运行，手机离开该 Wi-Fi 后不能继续访问此开发服务。真机结论及独立服务端证据见 [iPhone 语音验收](../../docs/evidence/iphone-voice-2026-10-07.md)。
 
-2026-10-07 新增 iOS 开发配对的边录边传：运行时探测 Expo AudioStream，单路 PCM 采音同时保存私有 WAV 与发送实时小块；实际采样率校验后转换为 16 kHz 单声道 int16。松手返回整句可编辑文字，无实时字幕。取消区暂停发送，移回顺序续传；取消/后台关闭会话，失败保留原件，由用户显式重试文件路径。旧运行时、Android、网页和普通云连接保留 M4A/浏览器文件识别。供应商 Key 始终留在 Wearing 后端。
+2026-10-07 新增 iOS 开发配对的边录边传：运行时探测 Expo AudioStream，单路 PCM 采音同时保存私有 WAV 与发送实时小块；实际采样率校验后转换为 16 kHz 单声道 int16。松手返回整句可编辑文字，无实时字幕。取消区暂停发送，移回顺序续传；取消/后台关闭会话，失败保留原件，由用户显式重试文件路径。旧运行时、Android、网页和普通云连接保留 M4A/浏览器文件识别。供应商 Key 始终留在 Pajio 后端。
 
 [豆包接入与测量](../../docs/evidence/voice-cloud-asr-2026-10-07.md) 区分了代码、完整服务链路与真实手机验收。iOS export 只验证 JS/Hermes 资源；本机停止后 150 ms drain 也不是原生尾包保证。
 
-排障先读 Metro 与 Wearing 服务日志。本轮已经从真机收到脱敏阶段诊断，但具体 Expo Go 版本是否将每类日志回传需要分别核对；服务端日志可见识别耗时和安全错误码。此能力不等于屏幕共享或发布版崩溃监控，不能承诺自动看到所有手机报错。
+排障先读 Metro 与 Pajio 服务日志。本轮已经从真机收到脱敏阶段诊断，但具体 Expo Go 版本是否将每类日志回传需要分别核对；服务端日志可见识别耗时和安全错误码。此能力不等于屏幕共享或发布版崩溃监控，不能承诺自动看到所有手机报错。

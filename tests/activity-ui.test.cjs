@@ -3,7 +3,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 
-const source=fs.readFileSync('src/wearing/web/activity.js','utf8');
+const source=fs.readFileSync('src/pajio/web/activity.js','utf8');
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});return {promise,resolve,reject};}
 function result(id='task-a',changes={}){return {task_id:id,version:'version-'+id,bucket:'results',unread:true,label:'已有回应',title:'一份可核对的结果',summary:'先看看结果，再决定下一步。',...changes};}
@@ -31,7 +31,7 @@ function setup(options={}){
   const state={identityId:'daily',identityEpoch:1,token:'test',motionPaused:true};
   class StaleIdentity extends Error{}
   const h={state,nodes,element,events,calls,notices,classes,current:options.data||activity(),apiHandler:null,conversationHandler:null,keepHandler:null};
-  const context={state,window:{WearingLife:{openView:view=>events.push('view:'+view)}},Date,Intl,Promise,StaleIdentity,
+  const context={state,window:{PajioLife:{openView:view=>events.push('view:'+view)}},Date,Intl,Promise,StaleIdentity,
     document:{getElementById:id=>nodes.get(id)||null,body:{classList:{add:key=>classes.add(key),remove:key=>classes.delete(key)}}},
     $:element,esc:value=>String(value??'').replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char])),
     notice:(message,error)=>notices.push({message,error}),busy:async(_,fn)=>fn(),
@@ -63,13 +63,13 @@ function setup(options={}){
     },
   };
   if(options.realKeep){
-    const app=fs.readFileSync('src/wearing/web/app.js','utf8');
+    const app=fs.readFileSync('src/pajio/web/app.js','utf8');
     const start=app.indexOf('async function loadKeep(id'),end=app.indexOf('$("conversation-form").addEventListener',start);
     context.researchMarkup=()=>'';context.turnActions=()=>'';
     vm.runInNewContext(app.slice(start,end),context);
   }
   vm.runInNewContext(source,context);
-  h.ui=context.window.WearingActivity;h.StaleIdentity=StaleIdentity;
+  h.ui=context.window.PajioActivity;h.StaleIdentity=StaleIdentity;
   h.changeIdentity=()=>{state.identityId='overseas';state.identityEpoch++;h.ui.reset();};
   return h;
 }
@@ -91,7 +91,7 @@ test('activity registers its controls before app globals are initialized',()=>{
   const listeners=new Map();
   const context={window:{},document:{getElementById:id=>({addEventListener:name=>listeners.set(id,name)})}};
   vm.runInNewContext(source,context);
-  assert.equal(typeof context.window.WearingActivity.openTask,'function');
+  assert.equal(typeof context.window.PajioActivity.openTask,'function');
   for(const id of ['open-activity','activity-return','activity-refresh','activity-list'])assert.equal(listeners.get(id),'click');
 });
 
@@ -227,21 +227,21 @@ test('disconnect preserves old work with an honest timestamp and recovery does n
 });
 
 test('conversation polling failure also marks activity as disconnected',async()=>{
-  const app=fs.readFileSync('src/wearing/web/app.js','utf8');
+  const app=fs.readFileSync('src/pajio/web/app.js','utf8');
   const start=app.indexOf('async function pollConversation(){'),end=app.indexOf('setInterval(pollConversation,3000);',start);
   let stale=0;const context={state:{identityEpoch:1,token:'test',connected:true,polling:false,lastStatus:Date.now()},
-    window:{WearingActivity:{disconnected:()=>stale++}},document:{hidden:false},Date,StaleIdentity:class extends Error{},
+    window:{PajioActivity:{disconnected:()=>stale++}},document:{hidden:false},Date,StaleIdentity:class extends Error{},
     loadConversation:async()=>{throw Error('offline');},updateCompanion(){},$:()=>({textContent:'',classList:{remove(){}}})};
   vm.createContext(context);vm.runInContext(app.slice(start,end),context);await context.pollConversation();
   assert.equal(stale,1);assert.equal(context.state.connected,false);assert.equal(context.state.polling,false);
 });
 
 test('an old-identity polling rejection cannot mark the current identity offline',async()=>{
-  const app=fs.readFileSync('src/wearing/web/app.js','utf8');
+  const app=fs.readFileSync('src/pajio/web/app.js','utf8');
   const start=app.indexOf('async function pollConversation(){'),end=app.indexOf('setInterval(pollConversation,3000);',start);
   const conversation=deferred();let stale=0;
   const context={state:{identityEpoch:1,token:'test',connected:true,polling:false,lastStatus:Date.now()},
-    window:{WearingActivity:{disconnected:()=>stale++}},document:{hidden:false},Date,StaleIdentity:class extends Error{},
+    window:{PajioActivity:{disconnected:()=>stale++}},document:{hidden:false},Date,StaleIdentity:class extends Error{},
     loadConversation:()=>conversation.promise,updateCompanion(){},$:()=>({textContent:'',classList:{remove(){}}})};
   vm.createContext(context);vm.runInContext(app.slice(start,end),context);
   const poll=context.pollConversation();context.state.identityEpoch=2;conversation.reject(Error('old request disconnected'));await poll;

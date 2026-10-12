@@ -4,15 +4,15 @@
 
 ## 实际数据库
 
-本机没有现成 PostgreSQL，因此从官方源构建到 `.wearing/qa/postgres-20261003/postgres`，没有全局安装或系统服务。官方 `postgresql-18.6.tar.bz2` SHA-256 为 `555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f`，下载后与官方 checksum 文件核对。记录在该私有目录的 `build-result.json`。
+本机没有现成 PostgreSQL，因此从官方源构建到 `.pajio/qa/postgres-20261003/postgres`，没有全局安装或系统服务。官方 `postgresql-18.6.tar.bz2` SHA-256 为 `555610c24d53e4316da5b7d3fc25c279d96856d5e0e23ee308c328c5fa881d9f`，下载后与官方 checksum 文件核对。记录在该私有目录的 `build-result.json`。
 
 验收结束后，独立测试数据库和全部 HTTP 测试进程已停止，记录为 `stop-result.json` 与 `live-result.json`；保留源码、测试配置与记录供本机复验，没有常驻新增数据库服务。
 
-测试数据库仅用私有 Unix socket，禁用 TCP；socket/数据目录受本机账户私有权限保护。本地 trust 鉴权和无 TLS 的编译配置只用于一次性本机 QA，不能用于生产。数据库角色实际分成非管理权限的 `wearing_app_qa`、`wearing_ops_qa`、`wearing_migrate_qa`，管理员仅准备测试资源。
+测试数据库仅用私有 Unix socket，禁用 TCP；socket/数据目录受本机账户私有权限保护。本地 trust 鉴权和无 TLS 的编译配置只用于一次性本机 QA，不能用于生产。数据库角色实际分成非管理权限的 `pajio_app_qa`、`pajio_ops_qa`、`pajio_migrate_qa`，管理员仅准备测试资源。
 
 ## 数据库与回归检查
 
-`WEARING_POSTGRES_TEST_CONFIG=<private QA config> .venv/bin/python -m pytest -q`：**210 项通过，0 跳过，10.32 秒**。其中 `test_control_postgres.py` 包含 27 个测试实例；18 个使用真实数据库，9 个验证连接/生产配置。未提供 QA 配置时这 18 个会明确跳过。保留一项已知上游 Authlib/httpx 兼容导入弃用提示，没有失败。页面动画检查已通过，未修改页面或视觉资产。
+`PAJIO_POSTGRES_TEST_CONFIG=<private QA config> .venv/bin/python -m pytest -q`：**210 项通过，0 跳过，10.32 秒**。其中 `test_control_postgres.py` 包含 27 个测试实例；18 个使用真实数据库，9 个验证连接/生产配置。未提供 QA 配置时这 18 个会明确跳过。保留一项已知上游 Authlib/httpx 兼容导入弃用提示，没有失败。页面动画检查已通过，未修改页面或视觉资产。
 
 | 检查 | 实际结果 |
 | --- | --- |
@@ -29,7 +29,7 @@
 
 ## 实际 HTTP 服务
 
-私有记录：`.wearing/qa/postgres-20261003/live-result.json`。实际启动一个合成 IdP、一个入口和两个 CLI Worker，入口重启两次；最终再验用时 6.4 秒。通过 CLI 执行迁移、检查、会员/路由登记与撤销；网页进程没有操作者/迁移环境凭据。
+私有记录：`.pajio/qa/postgres-20261003/live-result.json`。实际启动一个合成 IdP、一个入口和两个 CLI Worker，入口重启两次；最终再验用时 6.4 秒。通过 CLI 执行迁移、检查、会员/路由登记与撤销；网页进程没有操作者/迁移环境凭据。
 
 - PostgreSQL 中待完成的 state 能在入口重启后完成真实 RSA/JWKS/S256 PKCE 回调。
 - 两用户各自保存原话、下载独立文件；另一用户的消息不可见、任务 404、越界路径拒绝。

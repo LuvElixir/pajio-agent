@@ -1,4 +1,4 @@
-import {ApiError, Connection, connectionEndpoint, connectionHeaders, WearingApi} from './core';
+import {ApiError, Connection, connectionEndpoint, connectionHeaders, PajioApi} from './core';
 
 export type Skill = {id: string; name: string; description: string; category: string; enabled: boolean; essential: boolean; compatible: boolean; requirements: string[]; revision: string; installed?: boolean};
 export type SkillSnapshot = {revision: string; installed: Skill[]; catalog: Skill[]};
@@ -36,14 +36,14 @@ export function skillRemoval(value: unknown): SkillRemoval {
 }
 
 export class SkillsApi {
-  private authorization: WearingApi;
-  constructor(private connection: Connection, private fetcher: typeof fetch = fetch) {this.authorization = new WearingApi(connection, fetcher);}
+  private authorization: PajioApi;
+  constructor(private connection: Connection, private fetcher: typeof fetch = fetch) {this.authorization = new PajioApi(connection, fetcher);}
   private async request(path: string, method = 'GET', value?: unknown): Promise<unknown> {
     const token = method === 'GET' ? undefined : await this.authorization.voiceAuthorization();
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method, redirect: 'error', signal: controller.signal,
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(token ? {'X-Wearing-Token': token, 'Content-Type': 'application/json'} : {})},
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(token ? {'X-Pajio-Token': token, 'Content-Type': 'application/json'} : {})},
         ...(value === undefined ? {} : {body: JSON.stringify(value)})});
       const data = await response.json();
       if (!response.ok) throw new ApiError(response.status === 401 ? '连接已到期，请重新连接。' : response.status === 423 ? '当前有任务或自动加载设置在使用技能，请处理后再移除。' : response.status === 409 ? '技能内容或设置已有变化，请刷新后重试。' : response.status === 404 ? '这个技能暂时找不到，请刷新目录。' : '这次操作未完成，请稍后重试。', response.status);

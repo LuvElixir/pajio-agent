@@ -5,10 +5,10 @@ import pytest
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.dev_mobile import create_dev_mobile_app
-from wearing import speech_api
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.dev_mobile import create_dev_mobile_app
+from pajio import speech_api
 
 
 @pytest.fixture

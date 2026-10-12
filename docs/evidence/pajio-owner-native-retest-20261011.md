@@ -28,7 +28,7 @@ was 17,126 input and 2 output tokens, including 6,400 cache-read tokens. This is
 one observed request, not a representative cost benchmark.
 
 Private screenshots remain under
-`.wearing/on-prem/20261009/native-personal-beta3-20261010/`:
+`.pajio/on-prem/20261009/native-personal-beta3-20261010/`:
 `iphone-linux-touch.jpg`, `iphone-linux-returned.jpg`,
 `iphone-android-retest-touch.jpg`, `iphone-android-retest-returned.jpg`,
 and `iphone-live-chat-ok.jpg`. The phone was left on the chat page; both remote

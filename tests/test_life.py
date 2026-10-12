@@ -6,17 +6,17 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.life import LifeBook, LifeDraft, LifeError
-from wearing.life_proxy import dispatch
-from wearing.profile import prepare_profile
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.life import LifeBook, LifeDraft, LifeError
+from pajio.life_proxy import dispatch
+from pajio.profile import prepare_profile
+from pajio.store import Store
 
 
 @pytest.fixture
 def book(tmp_path):
-    return LifeBook(Store(tmp_path / "wearing.sqlite3"))
+    return LifeBook(Store(tmp_path / "pajio.sqlite3"))
 
 
 def note(title="一个念头"):
@@ -144,7 +144,7 @@ async def test_api_auth_scope_conflict_and_persisted_feed(tmp_path):
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         payload = {"record": {"kind":"note", "title":"API 记录"}, "request_key":"api-one"}
         assert (await client.post("/api/life", json=payload)).status_code == 403
-        client.headers["X-Wearing-Token"] = (await client.get("/api/bootstrap")).json()["token"]
+        client.headers["X-Pajio-Token"] = (await client.get("/api/bootstrap")).json()["token"]
         assert (await client.post("/api/life", json=payload, headers={"Origin":"https://elsewhere.example"})).status_code == 403
         item = (await client.post("/api/life", json=payload)).json()
         change = {"revision":1,"patch":{"title":"新版"}}
@@ -153,7 +153,7 @@ async def test_api_auth_scope_conflict_and_persisted_feed(tmp_path):
         bad = {"revision":2,"patch":{"owner":"其他人"}}
         assert (await client.patch("/api/life/"+item["id"],json=bad)).status_code == 422
         other = app.state.store.save_identity("另一个身份")["id"]
-        client.headers["X-Wearing-Identity"] = other
+        client.headers["X-Pajio-Identity"] = other
         assert (await client.get("/api/life/"+item["id"])).status_code == 404
         assert (await client.get("/api/life")).json()["items"] == []
         assert (await client.patch("/api/life/"+item["id"],json=change)).status_code == 404
@@ -168,13 +168,13 @@ def test_profile_exposes_life_tools_preserving_model_config(tmp_path):
     (home / "config.yaml").write_text('model:\n  provider: keep-me\n')
     connector = {"command":"python", "args":["life_proxy.py", "root", "daily"]}
     profile = prepare_profile(home, source, life=connector)
-    assert "wearing_life" in profile["toolsets"]
+    assert "pajio_life" in profile["toolsets"]
     import yaml
     config = yaml.safe_load((home / "config.yaml").read_text())
     assert config["model"]["provider"] == "keep-me"
     # The life connector also carries confirmation cards. Keep their 300-second
     # decision window inside the longer tool timeout, while preserving transport.
-    assert config["mcp_servers"]["wearing_life"] == {
+    assert config["mcp_servers"]["pajio_life"] == {
         **connector, "timeout": 360, "elicitation": {"enabled": True, "timeout": 300},
     }
     assert connector == {"command": "python", "args": ["life_proxy.py", "root", "daily"]}
@@ -185,7 +185,7 @@ async def test_natural_chat_keeps_record_reference_internal_and_scoped(tmp_path)
     app = create_app(Settings(tmp_path))
     item = app.state.life.create("daily", note(), "selected-note")
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
-        client.headers["X-Wearing-Token"] = (await client.get("/api/bootstrap")).json()["token"]
+        client.headers["X-Pajio-Token"] = (await client.get("/api/bootstrap")).json()["token"]
         body = {"content":"我们一起看看这条笔记。", "life_record_id":item["id"], "life_revision":item["revision"]}
         response = await client.post("/api/conversation", json=body)
         assert response.status_code == 201
@@ -194,7 +194,7 @@ async def test_natural_chat_keeps_record_reference_internal_and_scoped(tmp_path)
         assert item["id"] in app.state.service.context_provider(task)
         assert (await client.post("/api/conversation", json={"content":"继续聊", "life_record_id":item["id"]})).status_code == 422
         other = app.state.store.save_identity("另一个身份")["id"]
-        client.headers["X-Wearing-Identity"] = other
+        client.headers["X-Pajio-Identity"] = other
         assert (await client.post("/api/conversation", json=body)).status_code == 404
         assert app.state.store.conversation(other) == []
     await app.state.service.hermes.close()

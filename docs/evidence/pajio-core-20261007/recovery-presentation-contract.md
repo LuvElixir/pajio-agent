@@ -25,7 +25,7 @@
 
 ## 文件与接入
 
-新增 `src/wearing/task_presentation.py`；窄改 `durable_confirmations.py`、`store.py`、`service.py`、`app.py`、`activity.py`、`search.py`、`identity_export.py`、`conversation_sources.py`。App 仅改 `TaskDetailPanel.tsx`、`task-detail.ts` 与其测试，无依赖、原生配置或 Mobile 根路由变化。
+新增 `src/pajio/task_presentation.py`；窄改 `durable_confirmations.py`、`store.py`、`service.py`、`app.py`、`activity.py`、`search.py`、`identity_export.py`、`conversation_sources.py`。App 仅改 `TaskDetailPanel.tsx`、`task-detail.ts` 与其测试，无依赖、原生配置或 Mobile 根路由变化。
 
 Web/Desktop 由 ZCode 接续：读取 `kind/message_kind` 与上述能力字段，恢复请求用“重新核对”代替通用“继续这句话”；展示 blocked_reason，saved 的撤回走同一端点。不得显示内部执行 prompt，也不得将恢复点击解释为批准旧提案。现有 API 投影已先修复聊天正文与任务标题。
 

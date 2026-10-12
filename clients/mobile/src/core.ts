@@ -189,7 +189,7 @@ function completeMemorySnapshot(data: unknown, identity: string, mutation = fals
 }
 export type OngoingItem = {id: string; title: string; status: string; detail: string};
 
-export class WearingApi implements Transport {
+export class PajioApi implements Transport {
   private token = '';
   constructor(readonly connection: Connection, private fetcher: typeof fetch = fetch) {}
   private async request(path: string, method = 'GET', body?: string | Blob, mime = 'application/json', refresh = true, timeoutMs = 20000): Promise<any> {
@@ -197,7 +197,7 @@ export class WearingApi implements Transport {
     try {
       const call = this.fetcher;
       const base = connectionEndpoint(this.connection);
-      const response = await call(new URL(path, base).toString(), {method, body, signal: controller.signal, redirect: 'error', headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(method !== 'GET' ? {'X-Wearing-Token': this.token, 'Content-Type': mime} : {})}});
+      const response = await call(new URL(path, base).toString(), {method, body, signal: controller.signal, redirect: 'error', headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(method !== 'GET' ? {'X-Pajio-Token': this.token, 'Content-Type': mime} : {})}});
       if (response.status === 403 && method !== 'GET' && refresh) {await this.bootstrap(); return this.request(path, method, body, mime, false, timeoutMs);}
       const data = await response.json().catch(() => {throw new ApiError('这个地址没有返回 Pajio 数据，请检查连接。', response.status);});
       if (!response.ok) throw new ApiError(typeof data.detail === 'string' ? data.detail : '这次请求没有完成，请检查连接后重试。', response.status);

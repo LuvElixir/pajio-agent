@@ -94,11 +94,11 @@ flowchart LR
 
 | 现有位置 | 可以复用的部分 | 必须新增或隔离的部分 |
 |---|---|---|
-| `src/wearing/native_actions.py` | 可信任务主体、设备归属、版本、租约与持久回执 | 凭据专用、由可信执行端签发的目标与使用许可；密码不能进入普通命令参数 |
-| `src/wearing/desktop_input.py` | 输入对应帧、独占执行与审批边界 | 禁止把密码放入普通 `text/value`；私密执行器独立完成整段登录 |
-| `src/wearing/desktop_capture.py`、`mobile.py` | 常规截图、AX、原生设备操作 | 整个认证资源的跨通道隔离及迟到响应 fencing；不能只隐藏 App 里的图片 |
-| `src/wearing/runtime.py`、`profile.py` | 默认工具范围、引擎启动与工作目录 | 进程目前运行于当前用户；默认未开放 terminal/browser 不等于 OS 沙箱，必须阻断同用户设备控制旁路 |
-| `src/wearing/cloud/commands.py` | 租户和身份路由 | 凭据许可额外绑定真实 owner、任务代次、设备与条目版本，不能只靠 tenant/identity |
+| `src/pajio/native_actions.py` | 可信任务主体、设备归属、版本、租约与持久回执 | 凭据专用、由可信执行端签发的目标与使用许可；密码不能进入普通命令参数 |
+| `src/pajio/desktop_input.py` | 输入对应帧、独占执行与审批边界 | 禁止把密码放入普通 `text/value`；私密执行器独立完成整段登录 |
+| `src/pajio/desktop_capture.py`、`mobile.py` | 常规截图、AX、原生设备操作 | 整个认证资源的跨通道隔离及迟到响应 fencing；不能只隐藏 App 里的图片 |
+| `src/pajio/runtime.py`、`profile.py` | 默认工具范围、引擎启动与工作目录 | 进程目前运行于当前用户；默认未开放 terminal/browser 不等于 OS 沙箱，必须阻断同用户设备控制旁路 |
+| `src/pajio/cloud/commands.py` | 租户和身份路由 | 凭据许可额外绑定真实 owner、任务代次、设备与条目版本，不能只靠 tenant/identity |
 
 独立只读审查已确认以上边界；未读取实际密码或操作真实登录。首个实现里程碑是以合成秘密通过隔离验收，再接保险库，不能反过来把真实密码用作调试输入。
 

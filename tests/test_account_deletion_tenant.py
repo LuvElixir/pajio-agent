@@ -5,12 +5,12 @@ from dataclasses import replace
 import httpx
 import pytest
 
-from wearing.account_deletion import digest
-from wearing.cloud.instance import InstanceError, initialize_instance, load_instance
-from wearing.cloud.worker import create_tenant_app
-from wearing.cloud.account_deletion_tenant import PATH, PHASES, tombstoned
-from wearing.config import write_private_json
-from wearing.profile import write_private_text
+from pajio.account_deletion import digest
+from pajio.cloud.instance import InstanceError, initialize_instance, load_instance
+from pajio.cloud.worker import create_tenant_app
+from pajio.cloud.account_deletion_tenant import PATH, PHASES, tombstoned
+from pajio.config import write_private_json
+from pajio.profile import write_private_text
 
 ORIGIN='https://fixture.invalid'
 KEY='x'*64
@@ -34,7 +34,7 @@ def tenant(tmp_path, monkeypatch):
 async def test_complete_empty_tenant_freeze_readback_drain_and_restart_fence(tenant):
     root,instance,app=tenant
     async with app.router.lifespan_context(app), httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url=ORIGIN) as client:
-        gateway={'Authorization':'Bearer '+(root/'gateway.key').read_text().strip(),'X-Wearing-Tenant':'tenant_a'}
+        gateway={'Authorization':'Bearer '+(root/'gateway.key').read_text().strip(),'X-Pajio-Tenant':'tenant_a'}
         assert (await client.get('/api/bootstrap',headers=gateway)).status_code==200
         for phase in PHASES:
             request=payload(instance,phase)
@@ -88,7 +88,7 @@ async def test_messaging_without_provider_revoke_stays_waiting_and_keeps_credent
 
 
 async def test_cloud_revoke_response_loss_stays_waiting_then_retries_real_revoke(tenant):
-    from wearing.cloud_apps import CloudAppError
+    from pajio.cloud_apps import CloudAppError
     root,instance,app=tenant;calls=[]
     row={'app_id':'synthetic','secret':'synthetic-secret','revision':'r','oauth':{'refresh_token':'r-token','access_token':'a-token'}}
     app.state.cloud_apps._write('daily',row)
@@ -107,7 +107,7 @@ async def test_cloud_revoke_response_loss_stays_waiting_then_retries_real_revoke
 
 
 async def test_existing_relay_process_fences_after_marker(tenant):
-    from wearing.cloud.relay import create_relay_app
+    from pajio.cloud.relay import create_relay_app
     root,instance,app=tenant;relay=create_relay_app(root)
     async with app.router.lifespan_context(app), httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url=ORIGIN,headers={'Authorization':'Bearer '+KEY}) as c:
         assert (await c.post(PATH,json=payload(instance))).json()['state']=='done'
@@ -171,7 +171,7 @@ async def test_started_run_stop_is_read_back_without_background_dispatch(tenant)
 async def test_freeze_cancels_and_awaits_health_sampler_without_late_write_or_restart(tenant):
     import asyncio
     from contextlib import suppress
-    from wearing.health_history import HealthHistory, HealthMonitor
+    from pajio.health_history import HealthHistory, HealthMonitor
     root, instance, app = tenant
     entered, stopped = asyncio.Event(), asyncio.Event()
     class SlowReadOnlyProbe:

@@ -1,10 +1,10 @@
 """The real product MCP dispatch must reach the shared calendar series book."""
 import pytest
 from pydantic import ValidationError
-from wearing.calendar_series import SeriesError
-from wearing.life import LifeBook
-from wearing.life_proxy import TOOLS, dispatch
-from wearing.store import Store
+from pajio.calendar_series import SeriesError
+from pajio.life import LifeBook
+from pajio.life_proxy import TOOLS, dispatch
+from pajio.store import Store
 
 
 def test_calendar_series_product_tool_persists_and_checks_identity(tmp_path):

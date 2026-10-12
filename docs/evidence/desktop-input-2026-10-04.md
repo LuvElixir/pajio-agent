@@ -1,13 +1,13 @@
 # 电脑单次输入验收
 
-日期：2026-10-04（Asia/Shanghai）。私有证据目录：`.wearing/qa/desktop-input-20261004/`。
+日期：2026-10-04（Asia/Shanghai）。私有证据目录：`.pajio/qa/desktop-input-20261004/`。
 
 ## 真机结果
 
-在自建的 `WearingInputProbe.app` 里，经云端 Worker 网页确认 → 私有 relay → 出站 Connector → 固定 Hermes/Cua MCP → 原生后台操作完成了：
+在自建的 `PajioInputProbe.app` 里，经云端 Worker 网页确认 → 私有 relay → 出站 Connector → 固定 Hermes/Cua MCP → 原生后台操作完成了：
 
 - 点击「验证一次点击」，窗口真实状态变成「点击已验证」。
-- 填写「验证输入」，独立读取窗口确认值为 `Wearing 新鲜界面填写验证`；最后一次填写包括执行前的窗口重读与 AX 摘要校验。
+- 填写「验证输入」，独立读取窗口确认值为 `Pajio 新鲜界面填写验证`；最后一次填写包括执行前的窗口重读与 AX 摘要校验。
 - 浏览器显示逐次确认和设备回执卡片，未改变其他应用。
 
 原生回执、本机窗口独立 AX 核对、页面截图分别保存在该目录。这里用的是 ASGI 测试 relay，不把它描述为正式 HTTPS 云端电脑输入验收。

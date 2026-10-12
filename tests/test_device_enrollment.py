@@ -8,13 +8,13 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.x509.oid import ExtendedKeyUsageOID
 import pytest
 
-from wearing.cloud.device_bootstrap import BootstrapBook
-from wearing.cloud.device_enrollment import (EnrollmentBook, EnrollmentSpec, SSHEnrollmentAdapter,
+from pajio.cloud.device_bootstrap import BootstrapBook
+from pajio.cloud.device_enrollment import (EnrollmentBook, EnrollmentSpec, SSHEnrollmentAdapter,
     android_serial, certificate_material, validate_scope, checked_stage_result)
-from wearing.cloud.device_enrollment_remote import issued_pair, bound_connector, write_exact, render_guest_files
-from wearing.cloud.device_provisioning import ProvisionError, fingerprint
-from wearing.cloud.relay import RelayStore, PairRequest
-from wearing.mobile import resource_id
+from pajio.cloud.device_enrollment_remote import issued_pair, bound_connector, write_exact, render_guest_files
+from pajio.cloud.device_provisioning import ProvisionError, fingerprint
+from pajio.cloud.relay import RelayStore, PairRequest
+from pajio.mobile import resource_id
 from test_device_bootstrap import settings as bootstrap_settings, owner
 from test_device_provisioning import setup, reserve, spec
 
@@ -182,8 +182,8 @@ def test_expired_pair_stays_expired_and_cannot_rotate_under_same_request(tmp_pat
 
 
 def test_enrollment_requires_live_dynamic_relay_and_never_restarts_tenant(monkeypatch):
-    import wearing.cloud.device_enrollment_remote as remote
-    from wearing.cloud import relay
+    import pajio.cloud.device_enrollment_remote as remote
+    from pajio.cloud import relay
     monkeypatch.setattr(relay.RelayStore,'human_access_ready',property(lambda self:False),raising=False)
     monkeypatch.setattr(remote,'relay_process',lambda:('100',Path(relay.__file__).stat().st_mtime-20))
     with pytest.raises(ProvisionError,match='enrollment_live_relay_release_unconfirmed'):
@@ -199,8 +199,8 @@ def test_enrollment_requires_live_dynamic_relay_and_never_restarts_tenant(monkey
 
 def test_reconcile_relay_reader_cannot_mutate_business_state(tmp_path):
     import sqlite3
-    from wearing.config import write_private_json
-    from wearing.cloud.device_enrollment_remote import ReadonlyRelay
+    from pajio.config import write_private_json
+    from pajio.cloud.device_enrollment_remote import ReadonlyRelay
     root=tmp_path/'instance';store=RelayStore(root/'data/device-relay','tenant_a')
     write_private_json(root/'private-media-access.json',{'version':1,'enabled':True,'hosts':{}})
     with store.tx() as db:
@@ -219,7 +219,7 @@ def test_stdin_transport_splits_keys_and_no_sensitive_error_surface(tmp_path):
         calls.append((argv,json.loads(kwargs['input'])))
         return subprocess.CompletedProcess(argv,1,stdout='not json',stderr='sensitive')
     adapter=SSHEnrollmentAdapter(config=tmp_path/'ssh-config',sources={'tenants':{'tenant_a':{
-        'host':'tenant-a','python':'/opt/wearing/venv/bin/python','root':'/var/lib/wearing/instance','account':'wearing'}},
+        'host':'tenant-a','python':'/opt/pajio/venv/bin/python','root':'/var/lib/pajio/instance','account':'pajio'}},
         'devices':{device().resource_id:{'host':'new-device'}}},allow_apply=True,runner=runner)
     item=device();m=materials();o=owner(item)
     for stage in ('configure','issue'):
@@ -246,14 +246,14 @@ def test_generated_media_command_parses_real_cli_and_binds_only_loopback(monkeyp
     import shlex
     import sys
     from types import SimpleNamespace
-    from wearing import private_media
+    from pajio import private_media
     item=device(kind=kind)
     u=SimpleNamespace(pw_dir='/home/pajio-desktop',pw_uid=1001,pw_gid=1001,pw_name='pajio-desktop')
     unit=render_guest_files(item,owner(item),config(),materials(),u)['/etc/systemd/system/pajio-private-media.service'][0]
     command=shlex.split(next(line.removeprefix('ExecStart=') for line in unit.splitlines() if line.startswith('ExecStart=')))
-    assert command[:3]==['/opt/pajio-native/venv/bin/python','-m','wearing.private_media']
+    assert command[:3]==['/opt/pajio-native/venv/bin/python','-m','pajio.private_media']
     observed=[]
-    monkeypatch.setattr(sys,'argv',['wearing.private_media',*command[3:]])
+    monkeypatch.setattr(sys,'argv',['pajio.private_media',*command[3:]])
     monkeypatch.setattr(private_media,'read_private',lambda path:'{}')
     monkeypatch.setattr(private_media,'create_app',lambda config:'test-app')
     monkeypatch.setitem(sys.modules,'uvicorn',SimpleNamespace(run=lambda app,**kwargs:observed.append((app,kwargs))))

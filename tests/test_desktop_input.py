@@ -5,22 +5,22 @@ from concurrent.futures import ThreadPoolExecutor
 import pytest
 from pydantic import ValidationError
 import httpx
-from wearing.cloud.instance import initialize_instance
-from wearing.cloud.relay import instance_relay, PairRequest, ConnectionRequest, PollRequest, ClaimRequest, RelayError
-from wearing.cloud.desktop_approval import InputProposal, InputDecision, propose, decide, list_proposals
-from wearing.desktop_input import DesktopAction, DesktopFrames, DesktopApproval, action_hash
-from wearing.cloud.worker import create_tenant_app
-from wearing.connectors.remote.client import Connector
-from wearing.config import write_private_json
+from pajio.cloud.instance import initialize_instance
+from pajio.cloud.relay import instance_relay, PairRequest, ConnectionRequest, PollRequest, ClaimRequest, RelayError
+from pajio.cloud.desktop_approval import InputProposal, InputDecision, propose, decide, list_proposals
+from pajio.desktop_input import DesktopAction, DesktopFrames, DesktopApproval, action_hash
+from pajio.cloud.worker import create_tenant_app
+from pajio.connectors.remote.client import Connector
+from pajio.config import write_private_json
 
 TOKEN='a'*64
-ACTION={'app':'WearingProbe','frame_id':'b'*32,'action':'set_value','element':3,'element_label':'Test input','value':'test'}
+ACTION={'app':'PajioProbe','frame_id':'b'*32,'action':'set_value','element':3,'element_label':'Test input','value':'test'}
 SPEC={'resource_id':'computer_test','name':'Test computer','kind':'computer','methods':['computer.observe','computer.input']}
 
 
 @pytest.fixture
 def paired(tmp_path):
-    root=tmp_path/'tenant';initialize_instance(root,'tenant_test','https://wearing.example')
+    root=tmp_path/'tenant';initialize_instance(root,'tenant_test','https://pajio.example')
     s=instance_relay(root);b=s.pair_code('daily',[SPEC],[]);s.pair(PairRequest(code=b['code'],token=TOKEN))
     conn=s.connect(TOKEN,ConnectionRequest())['connection_id'];s.poll(TOKEN,PollRequest(connection_id=conn,availability={'computer_test':True}))
     return root,s,b,conn
@@ -44,7 +44,7 @@ def test_no_device_command_until_user_decides_and_repeat_cannot_replay(paired):
     with s.tx() as db:assert db.execute('SELECT COUNT(*) FROM commands').fetchone()[0]==1
     command=s.poll(TOKEN,PollRequest(connection_id=conn,availability={'computer_test':True}))['command']
     authority=s.claim(TOKEN,ClaimRequest(connection_id=conn,command_id=command['command_id']))['input_approval']
-    from wearing.cloud.commands import DeviceCommand
+    from pajio.cloud.commands import DeviceCommand
     assert DesktopApproval.model_validate(authority).permits(DeviceCommand.model_validate(command))
     altered=DeviceCommand.model_validate(command).model_copy(update={'params':{**command['params'],'value':'different'}})
     assert not DesktopApproval.model_validate(authority).permits(altered)
@@ -58,7 +58,7 @@ def test_denial_stale_or_other_identity_never_queues_input(paired,cause):
     elif cause=='expiry':
         with s.tx() as db:db.execute('UPDATE desktop_proposals SET expires=0')
     elif cause=='takeover':
-        from wearing.cloud.relay import ResourceControl
+        from pajio.cloud.relay import ResourceControl
         s.control('daily',ResourceControl(resource_id='computer_test',paused=True,expected_generation=0))
     elif cause=='reconnect':s.connect(TOKEN,ConnectionRequest(previous_connection_id=conn))
     elif cause=='wrong_identity':identity='overseas'
@@ -91,9 +91,9 @@ def frames():
     def dispatch(args):
         calls.append(args)
         if args['action']=='set_value':assert callbacks[-1]('test','test')=='once'
-        return '{"ok":true,"app":"WearingProbe","elements":[{"index":3,"label":"Test input"}]}'
+        return '{"ok":true,"app":"PajioProbe","elements":[{"index":3,"label":"Test input"}]}'
     f=DesktopFrames(dispatch,guard,callbacks.append)
-    _,meta=f.observe({'app':'WearingProbe','action':'capture'})
+    _,meta=f.observe({'app':'PajioProbe','action':'capture'})
     action={**ACTION,'frame_id':meta['frame_id']}
     authority=DesktopApproval(approval_id='approval_test',command_id='command_test',scope={'tenant_id':'tenant_test','identity_id':'daily'},
         resource_id='computer_test',connection_id='connection_test',params_hash=action_hash(action),expires_at=datetime.now(timezone.utc)+timedelta(seconds=60))
@@ -129,13 +129,13 @@ async def test_browser_decision_requires_instance_session_csrf_and_identity(pair
     app=create_tenant_app(root,engine_autostart=False);child=app
     async def no(*_):return None
     monkeypatch.setattr(child.state.runtime,'start',no)
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='https://wearing.example') as c:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='https://pajio.example') as c:
         assert (await c.get('/api/devices/input-approvals')).status_code==401
-        auth={'Authorization':'Bearer '+(root/'gateway.key').read_text().strip(),'X-Wearing-Tenant':'tenant_test','Origin':'https://wearing.example'}
+        auth={'Authorization':'Bearer '+(root/'gateway.key').read_text().strip(),'X-Pajio-Tenant':'tenant_test','Origin':'https://pajio.example'}
         c.headers.update(auth)
         csrf=(await c.get('/api/bootstrap')).json()['token']
         assert (await c.post('/api/devices/input-approvals',json=decision(p).model_dump())).status_code==403
-        c.headers['X-Wearing-Token']=csrf
+        c.headers['X-Pajio-Token']=csrf
         assert len((await c.get('/api/devices/input-approvals')).json()['approvals'])==1
         assert (await c.post('/api/devices/input-approvals',json=decision(p,'deny').model_dump())).json()['state']=='denied'
     await child.state.service.hermes.close()
@@ -144,8 +144,8 @@ async def test_browser_decision_requires_instance_session_csrf_and_identity(pair
 @pytest.mark.parametrize('tamper',['missing','hash','identity','expired'])
 async def test_connector_refuses_invalid_input_authority_before_native_execution(paired,tmp_path,monkeypatch,tamper):
     root,s,b,conn=paired;p=request(s);approved=decide(s,'daily',decision(p))
-    from wearing.cloud.commands import DeviceCommand
-    from wearing.cloud.relay import create_relay_app
+    from pajio.cloud.commands import DeviceCommand
+    from pajio.cloud.relay import create_relay_app
     command=DeviceCommand.model_validate(s.poll(TOKEN,PollRequest(connection_id=conn,availability={'computer_test':True}))['command'])
     node_root=tmp_path/'node'
     write_private_json(node_root/'connector.json',{**b,'endpoint':'https://relay.example','ca_pem':'TEST CA',
@@ -154,7 +154,7 @@ async def test_connector_refuses_invalid_input_authority_before_native_execution
         called=False
         async def execute(self,*_,**__):self.called=True;return {}
     adapter=Adapter();node=Connector(node_root,adapter)
-    from wearing.connectors.remote import client as module
+    from pajio.connectors.remote import client as module
     original=module.response
     async def altered(client,path,payload):
         current=await original(client,path,payload)
@@ -175,12 +175,12 @@ async def test_connector_refuses_invalid_input_authority_before_native_execution
 def test_empty_or_invalid_native_window_never_creates_input_frame():
     f,_,_,_,_,_=frames()
     f.dispatch=lambda _:json.dumps({'app':'','window_title':'Window','elements':[]})
-    _,meta=f.observe({'app':'WearingProbe','action':'capture'})
+    _,meta=f.observe({'app':'PajioProbe','action':'capture'})
     assert meta is None and f.frame is None
 
 
 def test_changed_actual_view_is_recaptured_and_input_is_refused():
     f,_,calls,callbacks,action,authority=frames()
-    f.dispatch=lambda _:json.dumps({'app':'WearingProbe','elements':[{'index':3,'label':'Different input'}]})
+    f.dispatch=lambda _:json.dumps({'app':'PajioProbe','elements':[{'index':3,'label':'Different input'}]})
     with pytest.raises(ValueError,match='view_changed'):f.act(action,authority)
     assert callbacks==[] and f.frame is None and len(calls)==1

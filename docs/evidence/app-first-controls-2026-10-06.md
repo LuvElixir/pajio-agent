@@ -15,7 +15,7 @@
 | --- | --- |
 | `pytest tests/test_artifacts.py -q` | 14 passed |
 | `node --test tests/artifact-ui.test.cjs` | 1 passed |
-| `node --check src/wearing/web/mobile-host.js` | 通过 |
+| `node --check src/pajio/web/mobile-host.js` | 通过 |
 | mobile `npm run typecheck` | 通过 |
 | mobile `./node_modules/.bin/eslint src` | 通过 |
 | mobile `npm test` | 17 passed；含原有同步/隔离测试，以及新增 App URL 与导航约束测试 |

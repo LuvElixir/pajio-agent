@@ -47,7 +47,7 @@ The gateway alone adds `X-Pajio-Private-Owner-Scope`, derived from the authentic
 A second independent resource anchor binds exact identity, resource, connector and personal actor. Before enabling file grants, the operator obtains a fresh `AccountProof` with `TrustedSSHAdmission.check` from the existing private control/tenant metadata targets. Within 60 seconds, pipe that proof over the already trusted SSH connection to the tenant service account's Python:
 
 ```text
-<tenant-python> -m wearing.cloud.device_files bind-owner \
+<tenant-python> -m pajio.cloud.device_files bind-owner \
   --instance-root <exact-tenant-private-root> --resource-id <paired-resource-id>
 ```
 
@@ -67,7 +67,7 @@ Send it through the existing authenticated `POST /api/devices/permissions`. Poll
 
 Use a reviewed source manifest and live preimages for each rollout. On 2026-10-10, the backend roles below were deployed to the A/B acceptance environment and its four execution devices. The [deployment evidence](evidence/pajio-device-files-2026-10-10.md) preserves the initial A native installer failures and rollback, the separate successful installer-v2 attempts, and the observed activation-window HTTP 502 responses; deployment was not interruption-free.
 
-| Role | Python paths under `src/wearing/` | Activation |
+| Role | Python paths under `src/pajio/` | Activation |
 | --- | --- | --- |
 | Control/public gateway | `cloud/control.py`, `cloud/gateway.py`, `cloud/voice.py` | Restart only public gateway; registry schema already exists, no PostgreSQL migration |
 | A/B tenant Core and relay | `app.py`, `workspace_upload.py`, `device_files_io.py`, `cloud/device_files.py`, `cloud/device_setup.py`, `cloud/device_permissions.py`, `cloud/relay.py`, `cloud/worker.py` | Restart both Core **and** long-running relay; first initialization adds actor/file tables under existing SQLite transaction |

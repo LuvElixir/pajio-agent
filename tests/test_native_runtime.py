@@ -2,16 +2,16 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 import pytest
-from wearing.native_runtime import driver_runtime
-from wearing.runtime import HERMES_REVISION,SOURCE_SHA256
-from wearing.config import write_private_json
+from pajio.native_runtime import driver_runtime
+from pajio.runtime import HERMES_REVISION,SOURCE_SHA256
+from pajio.config import write_private_json
 
 
 def test_native_driver_is_not_a_model_runtime(tmp_path,monkeypatch):
-    monkeypatch.setattr('wearing.native_runtime.sys.platform','linux')
+    monkeypatch.setattr('pajio.native_runtime.sys.platform','linux')
     root=tmp_path/'runtime';root.mkdir()
     source=tmp_path/('hermes-agent-'+HERMES_REVISION);source.mkdir()
-    (source/'.wearing-source-verified').write_text(SOURCE_SHA256)
+    (source/'.pajio-source-verified').write_text(SOURCE_SHA256)
     interpreter=tmp_path/'python';interpreter.touch()
     runtime=SimpleNamespace(root=root,python=root/'not-installed',source=root/'absent')
     marker={'version':1,'revision':HERMES_REVISION,'source_sha256':SOURCE_SHA256,

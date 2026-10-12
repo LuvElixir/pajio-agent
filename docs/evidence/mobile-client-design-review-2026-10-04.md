@@ -1,6 +1,6 @@
 # 手机界面完成度复核 · 2026-10-04
 
-依据 Impeccable finish review；既有 Wearing 视觉体系与指定 capture 原生适配，不是开放式品牌重构。
+依据 Impeccable finish review；既有 Pajio 视觉体系与指定 capture 原生适配，不是开放式品牌重构。
 
 首次 verdict：`disposition: fix`，限定三项实质问题。完成一次修复批次后，由同一独立 reviewer 仅复核原问题，不扩展审查范围。
 

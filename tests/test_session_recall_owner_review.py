@@ -64,18 +64,18 @@ def test_direct_read_sql_profile_and_alias_inputs_do_not_select_foreign_history(
 
 def test_missing_approval_context_does_not_accept_environment_run_id(case):
     root = Path(__file__).parents[1]
-    marker = root / '.wearing/runtime/installed.json'
+    marker = root / '.pajio/runtime/installed.json'
     if not marker.exists():
         pytest.skip('Pinned runtime unavailable')
     meta = json.loads(marker.read_text())
-    source = root / '.wearing/runtime' / ('hermes-agent-' + meta['revision'])
+    source = root / '.pajio/runtime' / ('hermes-agent-' + meta['revision'])
     code = r'''
 import os,sys,json
 from pathlib import Path
 root=Path(sys.argv[3]);os.environ['HERMES_HOME']=str(root/'hermes')
 os.environ['HERMES_SESSION_KEY']='run-current'
 sys.path[:0]=[sys.argv[1],sys.argv[2]]
-from wearing.session_recall_guard import RecallConfig,install_session_recall_guard
+from pajio.session_recall_guard import RecallConfig,install_session_recall_guard
 from tools import session_search_tool
 install_session_recall_guard(RecallConfig(root,'daily'))
 result=session_search_tool.session_search(current_session_id=sys.argv[4],session_id=sys.argv[5])

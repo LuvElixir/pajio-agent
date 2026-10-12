@@ -4,17 +4,17 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 
 const read=path=>fs.readFileSync(path,'utf8');
-const html=read('src/wearing/web/index.html');
-const views=read('src/wearing/web/views.js');
-const bookmarks=read('src/wearing/web/bookmarks.js');
-const sources=read('src/wearing/web/conversation-sources.js');
+const html=read('src/pajio/web/index.html');
+const views=read('src/pajio/web/views.js');
+const bookmarks=read('src/pajio/web/bookmarks.js');
+const sources=read('src/pajio/web/conversation-sources.js');
 
 function loadValidateUrl(){
   // 在受控宿主里加载模块（非 App 宿主），取 validateUrl 纯函数逐条对齐 bookmark-url.ts 规则。
   const element=()=>({addEventListener(){},replaceChildren(){},});
   const context={document:{documentElement:{classList:{contains:()=>false}},getElementById:element},window:{},URL,Intl,structuredClone,console};
   vm.runInNewContext(bookmarks,context);
-  return context.window.WearingBookmarks.validateUrl;
+  return context.window.PajioBookmarks.validateUrl;
 }
 
 test('new web modules compile as scripts',()=>{
@@ -71,7 +71,7 @@ test('shell wires both panels and entries; views stays inert in the App host',()
   assert.match(html,/<dialog id="sources-panel"/);
   assert.ok(html.indexOf('bookmarks.js?v=')<html.indexOf('series.js?v='));
   assert.match(views,/row\("链接收藏", "保存网页链接，需要时再打开"/);
-  assert.match(views,/action === "bookmarks"\) \{ window\.WearingBookmarks\?\.open\(\); \}/);
+  assert.match(views,/action === "bookmarks"\) \{ window\.PajioBookmarks\?\.open\(\); \}/);
   assert.match(views,/data-sources-open/);
   assert.match(views,/对话引用范围/);
 });
@@ -83,7 +83,7 @@ test('conversation source controls follow the closed contract flow',()=>{
   assert.match(sources,/data\.snapshot!==ui\.page\.snapshot/);
   assert.match(sources,/从第一页重新读取/);
   // 闭集请求体 + 双 CAS + 稳定 request_key 先持久。
-  assert.match(sources,/source_id:source\.source_id,source_revision:source\.source_revision,revision:pageRevision,request_key:window\.WearingIds\.uuid\(\)/);
+  assert.match(sources,/source_id:source\.source_id,source_revision:source\.source_revision,revision:pageRevision,request_key:window\.PajioIds\.uuid\(\)/);
   assert.match(sources,/pajio-source-exclude:v1/);
   assert.match(sources,/writePending\(\{identity:state\.identityId,body\}\);/);
   // 回执严格校验（revision+1、excluded、history_retained、request_key 回显）。
@@ -144,8 +144,8 @@ function sharedHost(){
     calls,
     store,
   };
-  context.window.WearingIds={uuid:()=>"fixed-uuid-key-000001"};
-  context.window.WearingStore={
+  context.window.PajioIds={uuid:()=>"fixed-uuid-key-000001"};
+  context.window.PajioStore={
     get:name=>store.has(name)?store.get(name):null,
     set:(name,value)=>{store.set(name,String(value));},
     remove:name=>{store.delete(name);},
@@ -166,7 +166,7 @@ test('bookmarks flow: list renders, create persists request key before POST, two
     throw Error("unexpected "+call.path);
   };
   vm.runInNewContext(bookmarks,context);
-  await context.window.WearingBookmarks.open();
+  await context.window.PajioBookmarks.open();
   assert(context.element("bm-body").innerHTML.includes("示例收藏"));
   assert(context.element("bm-body").innerHTML.includes('rel="noopener noreferrer"'));
   // 新建：完整请求先持久，成功后清 journal，POST 体带 request_key。
@@ -210,7 +210,7 @@ test('bookmarks edit keeps input on 409 and replays the same attempt key on unkn
     throw Error("unexpected "+call.path);
   };
   vm.runInNewContext(bookmarks,context);
-  await context.window.WearingBookmarks.open();
+  await context.window.PajioBookmarks.open();
   context.element("bm-body").dispatchEvent("click",{target:{closest:sel=>sel==='[data-bm-open]'?{dataset:{bmOpen:item.id}}:null}});
   const form=context.element("bm-edit-form");
   form.querySelector("#bm-edit-title").value="我的新标题";
@@ -252,7 +252,7 @@ test('conversation sources: two-click confirm posts the closed body; unknown res
     throw Error("unexpected "+call.path);
   };
   vm.runInNewContext(sources,context);
-  await context.window.WearingSources.open();
+  await context.window.PajioSources.open();
   const body=context.element("sc-body");
   assert(body.innerHTML.includes("会话A"));
   assert(body.innerHTML.includes("12 条入场消息"));
@@ -276,7 +276,7 @@ test('conversation sources: two-click confirm posts the closed body; unknown res
   assert.equal(firstBody.revision,3);
   // 结果未知：下次打开面板自动用同一请求取回（同一 body、同一 key），回执确认后清 journal。
   networkDown=false;
-  await context.window.WearingSources.open();
+  await context.window.PajioSources.open();
   assert.equal(posted,2,"replay issued with the same request");
   assert(!context.store.has("pajio-source-exclude:v1:qa"),"journal cleared after confirmed receipt");
 });

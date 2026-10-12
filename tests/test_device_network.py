@@ -9,7 +9,7 @@ import pytest
 
 from test_device_bootstrap import settings, owner
 from test_device_provisioning import spec
-from wearing.cloud.device_bootstrap import render
+from pajio.cloud.device_bootstrap import render
 
 ROOT=Path(__file__).resolve().parents[1]/'deploy/on-prem'
 

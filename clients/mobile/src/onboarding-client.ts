@@ -19,7 +19,7 @@ export class OnboardingApi {
     const controller=new AbortController(),cancel=()=>controller.abort(),timer=setTimeout(cancel,15000);
     this.signal?.addEventListener('abort',cancel);
     try{
-      const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body?'POST':'GET',redirect:'error',signal:controller.signal,headers:{...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity,...(body?{'Content-Type':'application/json','X-Wearing-Token':token||''}:{})},...(body?{body:JSON.stringify(body)}:{})});
+      const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body?'POST':'GET',redirect:'error',signal:controller.signal,headers:{...connectionHeaders(this.connection),'X-Pajio-Identity':this.connection.identity,...(body?{'Content-Type':'application/json','X-Pajio-Token':token||''}:{})},...(body?{body:JSON.stringify(body)}:{})});
       this.assertActive();
       if(!response.ok)throw new ApiError(response.status===409?'偏好已在另一处更新。请读取最新版本后核对。':response.status===404?'这台服务还未提供初始偏好设置，可以先进入产品。':'偏好暂时无法保存或读取，请重试。',response.status);
       const result=await response.json();this.assertActive();return result;

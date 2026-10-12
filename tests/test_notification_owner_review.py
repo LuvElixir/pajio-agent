@@ -7,8 +7,8 @@ from datetime import datetime
 import httpx
 import pytest
 
-from wearing.notifications import NotificationConfig, NotificationError, NotificationService
-from wearing.store import Store
+from pajio.notifications import NotificationConfig, NotificationError, NotificationService
+from pajio.store import Store
 
 PROJECT = "12345678-abcd-1234-abcd-123456789abc"
 PHONE = "review-phone-0012"
@@ -261,15 +261,15 @@ def test_preference_compare_and_swap_has_one_concurrent_winner(tmp_path):
 
 
 async def test_cloud_http_scope_is_internal_and_required_for_every_notification_route(tmp_path):
-    from wearing.app import create_app
-    from wearing.config import Settings
-    from wearing.cloud.worker import TenantBoundary
+    from pajio.app import create_app
+    from pajio.config import Settings
+    from pajio.cloud.worker import TenantBoundary
     app = create_app(Settings(tmp_path), engine_autostart=False)
     app.add_middleware(TenantBoundary, tenant_id="test-tenant", gateway_key="synthetic-internal")
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
-        client.headers.update({"Authorization": "Bearer synthetic-internal", "X-Wearing-Tenant": "test-tenant"})
+        client.headers.update({"Authorization": "Bearer synthetic-internal", "X-Pajio-Tenant": "test-tenant"})
         csrf = (await client.get("/api/bootstrap")).json()["token"]
-        client.headers["X-Wearing-Token"] = csrf
+        client.headers["X-Pajio-Token"] = csrf
         params = {"installation_id": PHONE}
         assert (await client.get("/api/notifications/status", params=params)).status_code == 401
         assert (await client.get("/api/notifications/preferences", params=params)).status_code == 401
@@ -398,12 +398,12 @@ def test_legacy_unattributed_registration_and_quiet_policy_are_not_given_to_next
 
 
 async def test_local_http_ignores_public_owner_header_and_rejects_owner_in_body(tmp_path):
-    from wearing.app import create_app
-    from wearing.config import Settings
+    from pajio.app import create_app
+    from pajio.config import Settings
     app = create_app(Settings(tmp_path), engine_autostart=False)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         csrf = (await client.get("/api/bootstrap")).json()["token"]
-        client.headers.update({"X-Wearing-Token": csrf, "X-Pajio-Storage-Scope": A})
+        client.headers.update({"X-Pajio-Token": csrf, "X-Pajio-Storage-Scope": A})
         body = dict(installation_id=PHONE, revision=0, enabled=True,
                     start_minute=1320, end_minute=480, timezone="Asia/Shanghai")
         assert (await client.post("/api/notifications/preferences", json=body)).status_code == 200

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from wearing.phone_proxy import device_states, driver_environment
+from pajio.phone_proxy import device_states, driver_environment
 
 
 pytestmark = pytest.mark.skipif(os.name=='nt',reason='POSIX execution-guest fixture')

@@ -1,10 +1,10 @@
 # 个人记忆验收
 
-日期：2026-10-03。Hermes 固定 revision `367441274c48a03d12ee9f8d3d9ccd9bc1585392`，Wearing profile v6。沿用当前已配置模型，测试身份无手机、电脑或文件工具，未改动真实用户记忆。
+日期：2026-10-03。Hermes 固定 revision `367441274c48a03d12ee9f8d3d9ccd9bc1585392`，Pajio profile v6。沿用当前已配置模型，测试身份无手机、电脑或文件工具，未改动真实用户记忆。
 
 ## 真实模型与原生存储
 
-六轮测试使用六个独立 session，记录位于本地私有 `.wearing/qa/personal-memory-20261003/live-result.json`：
+六轮测试使用六个独立 session，记录位于本地私有 `.pajio/qa/personal-memory-20261003/live-result.json`：
 
 1. memory 工具保存虚构昵称「青禾」及「先两句结论，再给依据」的偏好；随后只读接口确实读到原生条目。
 2. 新 session 不提供偏好提示，模型从记忆读出昵称与习惯。
@@ -21,6 +21,6 @@
 - 动画状态测试通过；JavaScript 语法检查通过。保持批准的头像、字标和动画资产。
 - 实际浏览器读取真实模型保存的测试记忆，检查纠正入口只填草稿、已有草稿保护、切换身份清空旧视图、未启动身份显示真实不可读状态。390px 宽度无页面横向溢出，临时视口已恢复。
 - 8765 上的本地服务已重启，真实执行引擎可达，profile v6 与 memory / session_search 已声明，实际页面记忆读取可用。目前真实身份原生记忆为空，没有将合成验收数据写给用户。
-- 重启前后，现有产品记录行数及内容哈希、模型选择、provider 环境和原生记忆文件哈希一致。私有 SQLite 备份位于 `.wearing/backups/before-memory-20261003.sqlite3`。
+- 重启前后，现有产品记录行数及内容哈希、模型选择、provider 环境和原生记忆文件哈希一致。私有 SQLite 备份位于 `.pajio/backups/before-memory-20261003.sqlite3`。
 
 这次没有跨天常驻、真实 SaaS 多租户或业务操作验收；沿用已有持续目标的恢复机制，没有另外增加调度器。删除条目与全量遗忘的区别见 [使用说明](../personal-memory.md)。

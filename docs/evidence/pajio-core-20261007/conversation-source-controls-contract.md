@@ -17,8 +17,8 @@
 ## 挂载
 
 ```python
-from wearing.conversation_sources import ConversationSources
-from wearing.conversation_sources_api import install_conversation_source_routes
+from pajio.conversation_sources import ConversationSources
+from pajio.conversation_sources_api import install_conversation_source_routes
 sources = ConversationSources(store)
 install_conversation_source_routes(app, sources, local_devices=settings.local_devices)
 ```
@@ -58,7 +58,7 @@ Web/Desktop 由 ZCode 只读此合同与 App 模型实现；不要改 App。
 
 `Service._start` 在构建 context 前读取 generation；`Store.reserve_start(..., source_generation=...)` 在最终入场事务再次比较。排除发生于 context 构建与入场之间时，旧 payload 不 dispatch，draft 留存，下一次需重建 context。
 
-引擎 capability 升为 `wearing.session_recall_guard="sources-v1"`。存在来源设置时，旧引擎不允许开始新运行；不会因源代码存在就信任旧进程。四种模式共用同一允许集合，在返回前再次核对运行状态、generation 和范围。host 只信真实 `approval_context._approval_session_key` contextvar，不采用同名环境变量 fallback。未自动重启真实引擎。
+引擎 capability 升为 `pajio.session_recall_guard="sources-v1"`。存在来源设置时，旧引擎不允许开始新运行；不会因源代码存在就信任旧进程。四种模式共用同一允许集合，在返回前再次核对运行状态、generation 和范围。host 只信真实 `approval_context._approval_session_key` contextvar，不采用同名环境变量 fallback。未自动重启真实引擎。
 
 ## 持久与有界规则
 

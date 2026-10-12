@@ -40,7 +40,7 @@ export class AIConsentClient {
     const timer=setTimeout(abort,15000);
     try {
       if(controller.signal.aborted)throw new AIConsentError(body===undefined?'network':'unconfirmed');
-      const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)).toString(),{method:body===undefined?'GET':'POST',headers:{...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity,...(body===undefined?{}:{'Content-Type':'application/json','X-Wearing-Token':token||''})},body:body===undefined?undefined:JSON.stringify(body),credentials:'omit',redirect:'error',cache:'no-store',signal:controller.signal});
+      const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)).toString(),{method:body===undefined?'GET':'POST',headers:{...connectionHeaders(this.connection),'X-Pajio-Identity':this.connection.identity,...(body===undefined?{}:{'Content-Type':'application/json','X-Pajio-Token':token||''})},body:body===undefined?undefined:JSON.stringify(body),credentials:'omit',redirect:'error',cache:'no-store',signal:controller.signal});
       if(controller.signal.aborted)throw new AIConsentError(body===undefined?'network':'unconfirmed');
       if(!response.ok)throw new AIConsentError(response.status===401?'expired':response.status===409?'changed':response.status===403?'unavailable':body===undefined?'network':'unconfirmed',response.status);
       const raw=await response.text();

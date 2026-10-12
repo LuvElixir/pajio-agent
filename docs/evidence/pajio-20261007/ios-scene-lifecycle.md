@@ -29,7 +29,7 @@ Active-source typecheck and local ESLint passed after plugin installation. Build
 - https://expo.dev/changelog/sdk-57
 - https://developer.apple.com/documentation/technotes/tn3187-migrating-to-the-uikit-scene-based-life-cycle
 
-Scene-only verification app: `/Users/archieliew/Documents/facet/artifacts/pajio-20261007/ios-scene-verification/Pajio.app`. Final Info.plist contains the scene manifest. This is an intermediate package with the previous icon, for startup verification only. The build agent has not installed/launched it.
+Scene-only verification app: `/Users/archieliew/Documents/pajio/artifacts/pajio-20261007/ios-scene-verification/Pajio.app`. Final Info.plist contains the scene manifest. This is an intermediate package with the previous icon, for startup verification only. The build agent has not installed/launched it.
 
 ## Runtime observation after scene repair
 

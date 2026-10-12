@@ -3,92 +3,92 @@
   "mode": "construction_only_temp_store_no_lifespan_no_handler_calls_no_network_no_processes",
   "installers": [
     {
-      "module": "src/wearing/activity_api.py",
+      "module": "src/pajio/activity_api.py",
       "installer": "install_activity_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/artifact_api.py",
+      "module": "src/pajio/artifact_api.py",
       "installer": "install_artifact_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/briefing_api.py",
+      "module": "src/pajio/briefing_api.py",
       "installer": "install_briefing_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/capture_api.py",
+      "module": "src/pajio/capture_api.py",
       "installer": "install_capture_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/cloud_apps_api.py",
+      "module": "src/pajio/cloud_apps_api.py",
       "installer": "install_cloud_app_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/confirmation_api.py",
+      "module": "src/pajio/confirmation_api.py",
       "installer": "install_confirmation_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/diagnostics_api.py",
+      "module": "src/pajio/diagnostics_api.py",
       "installer": "install_diagnostic_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/identity_export_api.py",
+      "module": "src/pajio/identity_export_api.py",
       "installer": "install_identity_export_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/life_api.py",
+      "module": "src/pajio/life_api.py",
       "installer": "install_life_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/messaging_api.py",
+      "module": "src/pajio/messaging_api.py",
       "installer": "install_messaging_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/notifications_api.py",
+      "module": "src/pajio/notifications_api.py",
       "installer": "install_notification_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/schedule_api.py",
+      "module": "src/pajio/schedule_api.py",
       "installer": "install_schedule_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/search_api.py",
+      "module": "src/pajio/search_api.py",
       "installer": "install_search_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/skills_api.py",
+      "module": "src/pajio/skills_api.py",
       "installer": "install_skill_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/speech_api.py",
+      "module": "src/pajio/speech_api.py",
       "installer": "install_speech_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/usage_api.py",
+      "module": "src/pajio/usage_api.py",
       "installer": "install_usage_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/workspace_api.py",
+      "module": "src/pajio/workspace_api.py",
       "installer": "install_workspace_page_routes",
       "mounted": true
     },
     {
-      "module": "src/wearing/workspace_upload.py",
+      "module": "src/pajio/workspace_upload.py",
       "installer": "install_workspace_import_routes",
       "mounted": true
     }

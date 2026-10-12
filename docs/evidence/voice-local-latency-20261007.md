@@ -5,7 +5,7 @@
 1. 原实现每次转写启动一个 Python 进程并载入 small/int8 模型。新实现复用一个只接受单请求的本地 JSON-lines 解码器；空闲 180 秒释放，服务退出时关闭。录音文件仍先落盘，身份检查仍先于转写，没有改变 HTTP 返回结构，也没有启用新的云端语音提供方或下载模型。
 2. 持续进程复用同一文件锁，与原件整理/OCR/其他 HTTP worker 互斥。超时、取消、破损响应或进程故障会终止该解码器；下一请求创建新进程，避免把迟到的上一份结果错配给当前录音。模型前文条件仍为关闭，逐请求不带上一段文字。
 3. 去掉错误的第二轮片段过滤。旧实现只保留 `avg_logprob > -1 AND no_speech_prob < .6` 的片段，但 upstream 已经过 VAD、重试和联合静音判断；这层过滤会丢掉 upstream 已接受的有效片段。现在直接连接 upstream 发出的片段；模型无语音结果仍为空，不补造文字。
-4. 解码器测量本地解码、权重加载、识别耗时。worker 以标准 Python `wearing.capture_worker` INFO logger 写入白名单数值；不记录录音路径、身份或转写文字。部署若未配置这个 logger 的 INFO 输出，不应声称实际已收集日志。
+4. 解码器测量本地解码、权重加载、识别耗时。worker 以标准 Python `pajio.capture_worker` INFO logger 写入白名单数值；不记录录音路径、身份或转写文字。部署若未配置这个 logger 的 INFO 输出，不应声称实际已收集日志。
 
 ## 原始资料
 
@@ -22,8 +22,8 @@
 复验（先准备好本机已授权的模型，不会自动下载）：
 
 ```sh
-say -v 'Tingting (中文（中国大陆）)' -o /tmp/wearing-voice-bench/sample.aiff '明天下午三点提醒我拿快递，周末想找一个人少一点的地方走走，预算五百块。'
-.venv/bin/python perf/bench/voice-warm.py --audio /tmp/wearing-voice-bench/sample.aiff --output perf/bench/voice-warm-20261007.json
+say -v 'Tingting (中文（中国大陆）)' -o /tmp/pajio-voice-bench/sample.aiff '明天下午三点提醒我拿快递，周末想找一个人少一点的地方走走，预算五百块。'
+.venv/bin/python perf/bench/voice-warm.py --audio /tmp/pajio-voice-bench/sample.aiff --output perf/bench/voice-warm-20261007.json
 ```
 
 [完整原始结果](../../perf/bench/voice-warm-20261007.json) 保存素材 SHA-256、模型清单 SHA-256、运行时版本、源码 SHA-256、每一组顺序/耗时/转写及汇总。
@@ -47,4 +47,4 @@ p50 减少 17.0%。新解码器第一次请求仍需 3.0237 秒，不能把热�
 
 要进一步逼近即时口述体验，应让录音采集与网络上传/识别重叠，而不是等文件全部结束后才发起。火山官方提供两种可评估协议：[单向流式输入](https://docs.volcengine.com/docs/DoubaoVoice/unidirectional-streaming-automatic-speech-recognition-websocket?lang=zh) 适合语音输入法/IM，在句末输出完整结果；[双向实时识别](https://docs.volcengine.com/docs/DoubaoVoice/bidirectional-streaming-automatic-speech-recognition-websocket?lang=zh) 持续返回会修正的中间结果。它们的产品适用说明可以支持选型，但不能证明豆包或微信 App 内部采用了哪一种实现。
 
-若引入云识别，需要独立评估中文专名、口音、噪音、网络异常、费用与音频传输同意；本轮没有启用。已确认 Expo 57 提供实时 PCM 接口，当前整段输入是 Wearing 应用的实现方式，并非 Expo Go 的框架限制。后续接入见 [流式语音计划](../plans/voice-streaming-2026-10-07.md)。
+若引入云识别，需要独立评估中文专名、口音、噪音、网络异常、费用与音频传输同意；本轮没有启用。已确认 Expo 57 提供实时 PCM 接口，当前整段输入是 Pajio 应用的实现方式，并非 Expo Go 的框架限制。后续接入见 [流式语音计划](../plans/voice-streaming-2026-10-07.md)。

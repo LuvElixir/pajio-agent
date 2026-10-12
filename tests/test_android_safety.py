@@ -10,9 +10,9 @@ from types import SimpleNamespace
 import pytest
 from PIL import Image
 
-from wearing.android_text import describe_hierarchy, focused_field, replace_text
-from wearing.private_media_android import AndroidScrcpySource, PRIVATE_IME_SHA256
-from wearing.private_media_sources import CapturedFrame, SourceError
+from pajio.android_text import describe_hierarchy, focused_field, replace_text
+from pajio.private_media_android import AndroidScrcpySource, PRIVATE_IME_SHA256
+from pajio.private_media_sources import CapturedFrame, SourceError
 
 
 def tree(*, text='before', password='false', resource='app:id/input', package='app', focused='true'):
@@ -185,7 +185,7 @@ def test_driver_value_error_cannot_echo_input_or_retry(monkeypatch):
 
 
 def test_observation_cleanup_failure_does_not_report_success_or_exception_content(monkeypatch):
-    from wearing.android_text import observe
+    from pajio.android_text import observe
     def stop(): raise OSError('synthetic-private-must-not-escape')
     device=SimpleNamespace(_dev=object(), stop_uiautomator=stop)
     monkeypatch.setitem(sys.modules, 'uiautomator2', SimpleNamespace(connect=lambda *a, **k: device))
@@ -215,8 +215,8 @@ def test_private_text_revalidates_human_lease_after_apk_io(tmp_path, monkeypatch
 
 @pytest.mark.asyncio
 async def test_partial_android_cleanup_never_acks_gateway_return(tmp_path):
-    from wearing.device_gateway import DeviceGateway, GatewayScope
-    from wearing.private_media import PrivateSession
+    from pajio.device_gateway import DeviceGateway, GatewayScope
+    from pajio.private_media import PrivateSession
     scope=GatewayScope('tenant_test','daily','actor_test','connector_test','phone_test')
     gate=DeviceGateway(tmp_path/'gateway', private_access_ready=True)
     claim=gate.begin_human(scope,'session_test',expected_epoch=0)

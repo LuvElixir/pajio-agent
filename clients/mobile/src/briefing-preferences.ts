@@ -46,7 +46,7 @@ export class BriefPreferenceApi {
   private async request(path: string, body?: PreferenceRequest, retry = true): Promise<unknown> {
     const timer = new AbortController(), timeout = setTimeout(() => timer.abort(), 15000);
     try {
-      const result = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method: body ? 'POST' : 'GET', signal: timer.signal, redirect: 'error', headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(body ? {'Content-Type': 'application/json', 'X-Wearing-Token': this.token} : {})}, ...(body ? {body: JSON.stringify(body)} : {})});
+      const result = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method: body ? 'POST' : 'GET', signal: timer.signal, redirect: 'error', headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(body ? {'Content-Type': 'application/json', 'X-Pajio-Token': this.token} : {})}, ...(body ? {body: JSON.stringify(body)} : {})});
       if (body && result.status === 403 && retry) {await this.bootstrap(); return this.request(path, body, false);}
       if (!result.ok) throw new ApiError(result.status === 409 ? '简报偏好已在别处修改，输入已保留。请读取最新设置后核对。' : '暂时无法读写简报偏好，请稍后重试。', result.status);
       return await result.json();

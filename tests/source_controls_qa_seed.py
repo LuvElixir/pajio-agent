@@ -5,9 +5,9 @@ No model/provider invocation. Synthetic history metadata is not engine validatio
 """
 from pathlib import Path
 import sqlite3
-from wearing.conversation_sources import ConversationSources
-from wearing.service import ACTIVE
-from wearing.session_recall_guard import RecallConfig
+from pajio.conversation_sources import ConversationSources
+from pajio.service import ACTIVE
+from pajio.session_recall_guard import RecallConfig
 
 QA_ROOT = Path('/private/tmp/pajio-core-qa-jf1qwuko')
 

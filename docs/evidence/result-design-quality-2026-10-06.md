@@ -2,7 +2,7 @@
 
 ## 本轮范围
 
-人工打磨预算演示；将按媒介的设计指引接入 Wearing 的既有 MCP 工具集。未重做品牌或角色，未调用付费模型生成新演示、未制作视频、未启动云 VM。
+人工打磨预算演示；将按媒介的设计指引接入 Pajio 的既有 MCP 工具集。未重做品牌或角色，未调用付费模型生成新演示、未制作视频、未启动云 VM。
 
 ## 交付与真实性
 
@@ -32,7 +32,7 @@
 
 两条柱使用固定 0–1,200 元相同尺度。过渡改用 transform，减少动态效果时禁用（源码检查，未单独切系统偏好验证）。手机顶部操作保持单行。未宣称真机或所有浏览器验收。
 
-截图：`.wearing/qa/result-delivery-20261006/design-desktop-final.png` 与 `design-mobile-final.png`。
+截图：`.pajio/qa/result-delivery-20261006/design-desktop-final.png` 与 `design-mobile-final.png`。
 
 ## 设计复核
 

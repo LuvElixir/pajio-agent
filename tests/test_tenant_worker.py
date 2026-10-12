@@ -6,13 +6,13 @@ import shutil
 import httpx
 import pytest
 
-from wearing.cloud.instance import InstanceError, initialize_instance, instance_status, load_instance
-from wearing.cloud.worker import create_tenant_app
-from wearing.config import Settings, write_private_json
-from wearing.hermes import HermesClient
+from pajio.cloud.instance import InstanceError, initialize_instance, instance_status, load_instance
+from pajio.cloud.worker import create_tenant_app
+from pajio.config import Settings, write_private_json
+from pajio.hermes import HermesClient
 
 
-ORIGIN = "https://wearing.example"
+ORIGIN = "https://pajio.example"
 
 
 @pytest.fixture(autouse=True)
@@ -31,10 +31,10 @@ def test_public_tenant_without_limits_fails_before_app_or_engine(tmp_path, monke
         monkeypatch.setenv("PAJIO_TRIAL_LIMITS", enabled)
     def forbidden(*args, **kwargs):
         pytest.fail("Unprotected tenant reached app/engine construction")
-    monkeypatch.setattr("wearing.cloud.worker.create_app", forbidden)
+    monkeypatch.setattr("pajio.cloud.worker.create_app", forbidden)
     with pytest.raises(InstanceError, match="PAJIO_TRIAL_LIMITS=1"):
         create_tenant_app(root, engine_autostart=False, hermes=object())
-    assert not (root / "data/wearing.sqlite3").exists()
+    assert not (root / "data/pajio.sqlite3").exists()
     assert not (root / "data/tenant-worker.lock").exists()
 
 
@@ -54,7 +54,7 @@ def initialize(path, tenant="tenant_A"):
 
 
 def headers(root, tenant="tenant_A"):
-    return {"Authorization": "Bearer " + (root / "gateway.key").read_text().strip(), "X-Wearing-Tenant": tenant, "X-Pajio-Storage-Scope": "a" * 64}
+    return {"Authorization": "Bearer " + (root / "gateway.key").read_text().strip(), "X-Pajio-Tenant": tenant, "X-Pajio-Storage-Scope": "a" * 64}
 
 
 def test_initialized_instance_is_private_idempotent_and_cannot_change_owner(tmp_path):
@@ -86,7 +86,7 @@ def test_bad_binding_never_creates_instance(tmp_path, tenant, origin):
 def test_does_not_adopt_existing_local_user_data(tmp_path):
     root = tmp_path / "existing"
     root.mkdir()
-    data = root / "wearing.sqlite3"
+    data = root / "pajio.sqlite3"
     data.write_bytes(b"original-user-data")
     with pytest.raises(InstanceError):
         initialize(root)
@@ -100,7 +100,7 @@ def test_wrong_volume_and_symlinks_are_rejected_before_database_creation(tmp_pat
     shutil.copyfile(a / "data/instance-owner.json", b / "data/instance-owner.json")
     with pytest.raises(InstanceError):
         create_tenant_app(b)
-    assert not (b / "data/wearing.sqlite3").exists()
+    assert not (b / "data/pajio.sqlite3").exists()
     (a / "gateway.key").unlink()
     (a / "gateway.key").symlink_to(b / "gateway.key")
     with pytest.raises(InstanceError):
@@ -116,7 +116,7 @@ async def test_bad_engine_connection_fails_before_database_and_releases_lock(tmp
     with pytest.raises(InstanceError) as error:
         create_tenant_app(root, engine_autostart=False)
     assert "private-" not in str(error.value)
-    assert not (root / "data/wearing.sqlite3").exists()
+    assert not (root / "data/pajio.sqlite3").exists()
     connection.unlink()
     recovered = create_tenant_app(root, engine_autostart=False)
     async with recovered.router.lifespan_context(recovered):
@@ -133,12 +133,12 @@ async def test_every_route_requires_key_and_bound_tenant_and_origin(tmp_path):
                 assert (await client.get(path)).status_code == 401
                 assert (await client.get(path, headers=headers(root, "tenant_B"))).status_code == 403
             client.headers.update(headers(root))
-            assert (await client.get("/api/bootstrap", headers={"Origin": "http://wearing.example"})).status_code == 403
+            assert (await client.get("/api/bootstrap", headers={"Origin": "http://pajio.example"})).status_code == 403
             assert (await client.get("/api/bootstrap", headers={"Origin": "https://foreign.example"})).status_code == 403
             assert (await client.get("/api/bootstrap", headers={"Host": "evil.example"})).status_code == 400
             token = (await client.get("/api/bootstrap", headers={"Origin": ORIGIN})).json()["token"]
             assert (await client.post("/api/conversation", json={"content": "without CSRF"})).status_code == 403
-            client.headers["X-Wearing-Token"] = token
+            client.headers["X-Pajio-Token"] = token
             assert (await client.post("/api/conversation", json={"content": "保留在本租户"})).status_code == 201
             for path in ("/api/phone", "/api/computer", "/api/doctor", "/api/connection"):
                 assert (await client.get(path)).status_code == 501
@@ -146,12 +146,12 @@ async def test_every_route_requires_key_and_bound_tenant_and_origin(tmp_path):
             status = (await client.get("/internal/runtime")).json()
             assert status["tenant_id"] == "tenant_A" and status["hardware_isolation_verified"] is False
             assert status["engine_state"] == "not_configured"
-            duplicate = [("Authorization", headers(root)["Authorization"]), ("Authorization", headers(root)["Authorization"]), ("X-Wearing-Tenant", "tenant_A")]
+            duplicate = [("Authorization", headers(root)["Authorization"]), ("Authorization", headers(root)["Authorization"]), ("X-Pajio-Tenant", "tenant_A")]
             assert (await client.get("/api/bootstrap", headers=duplicate)).status_code == 401
 
 
 async def test_cloud_device_controls_require_page_token_and_current_identity(tmp_path):
-    from wearing.cloud.relay import instance_relay, PairRequest
+    from pajio.cloud.relay import instance_relay, PairRequest
     root=tmp_path/'instance';initialize(root)
     relay=instance_relay(root)
     bundle=relay.pair_code('daily',[{'resource_id':'phone_test','name':'Test phone','kind':'android','methods':['phone.mobile_click_on_screen']}],[])
@@ -161,10 +161,10 @@ async def test_cloud_device_controls_require_page_token_and_current_identity(tmp
         boot=(await c.get('/api/bootstrap')).json();assert boot['deployment']=='cloud'
         body={'resource_id':'phone_test','paused':True,'expected_generation':0}
         assert (await c.post('/api/devices/control',json=body)).status_code==403
-        c.headers.update({'X-Wearing-Token':boot['token'],'Origin':ORIGIN})
+        c.headers.update({'X-Pajio-Token':boot['token'],'Origin':ORIGIN})
         other=(await c.post('/api/identities',json={'name':'出海','region':'international','description':''})).json()
-        assert (await c.post('/api/devices/control',json=body,headers={'X-Wearing-Identity':other['id']})).status_code==404
-        assert (await c.get('/api/devices',headers={'X-Wearing-Identity':other['id']})).json()=={'devices':[]}
+        assert (await c.post('/api/devices/control',json=body,headers={'X-Pajio-Identity':other['id']})).status_code==404
+        assert (await c.get('/api/devices',headers={'X-Pajio-Identity':other['id']})).json()=={'devices':[]}
         assert (await c.post('/api/devices/control',json=body)).status_code==200
         assert (await c.get('/api/devices')).json()['devices'][0]['paused']
         assert (await c.post('/api/devices/control',json=body)).status_code==409
@@ -173,15 +173,15 @@ async def test_cloud_device_controls_require_page_token_and_current_identity(tmp
 async def test_private_records_files_and_restart_do_not_cross_tenants(tmp_path, monkeypatch):
     a, b = tmp_path / "A", tmp_path / "B"
     initialize(a); initialize(b, "tenant_B")
-    monkeypatch.setenv("WEARING_DATA_DIR", str(a / "data"))
-    monkeypatch.setenv("WEARING_HERMES_KEY", "do-not-inherit")
+    monkeypatch.setenv("PAJIO_DATA_DIR", str(a / "data"))
+    monkeypatch.setenv("PAJIO_HERMES_KEY", "do-not-inherit")
     first, second = create_tenant_app(a, engine_autostart=False), create_tenant_app(b, engine_autostart=False)
     async with first.router.lifespan_context(first), second.router.lifespan_context(second):
         with pytest.raises(InstanceError, match="已有运行实例"):
             create_tenant_app(a)
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=first), base_url=ORIGIN, headers=headers(a)) as ca, httpx.AsyncClient(transport=httpx.ASGITransport(app=second), base_url=ORIGIN, headers=headers(b, "tenant_B")) as cb:
             for client in (ca, cb):
-                client.headers["X-Wearing-Token"] = (await client.get("/api/bootstrap")).json()["token"]
+                client.headers["X-Pajio-Token"] = (await client.get("/api/bootstrap")).json()["token"]
             task = (await ca.post("/api/conversation", json={"content": "A-only-message"})).json()
             assert "A-only-message" in (await ca.get("/api/conversation")).text
             assert (await cb.get("/api/conversation")).json() == []
@@ -220,7 +220,7 @@ async def test_managed_engine_is_started_on_boot_and_connection_is_server_only(t
 
 
 async def test_missing_model_does_not_destroy_records_or_expose_private_error(tmp_path, monkeypatch, caplog):
-    from wearing.runtime import RuntimeError
+    from pajio.runtime import RuntimeError
     root = tmp_path / "instance"
     initialize(root)
     app = create_tenant_app(root)
@@ -232,5 +232,5 @@ async def test_missing_model_does_not_destroy_records_or_expose_private_error(tm
     monkeypatch.setattr(engine, "start", fail)
     async with app.router.lifespan_context(app):
         assert app.state.service.hermes.configured is False
-        assert (root / "data/wearing.sqlite3").is_file()
+        assert (root / "data/pajio.sqlite3").is_file()
     assert "private-provider-error" not in caplog.text

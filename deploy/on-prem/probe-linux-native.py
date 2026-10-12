@@ -13,10 +13,10 @@ from pathlib import Path
 import re
 import time
 
-from wearing.cloud.instance import read_private
-from wearing.device_gateway import DeviceGateway
-from wearing.linux_computer import LinuxComputerBackend
-from wearing.linux_computer_helper import accessible_input_text
+from pajio.cloud.instance import read_private
+from pajio.device_gateway import DeviceGateway
+from pajio.linux_computer import LinuxComputerBackend
+from pajio.linux_computer_helper import accessible_input_text
 
 
 TITLE = 'Pajio Desktop Native Probe'

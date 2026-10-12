@@ -6,12 +6,12 @@ import httpx
 import pytest
 import yaml
 
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.filesystem import TOOLS, configuration
-from wearing.profile import prepare_profile
-from wearing.runtime import HermesRuntime
-from wearing.workspace import list_files, workspace_file, WorkspaceError
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.filesystem import TOOLS, configuration
+from pajio.profile import prepare_profile
+from pajio.runtime import HermesRuntime
+from pajio.workspace import list_files, workspace_file, WorkspaceError
 
 
 def test_download_and_listing_do_not_follow_symlinks_or_parent_paths(tmp_path):
@@ -37,7 +37,7 @@ async def test_download_is_attachment_and_active_turn_blocks_configuration(tmp_p
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver") as client:
         assert (await client.post("/api/model", json={})).status_code == 403
         token = (await client.get("/api/bootstrap")).json()["token"]
-        client.headers["X-Wearing-Token"] = token
+        client.headers["X-Pajio-Token"] = token
         file = await client.get("/api/workspace/file", params={"path": "hello.html"})
         assert file.headers["content-type"] == "application/octet-stream"
         assert "attachment" in file.headers["content-disposition"]
@@ -64,13 +64,13 @@ def test_profile_restricts_mcp_to_file_connector(tmp_path):
     files = {"command": "test-node", "args": ["test-server", "workspace"], "tools": {"include": list(TOOLS)}}
     prepare_profile(home, source, files)
     config = yaml.safe_load((home / "config.yaml").read_text())
-    assert config["platform_toolsets"] == {"api_server": ["memory", "session_search", "web", "todo", "skills", "vision", "wearing_files"], "cli": ["no_mcp"]}
+    assert config["platform_toolsets"] == {"api_server": ["memory", "session_search", "web", "todo", "skills", "vision", "pajio_files"], "cli": ["no_mcp"]}
     assert config["mcp_servers"]["unrelated"]["command"] == "never-start"
-    assert config["mcp_servers"]["wearing_files"] == files
+    assert config["mcp_servers"]["pajio_files"] == files
 
 
 def test_real_filesystem_mcp_can_write_read_but_not_escape(tmp_path):
-    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".wearing")
+    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".pajio")
     root = tmp_path / "files"
     root.mkdir()
     files = configuration(runtime.root, root)
@@ -95,14 +95,14 @@ from hermes_cli.config import load_config
 root=Path(sys.argv[1]); outside=Path(sys.argv[2])
 expected=set(json.loads(sys.argv[3]))
 try:
- names=discover_mcp_tools(['wearing_files'])
- assert set(names)=={'mcp__wearing_files__'+n for n in expected}, names
- assert _get_platform_tools(load_config(),'api_server') == {'memory','session_search','web','todo','skills','vision','wearing_files'}
- def call(name,args): return registry.dispatch('mcp__wearing_files__'+name,args)
+ names=discover_mcp_tools(['pajio_files'])
+ assert set(names)=={'mcp__pajio_files__'+n for n in expected}, names
+ assert _get_platform_tools(load_config(),'api_server') == {'memory','session_search','web','todo','skills','vision','pajio_files'}
+ def call(name,args): return registry.dispatch('mcp__pajio_files__'+name,args)
  allowed=call('list_allowed_directories',{}); assert str(root) in allowed
- call('write_file',{'path':str(root/'hello.txt'),'content':'wearing-canary'})
- assert (root/'hello.txt').read_text()=='wearing-canary'
- assert 'wearing-canary' in call('read_text_file',{'path':str(root/'hello.txt')})
+ call('write_file',{'path':str(root/'hello.txt'),'content':'pajio-canary'})
+ assert (root/'hello.txt').read_text()=='pajio-canary'
+ assert 'pajio-canary' in call('read_text_file',{'path':str(root/'hello.txt')})
  for path in (str(outside),str(root/'../outside.txt'),str(root/'outside-link')):
   result=call('read_text_file',{'path':path}); assert 'outside-canary' not in result, result
   assert 'denied' in result.lower() or 'error' in result.lower(), result

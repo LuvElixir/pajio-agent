@@ -149,7 +149,7 @@ export class OngoingManagementApi {
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 20000);
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method, signal: controller.signal, redirect: 'error',
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(method !== 'GET' ? {'Content-Type': 'application/json', 'X-Wearing-Token': this.token} : {})},
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(method !== 'GET' ? {'Content-Type': 'application/json', 'X-Pajio-Token': this.token} : {})},
         ...(body === undefined ? {} : {body: JSON.stringify(body)})});
       if (response.status === 403 && method !== 'GET' && refresh) {await this.bootstrap(); return await this.request(path, method, body, false);}
       const data: unknown = await response.json().catch(() => {throw new ApiError(method === 'GET' ? '暂时没有读到完整数据，请刷新。' : '保存回执不完整，请保留草稿并重新取回回执。', method === 'GET' ? 422 : 0);});

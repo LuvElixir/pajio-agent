@@ -2,7 +2,7 @@ import {useAppTheme, useThemedStyles, type AppColors} from './app-theme';
 import {useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, Pressable, StyleSheet, Text, View} from 'react-native';
 import {AlertCircle, Archive, ArrowUpRight, Check, ChevronRight, CircleHelp, Clock3, FileText, RefreshCw, Square} from 'lucide-react-native';
-import {ActivityItem, ActivitySnapshot, ApiError, Connection, WearingApi} from './core';
+import {ActivityItem, ActivitySnapshot, ApiError, Connection, PajioApi} from './core';
 import {appendActivityPage} from './activity-pages';
 import {useActivitySnapshot} from './use-activity-snapshot';
 import {activityPresentation, groupActivityItems} from './activity-presentation';
@@ -80,7 +80,7 @@ export default function AgentTaskList({connection, onTask, onGoals, onDraft}: Pr
     setArchive({scope, snapshot: base});
     setPagination({scope, mode: 'more', error: '', expired: false, notice: ''});
     try {
-      const next = await new WearingApi(connection, serviceFetch).activity({cursor: base.next_cursor!});
+      const next = await new PajioApi(connection, serviceFetch).activity({cursor: base.next_cursor!});
       if (!session.live) return;
       setArchive({scope, snapshot: appendActivityPage(base, next)});
       setPagination({scope, mode: null, error: '', expired: false, notice: ''});

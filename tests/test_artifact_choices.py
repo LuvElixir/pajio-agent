@@ -6,14 +6,14 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from wearing.artifact_choices import ArtifactChoices, ChoiceRequest
-from wearing.artifacts import ArtifactDraft, ArtifactError
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.goals import GoalBook, GoalCoordinator
-from wearing.hermes import HermesClient
-from wearing.service import TaskService
-from wearing.store import Store
+from pajio.artifact_choices import ArtifactChoices, ChoiceRequest
+from pajio.artifacts import ArtifactDraft, ArtifactError
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.goals import GoalBook, GoalCoordinator
+from pajio.hermes import HermesClient
+from pajio.service import TaskService
+from pajio.store import Store
 from test_artifacts import setup
 from test_goals import GoalWire
 
@@ -129,7 +129,7 @@ async def test_selection_dispatches_existing_coordinator_once_without_external_e
 
 
 def test_strict_choice_schema_and_tool_definitions(tmp_path):
-    from wearing.artifact_tools import TOOLS
+    from pajio.artifact_tools import TOOLS
     import jsonschema
     schema = next(t.inputSchema for t in TOOLS if t.name == "artifact_publish")
     base = {"artifact": {"path": "x.html", "title": "title", "summary": "summary", "choices": [
@@ -144,17 +144,17 @@ def test_strict_choice_schema_and_tool_definitions(tmp_path):
 
 async def test_api_csrf_no_html_bridge_exact_identity_and_receipt(tmp_path):
     app = create_app(Settings(tmp_path), engine_autostart=False, local_devices=False)
-    from wearing.cloud.worker import TenantBoundary
+    from pajio.cloud.worker import TenantBoundary
     app.add_middleware(TenantBoundary, tenant_id='fixture', gateway_key='fixture-key')
     book, task, draft = setup(app.state.store)
     draft = ArtifactDraft.model_validate({**draft.model_dump(), "choices": [{"id": "compare", "label": "比较", "instruction": "继续比较。"}]})
     item = book.publish("daily", draft, "request")
     app.state.store.update(task["id"], status="completed_unverified")
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver", headers={'Authorization': 'Bearer fixture-key', 'X-Wearing-Tenant': 'fixture', 'X-Pajio-Storage-Scope': 'a' * 64}) as http:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver", headers={'Authorization': 'Bearer fixture-key', 'X-Pajio-Tenant': 'fixture', 'X-Pajio-Storage-Scope': 'a' * 64}) as http:
         url = f'/api/artifacts/{item["id"]}/choices'
         assert (await http.post(url, json=request().model_dump())).status_code == 403
         token = (await http.get('/api/bootstrap')).json()['token']
-        headers = {'X-Wearing-Token': token}
+        headers = {'X-Pajio-Token': token}
         result = await http.post(url, json=request().model_dump(), headers=headers)
         assert result.status_code == 201 and result.json()['source_task_id'] == task['id']
         assert (await http.get(url)).json()['selection']['task_id'] == result.json()['task_id']

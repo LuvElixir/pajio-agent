@@ -1,7 +1,7 @@
 # Web onboarding 独立回归复核
 
 - 最终运行时间（UTC）：2026-10-08T18:47:16+00:00 至 2026-10-08T18:47:17+00:00。
-- 执行环境：Node.js v24.16.0；本机工作区 `/Users/archieliew/Documents/facet`。
+- 执行环境：Node.js v24.16.0；本机工作区 `/Users/archieliew/Documents/pajio`。
 - 最终结果：Web Node 套件 200/200 通过；独立行为回归 14/14 通过，均为 0 失败、0 跳过。
 - 审查边界：只读 Web 实现。仅维护本报告、完整测试日志和独立审查脚本证据，未编辑 Web/App 产品代码。
 
@@ -11,7 +11,7 @@
 
 ```sh
 node --test --test-reporter=tap tests/*-ui.test.cjs tests/web-core-closure.test.cjs tests/web-import-goal.test.cjs
-PAJIO_REVIEW_ROOT=/Users/archieliew/Documents/facet node --test --test-reporter=tap docs/evidence/pajio-onboarding-20261009/independent-web-review.cjs
+PAJIO_REVIEW_ROOT=/Users/archieliew/Documents/pajio node --test --test-reporter=tap docs/evidence/pajio-onboarding-20261009/independent-web-review.cjs
 ```
 
 本次直接执行 evidence 目录中的独立脚本。完整原始 TAP 输出、展开后的命令、退出码、时间及源码哈希保存在同目录 [web-tests-final.log](web-tests-final.log)。
@@ -62,11 +62,11 @@ PAJIO_REVIEW_ROOT=/Users/archieliew/Documents/facet node --test --test-reporter=
 
 | 文件 | SHA-256 |
 | --- | --- |
-| `src/wearing/web/onboarding.js` | `6796b82eb72352b740357b2f919041ab29e7a299c9054612113b89f849b4ab1e` |
-| `src/wearing/web/scoped-store.js` | `9d9fdcffd3548fd4eecd804bae64d917580403a0afec403bc7fbee2f1175caca` |
-| `src/wearing/web/account-deletion.js` | `fa9e743b6b42ddef5b6078b41e516b509680147e4b25a00e892c6a5da9e664af` |
-| `src/wearing/web/app.js` | `605802f9cb2c1814955d9e13bcc3c41217f524ac0934108a441719aff9eff949` |
-| `src/wearing/web/index.html` | `65aa223f8dee00d88ede783d487f13ae79a1aa11e8025f4cbe4a5eaa74ad1e9c` |
-| `src/wearing/web/pajio.css` | `851674fb0a8d722f0c204642358e137af8f59add6241febae7ae3a0961554039` |
-| `src/wearing/web/life.js` | `f4313e2a0f247e0070491f1760a87c98609344553e80e6b4dde71c25bce8bea4` |
+| `src/pajio/web/onboarding.js` | `6796b82eb72352b740357b2f919041ab29e7a299c9054612113b89f849b4ab1e` |
+| `src/pajio/web/scoped-store.js` | `9d9fdcffd3548fd4eecd804bae64d917580403a0afec403bc7fbee2f1175caca` |
+| `src/pajio/web/account-deletion.js` | `fa9e743b6b42ddef5b6078b41e516b509680147e4b25a00e892c6a5da9e664af` |
+| `src/pajio/web/app.js` | `605802f9cb2c1814955d9e13bcc3c41217f524ac0934108a441719aff9eff949` |
+| `src/pajio/web/index.html` | `65aa223f8dee00d88ede783d487f13ae79a1aa11e8025f4cbe4a5eaa74ad1e9c` |
+| `src/pajio/web/pajio.css` | `851674fb0a8d722f0c204642358e137af8f59add6241febae7ae3a0961554039` |
+| `src/pajio/web/life.js` | `f4313e2a0f247e0070491f1760a87c98609344553e80e6b4dde71c25bce8bea4` |
 | `docs/evidence/pajio-onboarding-20261009/independent-web-review.cjs` | `b77eaac88f4b9cac4163318141d56e194a8d9ae653e2fbb3d28eb984df9521f2` |

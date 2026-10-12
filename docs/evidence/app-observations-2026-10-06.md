@@ -1,6 +1,6 @@
 # App 观察回执与真机研究验收
 
-日期：2026-10-06（北京时间）。引擎固定 Hermes `367441274c48a03d12ee9f8d3d9ccd9bc1585392`，Wearing profile v14。验收使用隔离 Hermes Home 与 8766 数据目录，复用已经授权的模型凭据和测试手机连接器；测试对话没有写入日常服务数据。
+日期：2026-10-06（北京时间）。引擎固定 Hermes `367441274c48a03d12ee9f8d3d9ccd9bc1585392`，Pajio profile v14。验收使用隔离 Hermes Home 与 8766 数据目录，复用已经授权的模型凭据和测试手机连接器；测试对话没有写入日常服务数据。
 
 ## 本轮实现
 
@@ -15,15 +15,15 @@
 ## 真实模型 + 实际手机
 
 1. 搜索验收：模型自行在抖音搜索「泉州 旅游 避坑」，切到视频页，打开一条结果与评论，再截图。留下 7 次 App 文字观察与 1 次截图记录。该轮达到测试上限 20 轮，Hermes 给出阶段总结并返回 failed，**不算完整任务通过**。没有据此提高上限或自动重发。
-2. 短观察验收：同一隔离对话请求只读当前公开页、截图并调用已有视觉工具；工具记录包含 `mobile_list_elements_on_screen`、`mobile_take_screenshot`、`vision_analyze`。正常返回 completed，Wearing 保持 completed_unverified；留下 1 次文字与 1 次截图回执。视觉回答识别到当前帧字幕，明确不代表完整视频。
-3. 访问边界：错误引擎 Key 返回 401；不存在的 run 返回 404；另一个 Wearing 身份读取该任务返回 404。隔离引擎已停止，手机回到 HOME。
+2. 短观察验收：同一隔离对话请求只读当前公开页、截图并调用已有视觉工具；工具记录包含 `mobile_list_elements_on_screen`、`mobile_take_screenshot`、`vision_analyze`。正常返回 completed，Pajio 保持 completed_unverified；留下 1 次文字与 1 次截图回执。视觉回答识别到当前帧字幕，明确不代表完整视频。
+3. 访问边界：错误引擎 Key 返回 401；不存在的 run 返回 404；另一个 Pajio 身份读取该任务返回 404。隔离引擎已停止，手机回到 HOME。
 
-私有原始材料在 `.wearing/qa/app-observations-20261006/`：`live-check.json`（保留第一次未完成结果）、`read-check.json`（第二次正常结果）、隔离引擎数据库与日志。它们不是交付到源码仓库的公开数据。模型文字中仍有数字转述不一致等问题，原观察可用于核对，不能把模型自报当作全部动作或业务准确性的证明。
+私有原始材料在 `.pajio/qa/app-observations-20261006/`：`live-check.json`（保留第一次未完成结果）、`read-check.json`（第二次正常结果）、隔离引擎数据库与日志。它们不是交付到源码仓库的公开数据。模型文字中仍有数字转述不一致等问题，原观察可用于核对，不能把模型自报当作全部动作或业务准确性的证明。
 
 ## 检查
 
 - 72 项 Python 测试通过：App/web receipts、手机、profile、真实引擎集成边界和 TaskService 生命周期。
-- 5 项前端来源渲染测试通过；`node --check src/wearing/web/app.js` 通过。
+- 5 项前端来源渲染测试通过；`node --check src/pajio/web/app.js` 通过。
 - 浏览器实际展开隔离任务的 App 与逐次文字记录；390px 窄屏展开后 scrollWidth=390，无横向溢出。截图记录不导出内部文件路径。桌面与窄屏截图保存在私有验收目录的 `app-receipts-desktop.jpg` / `app-receipts-mobile.jpg`。
 - 本地 8765 服务重启后实测 phase=running、profile_version=14、app_observation_receipts=true；todo/skills/vision 可发现，来源 JS/CSS 返回 200。没有运行中的用户任务被中断。
 

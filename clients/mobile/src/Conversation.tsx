@@ -31,7 +31,7 @@ function ConversationPage({connection,record,active=true,visible=true,showCompos
   const contextKey=JSON.stringify({identity:connection.identity,...(record?{life:{id:record.id,revision:record.revision}}:{})});
   const draft=useMemo(()=>new ChatDraft(connection,storage,()=>Crypto.randomUUID(),contextKey),[connection,contextKey]);
   const journal=useRef<ChatJournal>({text:'',voiceIds:[]}),serial=useRef(Promise.resolve()),sequence=useRef(0),sending=useRef(false);
-  const [snapshot,setSnapshot]=useState<ComposerState>({type:'wearing-composer-state',identity:connection.identity,pageId,contextKey,text:'',sending:false,ready:false,ackSeq:0,...(record?{contextLabel:'围绕记录 · '+record.title}:{})});
+  const [snapshot,setSnapshot]=useState<ComposerState>({type:'pajio-composer-state',identity:connection.identity,pageId,contextKey,text:'',sending:false,ready:false,ackSeq:0,...(record?{contextLabel:'围绕记录 · '+record.title}:{})});
   const [messages,setMessages]=useState<ChatMessage[]>([]),messagesRef=useRef<ChatMessage[]>([]);
   const [loaded,setLoaded]=useState(false),[error,setError]=useState(''),[olderBusy,setOlderBusy]=useState(false),[hasOlder,setHasOlder]=useState(false),[away,setAway]=useState(false),[keyboard,setKeyboard]=useState(false);
   const oldest=useRef<string|null>(null),latest=useRef<string|null>(null),readBusy=useRef(false),readAgain=useRef(false),olderLock=useRef(false),nearLatest=useRef(true);

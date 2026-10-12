@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('vm');
 
-const app = fs.readFileSync('src/wearing/web/app.js', 'utf8');
+const app = fs.readFileSync('src/pajio/web/app.js', 'utf8');
 
 // ---- 文件导入：raw bytes + 幂等 request_key + 回执核对 ----
 const importStart = app.indexOf('let importAttempt=null;');
@@ -16,7 +16,7 @@ function importSetup({failFirst = false} = {}) {
   const context0 = {uuidN: 0};
   const context = {
     URLSearchParams, URL,
-    window: {WearingIds: {uuid: () => 'fixed-uuid-' + String(++context0.uuidN).padStart(4, '0')}},
+    window: {PajioIds: {uuid: () => 'fixed-uuid-' + String(++context0.uuidN).padStart(4, '0')}},
     state: {identityId: 'qa', identityEpoch: 1, token: 'tok'},
     fetch: async (url, options) => {
       fetches.push({url, options});
@@ -46,8 +46,8 @@ test('import posts raw bytes with name+request_key and verifies the receipt', as
   assert.match(url, /\/api\/workspace\/import\?name=/);
   assert.match(url, /request_key=fixeduuid0001/);
   assert.equal(options.method, 'POST');
-  assert.equal(options.headers['X-Wearing-Identity'], 'qa');
-  assert.equal(options.headers['X-Wearing-Token'], 'tok');
+  assert.equal(options.headers['X-Pajio-Identity'], 'qa');
+  assert.equal(options.headers['X-Pajio-Token'], 'tok');
   assert.equal(new Uint8Array(options.body).length, 5, 'body is the raw file bytes');
 });
 
@@ -83,7 +83,7 @@ const keySource = app.slice(keyStart, keyEnd);
 
 test('goal request key: stable per spec, new when spec changes, valid charset', () => {
   let goalUuidN = 0;
-  const context = {URLSearchParams, URL, window: {WearingIds: {uuid: () => 'goal-key-' + String(++goalUuidN).padStart(12, '0')}}};
+  const context = {URLSearchParams, URL, window: {PajioIds: {uuid: () => 'goal-key-' + String(++goalUuidN).padStart(12, '0')}}};
   vm.createContext(context);
   vm.runInContext(keySource, context);
   const a = vm.runInContext('goalCreateKey("spec-a")', context);
@@ -104,7 +104,7 @@ test('goal submit body carries request_key (source-level contract)', () => {
 });
 
 // ---- 简报（briefings.js）：request_key 持久化 / 未知结果重试 / 状态映射 ----
-const briefSource = fs.readFileSync('src/wearing/web/briefings.js', 'utf8');
+const briefSource = fs.readFileSync('src/pajio/web/briefings.js', 'utf8');
 test('briefings: journal persists request body before send and clears on verified receipt', () => {
   const store = new Map();
   const context = {
@@ -124,7 +124,7 @@ test('briefings: journal persists request body before send and clears on verifie
 
 // ---- 技能/消息：真实路由方法与体（vm 隔离；QA 未挂载不影响断言） ----
 test('skills and messaging calls use the real routes with revisions', async () => {
-  const viewsSource = fs.readFileSync('src/wearing/web/views.js', 'utf8');
+  const viewsSource = fs.readFileSync('src/pajio/web/views.js', 'utf8');
   assert.match(viewsSource, /api\("\/api\/skills\/install", \{method: "POST", body: JSON\.stringify\(\{id: skillInstall\.dataset\.skillInstall, revision/);
   assert.match(viewsSource, /api\("\/api\/skills\/enabled", \{method: "PATCH"/);
   assert.match(viewsSource, /api\(`\/api\/messaging\/\$\{msgToggle\.dataset\.msgToggle\}`, \{method: "PATCH"/);
@@ -138,7 +138,7 @@ test('skills and messaging calls use the real routes with revisions', async () =
 
 // ---- 记忆编辑：PATCH 体与 409 留输入 ----
 test('memory direct edit sends precise change bodies and keeps input on failure', async () => {
-  const viewsSource = fs.readFileSync('src/wearing/web/views.js', 'utf8');
+  const viewsSource = fs.readFileSync('src/pajio/web/views.js', 'utf8');
   assert.match(viewsSource, /api\("\/api\/memory", \{method: "PATCH", body: JSON\.stringify\(change\)\}/);
   assert.match(viewsSource, /action: isEdit \? "replace" : "add"/);
   assert.match(viewsSource, /action: "remove"/);
@@ -148,7 +148,7 @@ test('memory direct edit sends precise change bodies and keeps input on failure'
 });
 
 // ---- 飞书个人账号（cloud-apps.js）：真实路由体 / 官方链接校验 / 凭据零持久化 ----
-const cloudSource = fs.readFileSync('src/wearing/web/cloud-apps.js', 'utf8');
+const cloudSource = fs.readFileSync('src/pajio/web/cloud-apps.js', 'utf8');
 const cloudStart = cloudSource.indexOf('async function call(path');
 const cloudEnd = cloudSource.indexOf('function render()');
 assert.ok(cloudStart > 0 && cloudEnd > cloudStart, 'cloud call slice');
@@ -175,16 +175,16 @@ test('cloud apps: real route verbs and bodies, official URL gate, no credential 
   assert.match(cloudSource, /data-cloud-retry/);
 });
 test('memory PATCH keeps the corrected field names (target/action/revision/index/content)', () => {
-  const viewsSource = fs.readFileSync('src/wearing/web/views.js', 'utf8');
+  const viewsSource = fs.readFileSync('src/pajio/web/views.js', 'utf8');
   const handler = viewsSource.slice(viewsSource.indexOf('async function submitMemoryChange'));
-  assert.ok(handler.includes('action: isEdit ? "replace" : "add"') || require('fs').readFileSync('src/wearing/web/views.js','utf8').includes('action: isEdit ? "replace" : "add"'), 'replace/add actions');
-  assert.ok(require('fs').readFileSync('src/wearing/web/views.js','utf8').includes('action: "remove", revision'), 'remove action with revision');
+  assert.ok(handler.includes('action: isEdit ? "replace" : "add"') || require('fs').readFileSync('src/pajio/web/views.js','utf8').includes('action: isEdit ? "replace" : "add"'), 'replace/add actions');
+  assert.ok(require('fs').readFileSync('src/pajio/web/views.js','utf8').includes('action: "remove", revision'), 'remove action with revision');
   assert.ok(!viewsSource.includes('base_revision'), 'no stale base_revision');
   assert.ok(!/data-memory-base/.test(viewsSource), 'no stale entry field');
 });
 
 // ---- 待核对决定（decisions.js）与用量（app.js）：真实合同体 ----
-const decisionsSource = fs.readFileSync('src/wearing/web/decisions.js', 'utf8');
+const decisionsSource = fs.readFileSync('src/pajio/web/decisions.js', 'utf8');
 test('decisions: resume only when can_resume && needs_recheck; key persisted per identity/card/revision; strict receipt', () => {
   assert.match(decisionsSource, /GET/); // via api
   assert.ok(decisionsSource.includes('api("/api/confirmations")'));
@@ -197,7 +197,7 @@ test('decisions: resume only when can_resume && needs_recheck; key persisted per
   assert.match(decisionsSource, /decision_\[a-f0-9\]\{32\}/);
 });
 test('usage: honest not_enabled/unavailable, never 0 yuan', () => {
-  const appSource = fs.readFileSync('src/wearing/web/app.js', 'utf8');
+  const appSource = fs.readFileSync('src/pajio/web/app.js', 'utf8');
   assert.ok(appSource.includes('api("/api/usage")'));
   assert.match(appSource, /用量统计未启用/);
   assert.match(appSource, /金额未知（未接入计费，不显示为 0 元）/);
@@ -205,14 +205,14 @@ test('usage: honest not_enabled/unavailable, never 0 yuan', () => {
   assert.ok(!/¥\s*0|￥\s*0|共\s*0\s*元|费用[:：]\s*0/.test(usageFn), 'no fake zero cost');
 });
 test('settings panel opens for every identity (no redirect to identity panel)', () => {
-  const appSource = fs.readFileSync('src/wearing/web/app.js', 'utf8');
+  const appSource = fs.readFileSync('src/pajio/web/app.js', 'utf8');
   const fn = appSource.slice(appSource.indexOf('function showSettings'), appSource.indexOf('$("model-provider").addEventListener'));
   assert.ok(fn.includes('openPanel("settings-panel")'));
   assert.ok(!fn.includes('showIdentities()'), 'no identity-panel redirect');
 });
 
 // ---- 数据导出 + 服务端文件分页 + 决定键 localStorage ----
-const exportSource = fs.readFileSync('src/wearing/web/data-exports.js', 'utf8');
+const exportSource = fs.readFileSync('src/pajio/web/data-exports.js', 'utf8');
 test('data export: list recovery, sha/omissions, localStorage idempotent key, no credentials', () => {
   assert.ok(exportSource.includes('api("/api/data-exports")'));
   assert.ok(exportSource.includes('api("/api/data-exports", {method: "POST", body: JSON.stringify({request_key: key})})'));
@@ -221,11 +221,11 @@ test('data export: list recovery, sha/omissions, localStorage idempotent key, no
   assert.match(exportSource, /SHA256/);
   assert.match(exportSource, /item\.omitted/, 'omissions surfaced');
   assert.match(exportSource, /pajio\.data-export:v1:/);
-  assert.match(exportSource, /window\.WearingStore\.get\(KEY\(\)\)/, 'key via scoped store (localStorage in local/scoped modes)');
-  assert.ok(!/secret|token|password/i.test(exportSource.replace(/X-Wearing-Token/g, '')), 'no credential fields stored');
+  assert.match(exportSource, /window\.PajioStore\.get\(KEY\(\)\)/, 'key via scoped store (localStorage in local/scoped modes)');
+  assert.ok(!/secret|token|password/i.test(exportSource.replace(/X-Pajio-Token/g, '')), 'no credential fields stored');
 });
 test('files: server-side paged search replaces the old 200-item client filter', () => {
-  const appSource = fs.readFileSync('src/wearing/web/app.js', 'utf8');
+  const appSource = fs.readFileSync('src/pajio/web/app.js', 'utf8');
   assert.ok(appSource.includes('api("/api/workspace/page?"+query)'));
   assert.ok(appSource.includes('if(filesQuery)query.set("query",filesQuery);'), 'server-side query param');
   assert.ok(appSource.includes('if(filesCursor)query.set("cursor",filesCursor);'), 'opaque cursor pagination');
@@ -235,23 +235,23 @@ test('files: server-side paged search replaces the old 200-item client filter', 
   assert.ok(!appSource.includes('files.filter(file=>!filesQuery'), 'client-side filter removed');
 });
 test('decision resume key persists in localStorage per scope/card/revision', () => {
-  const decisionsSource2 = fs.readFileSync('src/wearing/web/decisions.js', 'utf8');
-  assert.match(decisionsSource2, /window\.WearingStore\.get\(keyFor\(row\)\)/);
-  assert.match(decisionsSource2, /window\.WearingStore\.set\(keyFor\(row\), key\)/);
+  const decisionsSource2 = fs.readFileSync('src/pajio/web/decisions.js', 'utf8');
+  assert.match(decisionsSource2, /window\.PajioStore\.get\(keyFor\(row\)\)/);
+  assert.match(decisionsSource2, /window\.PajioStore\.set\(keyFor\(row\), key\)/);
   assert.ok(!decisionsSource2.includes('clearKey(row)'), 'success keeps the key');
   assert.match(decisionsSource2, /execution_unknown/);
 });
 
 // ---- P0 账号隔离：storage_scope 语义（A/B 同源、重登稳定、cloud 无 scope 仅内存） ----
-const scopedSource = fs.readFileSync('src/wearing/web/scoped-store.js', 'utf8');
+const scopedSource = fs.readFileSync('src/pajio/web/scoped-store.js', 'utf8');
 test('storage scope: A/B same-origin isolation, stable re-login, cloud-no-scope memory-only', () => {
   const backing = new Map();
   const fakeLocalStorage = {getItem: k => backing.get(k) ?? null, setItem: (k, v) => backing.set(k, String(v)), removeItem: k => backing.delete(k)};
   const context = {window: {}, localStorage: fakeLocalStorage};
   vm.createContext(context);
   vm.runInContext(scopedSource, context);
-  const S = () => context.window.WearingStore;
-  const B = context.window.WearingStoreBind;
+  const S = () => context.window.PajioStore;
+  const B = context.window.PajioStoreBind;
   // local：沿用旧键（本机兼容）
   B('local', null);
   S().set('draft:daily', 'A 账号草稿');
@@ -303,25 +303,25 @@ test('bootstrap failure cannot leak scoped drafts: pending mode is memory-only b
   const context = {window: {}, localStorage: {getItem: () => 'LEAK', setItem: (k, v) => {wrote = [k, v];}, removeItem: () => {}}};
   vm.createContext(context);
   vm.runInContext(scopedSource, context);
-  const S = context.window.WearingStore;
+  const S = context.window.PajioStore;
   assert.equal(S.mode, 'pending');
   S.set('draft:daily', 'bootstrap 前输入');
   assert.equal(S.get('draft:daily'), 'bootstrap 前输入', 'usable in memory');
   assert.equal(wrote, null, 'never touched localStorage before bootstrap');
-  assert.equal(S.get('wearing-voice-received:daily:x'), null, 'old unscoped cache not read');
+  assert.equal(S.get('pajio-voice-received:daily:x'), null, 'old unscoped cache not read');
 });
 
 // ---- 复核修正：bindScopedStorage 原始值传递 + 诊断白名单投影 + 安静时段 ----
-const appRaw = fs.readFileSync('src/wearing/web/app.js', 'utf8');
+const appRaw = fs.readFileSync('src/pajio/web/app.js', 'utf8');
 test('bindScopedStorage passes the raw deployment (no local fallback before the store sees it)', () => {
   const fn = appRaw.slice(appRaw.indexOf('function bindScopedStorage'), appRaw.indexOf('function composerContext'));
-  assert.ok(fn.includes('window.WearingStoreBind(bootstrap.deployment,bootstrap.storage_scope)'), 'raw values only');
+  assert.ok(fn.includes('window.PajioStoreBind(bootstrap.deployment,bootstrap.storage_scope)'), 'raw values only');
   assert.ok(!fn.includes('deployment||"local"'), 'no defaulting to local in app.js');
   // 集成语义：bootstrap 形态 → store 模式（引用 store 模块直接联动验证）
   const ctx = {window: {}};
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync('src/wearing/web/scoped-store.js', 'utf8'), ctx);
-  const B = ctx.window.WearingStoreBind, S = ctx.window.WearingStore;
+  vm.runInContext(fs.readFileSync('src/pajio/web/scoped-store.js', 'utf8'), ctx);
+  const B = ctx.window.PajioStoreBind, S = ctx.window.PajioStore;
   const cases = [
     [{}, 'cloud-memory', 'missing deployment'],
     [{deployment: ''}, 'cloud-memory', 'empty deployment'],
@@ -336,17 +336,17 @@ test('bindScopedStorage passes the raw deployment (no local fallback before the 
   }
 });
 
-const diagSource = fs.readFileSync('src/wearing/web/diagnostics.js', 'utf8');
+const diagSource = fs.readFileSync('src/pajio/web/diagnostics.js', 'utf8');
 test('diagnostics: whitelist projection drops forged/sensitive fields, arrays bounded', () => {
   const diagCtx = {window: {}, document: {documentElement: {classList: {contains: () => true}}}, URL: {revokeObjectURL: () => {}}, addEventListener: () => {}, fetch: async () => ({json: async () => ({})})};
   // contains=>true 让 IIFE 直接 return（宿主分支），project 不会注册——改为 false
   diagCtx.document.documentElement.classList.contains = () => false;
   diagCtx.document.addEventListener = () => {};
-  diagCtx.window.WearingIds = {uuid: () => 'x'.repeat(32)};
+  diagCtx.window.PajioIds = {uuid: () => 'x'.repeat(32)};
   diagCtx.window.addEventListener = () => {};
   vm.createContext(diagCtx);
   vm.runInContext(diagSource, diagCtx);
-  const project = diagCtx.window.WearingDiagnosticsProject;
+  const project = diagCtx.window.PajioDiagnosticsProject;
   // 直接驱动：构造合法骨架 + 夹带字段
   const base = {schema: 1, report_id: 'a'.repeat(32), identity_id: 'qa', captured_at: '2026-10-08T02:00:00Z',
     service: {state: 'reachable', version: '0.2.0', deployment: 'synthetic'},
@@ -375,7 +375,7 @@ test('diagnostics: whitelist projection drops forged/sensitive fields, arrays bo
 });
 
 test('quiet hours: GET/POST preferences with revision CAS and equal-time rejection', () => {
-  const qh = fs.readFileSync('src/wearing/web/quiet-hours.js', 'utf8');
+  const qh = fs.readFileSync('src/pajio/web/quiet-hours.js', 'utf8');
   assert.ok(qh.includes('/api/notifications/preferences?installation_id='));
   assert.ok(qh.includes('installation_id: installationId()'));
   assert.match(qh, /revision: Number\(\$\("qh-revision"\)\.value \|\| 0\)/);
@@ -387,33 +387,33 @@ test('quiet hours: GET/POST preferences with revision CAS and equal-time rejecti
   assert.ok(!/已推送|已静音/.test(qhCode), 'does not claim push/mute effect');
 });
 
-// ---- 真实缺陷回归：WearingStore 必须满足 Storage 接口，本地草稿不得误报失效 ----
-test('WearingStore satisfies the Storage interface so drafts never false-fail on local', () => {
+// ---- 真实缺陷回归：PajioStore 必须满足 Storage 接口，本地草稿不得误报失效 ----
+test('PajioStore satisfies the Storage interface so drafts never false-fail on local', () => {
   const backing = new Map();
   const ctx = {window: {}, localStorage: {getItem: k => backing.get(k) ?? null, setItem: (k, v) => backing.set(k, String(v)), removeItem: k => backing.delete(k)}};
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync('src/wearing/web/scoped-store.js', 'utf8'), ctx);
-  ctx.window.WearingStoreBind('local', null);
-  const S = ctx.window.WearingStore;
+  vm.runInContext(fs.readFileSync('src/pajio/web/scoped-store.js', 'utf8'), ctx);
+  ctx.window.PajioStoreBind('local', null);
+  const S = ctx.window.PajioStore;
   // drafts 模块直接调 getItem/setItem/removeItem —— 必须不抛且生效
-  S.setItem('wearing-chat-draft:v1:qa:x', '{"text":"输入"}');
-  assert.equal(S.getItem('wearing-chat-draft:v1:qa:x'), '{"text":"输入"}');
-  S.removeItem('wearing-chat-draft:v1:qa:x');
-  assert.equal(S.getItem('wearing-chat-draft:v1:qa:x'), null);
-  // 与 drafts 模块联动：create(()=>WearingStore) 读写走通且不触发 onError
+  S.setItem('pajio-chat-draft:v1:qa:x', '{"text":"输入"}');
+  assert.equal(S.getItem('pajio-chat-draft:v1:qa:x'), '{"text":"输入"}');
+  S.removeItem('pajio-chat-draft:v1:qa:x');
+  assert.equal(S.getItem('pajio-chat-draft:v1:qa:x'), null);
+  // 与 drafts 模块联动：create(()=>PajioStore) 读写走通且不触发 onError
   const draftsCtx = {...ctx, window: {...ctx.window}};
   vm.createContext(draftsCtx);
-  vm.runInContext(fs.readFileSync('src/wearing/web/conversation-drafts.js', 'utf8'), draftsCtx);
-  const store2 = draftsCtx.window.WearingStore;
-  const drafts = draftsCtx.window.WearingDrafts.create(() => store2, () => { throw new Error('onError must not fire on healthy local storage'); });
+  vm.runInContext(fs.readFileSync('src/pajio/web/conversation-drafts.js', 'utf8'), draftsCtx);
+  const store2 = draftsCtx.window.PajioStore;
+  const drafts = draftsCtx.window.PajioDrafts.create(() => store2, () => { throw new Error('onError must not fire on healthy local storage'); });
   const context = {identity: 'qa'};
   assert.equal(drafts.save(context, '离线输入保留'), true);
   assert.equal(drafts.read(context).text, '离线输入保留');
 });
 
 // ---- 技能移除 + 结果选项（新合同）----
-const viewsNow = fs.readFileSync('src/wearing/web/views.js', 'utf8');
-const artifactsNow = fs.readFileSync('src/wearing/web/artifacts.js', 'utf8');
+const viewsNow = fs.readFileSync('src/pajio/web/views.js', 'utf8');
+const artifactsNow = fs.readFileSync('src/pajio/web/artifacts.js', 'utf8');
 test('skill removal: preview → confirm → stable operation_id retry → receipt check → refresh', () => {
   assert.ok(viewsNow.includes('api(`/api/skills/removal?id=${encodeURIComponent(id)}`)'), 'GET removal preview');
   assert.ok(viewsNow.includes('api("/api/skills/remove", {method: "POST", body: JSON.stringify({id: preview.id, revision: preview.revision, package_revision: preview.package_revision, operation_id: preview.operation_id})})'), 'exact four-field submit');
@@ -433,7 +433,7 @@ test('artifact choices: native UI only, fixed request_key persisted, queued ≠ 
 });
 
 // ---- 账户注销（复核版）：真实事件/CSRF/掉响应/账户围栏/异步写回/not_submitted/未知回执 ----
-const deletionSrc2 = fs.readFileSync('src/wearing/web/account-deletion.js', 'utf8');
+const deletionSrc2 = fs.readFileSync('src/pajio/web/account-deletion.js', 'utf8');
 function deletionHarness({planResponse, statusResponse, submitResponse, fetchImpl} = {}) {
   const store = new Map();
   const cookies = {'pajio-csrf': 'csrf-abc123'};
@@ -463,10 +463,10 @@ function deletionHarness({planResponse, statusResponse, submitResponse, fetchImp
     busy: async (button, action) => {submitStarted++; await action();},
     notice: () => {},
   };
-  ctx.window.WearingStore = {mode: 'local', scope: null, backend: ctx.localStorage, key: n => n,
+  ctx.window.PajioStore = {mode: 'local', scope: null, backend: ctx.localStorage, key: n => n,
     get: n => ctx.localStorage.getItem(n), set: (n, v) => {ctx.localStorage.setItem(n, v); return true;}, remove: n => ctx.localStorage.removeItem(n),
     getItem: n => ctx.localStorage.getItem(n), setItem: (n, v) => ctx.localStorage.setItem(n, v), removeItem: n => ctx.localStorage.removeItem(n)};
-  ctx.window.WearingIds = {uuid: () => 'd'.repeat(32)};
+  ctx.window.PajioIds = {uuid: () => 'd'.repeat(32)};
   vm.createContext(ctx);
   vm.runInContext(deletionSrc2, ctx);
   return {ctx, store, fetchLog, elements, element};
@@ -476,7 +476,7 @@ const goodPlan2 = {tenants: [{tenant_id: 't1', action: 'erase_private'}], blocke
 
 test('deletion review: strict plan/status validation, unknown receipt rejected', () => {
   const h = deletionHarness({planResponse: goodPlan2});
-  const D = h.ctx.window.WearingDeletion;
+  const D = h.ctx.window.PajioDeletion;
   assert.ok(D.validPlan(goodPlan2));
   assert.equal(D.validPlan({...goodPlan2, receipt_token: 'short16charsxxxx'}), null, 'non-pdr1 token rejected');
   assert.equal(D.validPlan({...goodPlan2, request_key: 'x'.repeat(15)}), null, 'short key rejected');
@@ -504,13 +504,13 @@ test('deletion review: CSRF header on POSTs; submit lost-response falls to same-
     },
     localStorage: {getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k), get length() {return store.length ?? store.size;}, key: i => [...store.keys()][i]},
     state: {polling: true}, busy: async (button, action) => action()};
-  ctx.window.WearingStore = {mode: 'local', scope: null, backend: ctx.localStorage, key: n => n,
+  ctx.window.PajioStore = {mode: 'local', scope: null, backend: ctx.localStorage, key: n => n,
     get: n => ctx.localStorage.getItem(n), set: (n, v) => {ctx.localStorage.setItem(n, v); return true;}, remove: n => ctx.localStorage.removeItem(n),
     getItem: n => ctx.localStorage.getItem(n), setItem: (n, v) => ctx.localStorage.setItem(n, v), removeItem: n => ctx.localStorage.removeItem(n)};
-  ctx.window.WearingIds = {uuid: () => 'd'.repeat(32)};
+  ctx.window.PajioIds = {uuid: () => 'd'.repeat(32)};
   vm.createContext(ctx);
   vm.runInContext(deletionSrc2, ctx);
-  const D = ctx.window.WearingDeletion;
+  const D = ctx.window.PajioDeletion;
   await D.refreshPlan();
   assert.ok(D.fence, 'fence persisted before submit');
   const btn = element('deletion-confirm'), input = element('deletion-confirm-input');
@@ -523,12 +523,12 @@ test('deletion review: CSRF header on POSTs; submit lost-response falls to same-
   // 掉响应 → 同一申请查询（request drop → status 调用）
   const request = fetchLog.find(f => f.path.includes('/request'));
   assert.ok(request, 'POST /request attempted');
-  assert.equal(request.options.headers['x-wearing-csrf'], 'csrf-from-session-xyz', 'CSRF header fetched from GET /auth/session');
+  assert.equal(request.options.headers['x-pajio-csrf'], 'csrf-from-session-xyz', 'CSRF header fetched from GET /auth/session');
   const status = fetchLog.find(f => f.path.includes('/status'));
   assert.ok(status?.options?.headers?.Authorization?.startsWith('Bearer pdr1.'), 'status uses receipt bearer');
   assert.equal(D.workAllowed(), true, 'not_submitted unfreezes business');
   assert.ok(deletionSrc2.includes('/auth/session') && deletionSrc2.includes('csrf'), 'CSRF from session endpoint');
-  assert.ok(!deletionSrc2.includes('pajio-csrf'), 'no fake cookie assumption');
+  assert.ok(!deletionSrc2.includes('document.cookie'), 'no fake cookie assumption');
 });
 test('deletion review: scoped-prefix cleanup; other scope and local keys untouched; generation bumps', async () => {
   const store = new Map();
@@ -540,21 +540,21 @@ test('deletion review: scoped-prefix cleanup; other scope and local keys untouch
     fetch: async () => ({ok: false, status: 404, json: async () => ({})}),
     localStorage: {getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k), get length() {return store.size;}, key: i => [...store.keys()][i]},
     state: {polling: true}};
-  ctx.window.WearingStore = {mode: 'scoped', scope, backend: ctx.localStorage, key: n => `pajio:${scope}:${n}`,
+  ctx.window.PajioStore = {mode: 'scoped', scope, backend: ctx.localStorage, key: n => `pajio:${scope}:${n}`,
     get: n => ctx.localStorage.getItem(`pajio:${scope}:${n}`), set: (n, v) => {ctx.localStorage.setItem(`pajio:${scope}:${n}`, v); return true;}, remove: n => ctx.localStorage.removeItem(`pajio:${scope}:${n}`)};
-  ctx.window.WearingIds = {uuid: () => 'd'.repeat(32)};
+  ctx.window.PajioIds = {uuid: () => 'd'.repeat(32)};
   vm.createContext(ctx);
   vm.runInContext(deletionSrc2, ctx);
-  const D = ctx.window.WearingDeletion;
+  const D = ctx.window.PajioDeletion;
   const fence = {origin: 'https://gw.example', user_id: 'user_' + '1'.repeat(32), request_key: 'k'.repeat(32), plan_revision: 'a'.repeat(64), receipt_token: 'pdr1.' + 't'.repeat(40), phase: 'submitted'};
   assert.equal(D.saveFence(fence), true, 'persist confirmed');
-  store.set(`pajio:${scope}:wearing-chat-draft:v1:daily:chat::`, 'MINE');
-  store.set(`pajio:${'f'.repeat(64)}:wearing-chat-draft:v1:daily:chat::`, 'OTHER-SCOPE');
-  store.set('wearing-chat-draft:v1:daily:chat::', 'LOCAL-LEGACY');
+  store.set(`pajio:${scope}:pajio-chat-draft:v1:daily:chat::`, 'MINE');
+  store.set(`pajio:${'f'.repeat(64)}:pajio-chat-draft:v1:daily:chat::`, 'OTHER-SCOPE');
+  store.set('pajio-chat-draft:v1:daily:chat::', 'LOCAL-LEGACY');
   D.clearAccountCaches(fence);
-  assert.ok(!store.has(`pajio:${scope}:wearing-chat-draft:v1:daily:chat::`), 'owned scoped cache cleared');
-  assert.ok(store.has(`pajio:${'f'.repeat(64)}:wearing-chat-draft:v1:daily:chat::`), 'other account scope untouched');
-  assert.ok(store.has('wearing-chat-draft:v1:daily:chat::'), 'local legacy keys untouched');
+  assert.ok(!store.has(`pajio:${scope}:pajio-chat-draft:v1:daily:chat::`), 'owned scoped cache cleared');
+  assert.ok(store.has(`pajio:${'f'.repeat(64)}:pajio-chat-draft:v1:daily:chat::`), 'other account scope untouched');
+  assert.ok(store.has('pajio-chat-draft:v1:daily:chat::'), 'local legacy keys untouched');
   assert.ok(D.loadFence().length === 1, 'receipt retained');
   let stopped = false;
   D.registerWorkGate({stop: async () => {stopped = true;}});
@@ -572,10 +572,10 @@ test('deletion review: saveFence failure blocks submit; generation bumps stop st
     fetch: async (path, options) => {fetchLog2.push({path, options}); if (path === '/auth/session') return {ok: true, status: 200, json: async () => ({csrf: 'c'.repeat(24)})}; if (path.includes('/plan')) return {ok: true, status: 200, json: async () => goodPlan2}; return {ok: false, status: 404, json: async () => ({})};},
     localStorage: {getItem: k => store2.get(k) ?? null, setItem: (k, v) => {throw new Error('quota');}, removeItem: k => store2.delete(k), get length() {return store2.size;}, key: i => [...store2.keys()][i]},
     state: {polling: true}, busy: async (b, a) => a()};
-  ctx2.window.WearingStore = {mode: 'local', scope: null, backend: ctx2.localStorage, key: n => n, get: n => ctx2.localStorage.getItem(n), set: () => false, remove: n => ctx2.localStorage.removeItem(n)};
-  ctx2.window.WearingIds = {uuid: () => 'd'.repeat(32)};
+  ctx2.window.PajioStore = {mode: 'local', scope: null, backend: ctx2.localStorage, key: n => n, get: n => ctx2.localStorage.getItem(n), set: () => false, remove: n => ctx2.localStorage.removeItem(n)};
+  ctx2.window.PajioIds = {uuid: () => 'd'.repeat(32)};
   vm.createContext(ctx2); vm.runInContext(deletionSrc2, ctx2);
-  const D2 = ctx2.window.WearingDeletion;
+  const D2 = ctx2.window.PajioDeletion;
   await D2.refreshPlan();
   assert.ok(els2['deletion-body'].innerHTML.includes('未能保存在本机'), 'persist failure surfaces honestly');
   assert.ok(!D2.fence || !els2['deletion-confirm'], 'no submit path without persisted receipt');
@@ -591,17 +591,17 @@ test('deletion review: submit body exactly four fields with confirm DELETE; butt
   assert.ok(deletionSrc2.includes('id="deletion-confirm"'));
   assert.ok(deletionSrc2.includes('服务尚未收到这次注销申请，本账户业务可以继续使用'), 'not_submitted wording honest');
 });
-test('app freeze gates: polling and send check WearingDeletion.workAllowed', () => {
-  const appNow = fs.readFileSync('src/wearing/web/app.js', 'utf8');
-  assert.match(appNow, /WearingDeletion && window\.WearingDeletion\.workAllowed\(\) === false\) return/, 'poll gate');
-  assert.ok(appNow.includes('window.WearingDeletion?.workAllowed?.() === false'), 'send gate');
-  const lifeNow = fs.readFileSync('src/wearing/web/life.js', 'utf8');
-  assert.ok(lifeNow.includes('window.WearingDeletion?.workAllowed?.()!==false'), 'life polling gate');
+test('app freeze gates: polling and send check PajioDeletion.workAllowed', () => {
+  const appNow = fs.readFileSync('src/pajio/web/app.js', 'utf8');
+  assert.match(appNow, /PajioDeletion && window\.PajioDeletion\.workAllowed\(\) === false\) return/, 'poll gate');
+  assert.ok(appNow.includes('window.PajioDeletion?.workAllowed?.() === false'), 'send gate');
+  const lifeNow = fs.readFileSync('src/pajio/web/life.js', 'utf8');
+  assert.ok(lifeNow.includes('window.PajioDeletion?.workAllowed?.()!==false'), 'life polling gate');
 });
 
 // ---- 简报偏好 + 文本编辑 + 健康导出（新合同）----
 test('brief preferences: GET/POST with revision CAS, persisted request_key, 409 reload', () => {
-  const b = fs.readFileSync('src/wearing/web/briefings.js', 'utf8');
+  const b = fs.readFileSync('src/pajio/web/briefings.js', 'utf8');
   assert.ok(b.includes('api("/api/briefings/preferences")'));
   assert.ok(b.includes('api("/api/briefings/preferences", {method: "POST"'));
   assert.match(b, /request_key: prefRequestKey/);
@@ -611,7 +611,7 @@ test('brief preferences: GET/POST with revision CAS, persisted request_key, 409 
   assert.match(b, /已授权（未证明已读取）/, 'authorized ≠ read');
 });
 test('workspace text editor: read/save/CAS/conflict/recovery draft semantics', () => {
-  const w = fs.readFileSync('src/wearing/web/workspace-text.js', 'utf8');
+  const w = fs.readFileSync('src/pajio/web/workspace-text.js', 'utf8');
   assert.ok(w.includes('api(`/api/workspace/text?path=${encodeURIComponent(path)}`)'));
   assert.ok(w.includes('api("/api/workspace/text", {method: "POST"'));
   assert.match(w, /base_revision: baseRevision, base_sha256: baseSha, request_key/);
@@ -623,7 +623,7 @@ test('workspace text editor: read/save/CAS/conflict/recovery draft semantics', (
   assert.match(w, /data\.editable === true/, 'editable strictly true (423/other types read-only)');
 });
 test('health history: samples/events pagination, support export honest', () => {
-  const d = fs.readFileSync('src/wearing/web/diagnostics.js', 'utf8');
+  const d = fs.readFileSync('src/pajio/web/diagnostics.js', 'utf8');
   assert.ok(d.includes('api("/api/diagnostics/history"'));
   assert.match(d, /samples_cursor|next_samples_cursor/);
   assert.match(d, /events_cursor|next_events_cursor/);
@@ -636,7 +636,7 @@ test('health history: samples/events pagination, support export honest', () => {
 
 // ---- 清单 / 日历视图 / 任务操作（新合同） ----
 test('task lists: real routes, board revision CAS, persisted request key, paging', () => {
-  const v = fs.readFileSync('src/wearing/web/views.js', 'utf8');
+  const v = fs.readFileSync('src/pajio/web/views.js', 'utf8');
   assert.ok(v.includes('api("/api/task-lists")'));
   assert.ok(v.includes('api(`/api/task-lists/${encodeURIComponent(listId)}/items?` + params)'));
   assert.ok(v.includes('api("/api/task-lists/change", {method: "POST"'));
@@ -648,7 +648,7 @@ test('task lists: real routes, board revision CAS, persisted request key, paging
   assert.ok(v.includes('offset > 0 && listState.revision !== null'), 'second page requires revision');
 });
 test('calendar views: month/week/agenda, dedup, cross-day labels, batched rendering', () => {
-  const l = fs.readFileSync('src/wearing/web/life.js', 'utf8');
+  const l = fs.readFileSync('src/pajio/web/life.js', 'utf8');
   assert.ok(l.includes('renderCalendarViews'));
   assert.match(l, /data-cal-view="dayGridMonth"/);
   assert.match(l, /data-cal-view="timeGridWeek"/);
@@ -660,7 +660,7 @@ test('calendar views: month/week/agenda, dedup, cross-day labels, batched render
   assert.match(l, /pajio-cal-view/, 'view preference persisted');
 });
 test('task actions: stop/withdraw only with confirm, real routes, no inline handlers', () => {
-  const v = fs.readFileSync('src/wearing/web/views.js', 'utf8');
+  const v = fs.readFileSync('src/pajio/web/views.js', 'utf8');
   assert.ok(v.includes('data-task-stop'));
   assert.ok(v.includes('data-task-cancel'));
   assert.ok(v.includes('stop.dataset.taskStop}/stop'), 'stop route');

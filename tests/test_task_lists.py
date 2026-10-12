@@ -8,11 +8,11 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from wearing.life import LifeBook, LifeDraft, LifeError
-from wearing.life_api import install_life_routes
-from wearing.store import Store
-from wearing.task_lists import ListChange, install_task_list_routes
-from wearing.task_list_tools import dispatch
+from pajio.life import LifeBook, LifeDraft, LifeError
+from pajio.life_api import install_life_routes
+from pajio.store import Store
+from pajio.task_lists import ListChange, install_task_list_routes
+from pajio.task_list_tools import dispatch
 
 
 @pytest.fixture
@@ -171,7 +171,7 @@ def test_foreign_lists_records_and_same_keys_stay_in_own_identity(life):
 def test_name_limits_duplicates_and_field_allowlist(life, monkeypatch):
     change(life, 'create', name='Shopping')
     with pytest.raises(LifeError): change(life, 'create', name='shopping', key='task-list-request-002')
-    monkeypatch.setattr('wearing.task_lists.MAX_LISTS', 1)
+    monkeypatch.setattr('pajio.task_lists.MAX_LISTS', 1)
     with pytest.raises(LifeError) as error: change(life, 'create', name='Other', key='task-list-request-003')
     assert error.value.status == 413
     for fields in [{'action': 'create', 'name': ''}, {'action': 'create', 'name': 'x', 'identity_id': 'other'}, {'action': 'archive', 'list_id': 'list_'+'a'*32, 'title': 'bad'}, {'action': 'move', 'record_id': 'life_'+'a'*32}]:
@@ -191,7 +191,7 @@ def test_routes_use_existing_identity_gate_and_strict_body(life):
     app = FastAPI()
     @app.middleware('http')
     async def identity(request: Request, next):
-        request.state.identity_id = request.headers.get('X-Wearing-Identity', 'daily')
+        request.state.identity_id = request.headers.get('X-Pajio-Identity', 'daily')
         return await next(request)
     install_life_routes(app, life); install_task_list_routes(app, life)
     other = life.store.save_identity('Other')['id']
@@ -200,7 +200,7 @@ def test_routes_use_existing_identity_gate_and_strict_body(life):
             response = await client.post('/api/task-lists/change', json={'action': 'create', 'revision': 0, 'name': 'Shopping', 'request_key': 'task-list-request-001'})
             assert response.status_code == 200
             identifier = response.json()['lists'][0]['id']
-            assert (await client.get('/api/task-lists/'+identifier+'/items', headers={'X-Wearing-Identity': other})).status_code == 404
+            assert (await client.get('/api/task-lists/'+identifier+'/items', headers={'X-Pajio-Identity': other})).status_code == 404
             assert (await client.get('/api/task-lists/'+identifier+'/items?offset=100')).status_code == 422
             assert (await client.post('/api/task-lists/change', json={'action':'create','revision':0,'name':'x','request_key':'task-list-request-002','identity_id':other})).status_code == 422
     asyncio.run(run())
@@ -219,7 +219,7 @@ def test_list_add_key_cannot_collide_with_legacy_creation_protocol(life):
 def test_large_rename_limit_rolls_back_without_partial_labels(life, monkeypatch):
     items = [task(life, key=f'fixture-{i}') for i in range(2)]
     catalog = life.lists.catalog('daily')
-    monkeypatch.setattr('wearing.task_lists.MAX_RENAME_ITEMS', 1)
+    monkeypatch.setattr('pajio.task_lists.MAX_RENAME_ITEMS', 1)
     with pytest.raises(LifeError) as error: change(life, 'rename', list_id=catalog['lists'][0]['id'], name='Later')
     assert error.value.status == 413
     assert life.lists.catalog('daily') == catalog

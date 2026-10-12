@@ -6,8 +6,8 @@ import pytest
 from fastapi import FastAPI, HTTPException, Request
 import yaml
 
-from wearing.skills_api import SkillLibrary, install_skill_routes
-from wearing.store import Store
+from pajio.skills_api import SkillLibrary, install_skill_routes
+from pajio.store import Store
 
 
 def skill(root, name="documents/letter", title="letter", extra=""):
@@ -129,8 +129,8 @@ async def test_routes_use_request_identity_for_reads_and_mutations(tmp_path):
 def test_disabled_setting_is_read_by_actual_pinned_runtime_when_installed(tmp_path):
     import os
     import subprocess
-    from wearing.runtime import HermesRuntime
-    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".wearing")
+    from pajio.runtime import HermesRuntime
+    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".pajio")
     if not runtime.python.is_file() or not runtime.source.is_dir():
         pytest.skip("Pinned runtime is not installed in this checkout")
     lib = library(tmp_path)
@@ -232,8 +232,8 @@ def test_remove_rejects_catalog_alias_and_recovery_symlinks(tmp_path):
 
 
 async def test_remove_real_http_identity_csrf_and_exact_recovery_receipt(tmp_path):
-    from wearing.app import create_app
-    from wearing.config import Settings
+    from pajio.app import create_app
+    from pajio.config import Settings
     app = create_app(Settings(tmp_path), engine_autostart=False)
     installed = tmp_path / "hermes" / "skills"
     package = skill(installed)
@@ -242,9 +242,9 @@ async def test_remove_real_http_identity_csrf_and_exact_recovery_receipt(tmp_pat
         preview = (await client.get("/api/skills/removal", params={"id": "documents/letter"})).json()
         body = {k: v for k, v in preview.items() if k != "name"}
         assert (await client.post("/api/skills/remove", json=body)).status_code == 403
-        headers = {"X-Wearing-Token": csrf}
+        headers = {"X-Pajio-Token": csrf}
         other = app.state.store.save_identity("Other")["id"]
-        response = await client.post("/api/skills/remove", json=body, headers={**headers, "X-Wearing-Identity": other})
+        response = await client.post("/api/skills/remove", json=body, headers={**headers, "X-Pajio-Identity": other})
         assert response.status_code == 404 and package.exists()
         assert (await client.post("/api/skills/remove", json={**body, "source": "catalog"}, headers=headers)).status_code == 422
         response = await client.post("/api/skills/remove", json=body, headers=headers)
@@ -272,7 +272,7 @@ def test_remove_recovers_after_move_but_before_http_snapshot(tmp_path, monkeypat
 def test_remove_transaction_serializes_with_real_task_start(tmp_path, monkeypatch):
     from concurrent.futures import ThreadPoolExecutor, TimeoutError
     import threading
-    from wearing.service import ACTIVE
+    from pajio.service import ACTIVE
     lib = library(tmp_path)
     package = skill(lib.installed)
     preview = lib.removal_preview("documents/letter")
@@ -307,8 +307,8 @@ def test_removal_recovery_is_not_discovered_by_actual_pinned_runtime(tmp_path):
     import json
     import os
     import subprocess
-    from wearing.runtime import HermesRuntime
-    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".wearing")
+    from pajio.runtime import HermesRuntime
+    runtime = HermesRuntime(Path(__file__).resolve().parents[1] / ".pajio")
     if not runtime.python.is_file() or not runtime.source.is_dir():
         pytest.skip("Pinned runtime is not installed in this checkout")
     lib = library(tmp_path)

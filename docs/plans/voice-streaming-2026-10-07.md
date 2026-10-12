@@ -1,4 +1,4 @@
-# Wearing 真正流式语音输入
+# Pajio 真正流式语音输入
 
 2026-10-07 · 手机流式输入的实现与后续计划。已接通 iOS 开发配对的 PCM 中继及边录边传，使用豆包 Seed-ASR 2.0 一句话接口；Whisper Small 已卸载。用户确认真机识别正常，阶段日志显示本次松手到草稿 944 ms；随后发送阶段的 HTTP WebView UUID 兼容报错也已修复，等待手机发送回执。最新状态见 [云端语音证据](../evidence/voice-cloud-asr-2026-10-07.md)。
 
@@ -24,7 +24,7 @@ Expo 57 的 `useAudioStream` 提供 `start/stop`、`ArrayBuffer`、实际采样�
 - Android `AudioStream.kt` 使用 AudioRecord，默认读取约 100 ms，硬件不支持时可降为其他采样率；以实际返回格式为准。
 - **格式风险必须先验收：** iOS 转换器创建失败时走硬件格式回退；缓冲对象没有 encoding 字段，源码可能在请求 int16 后仍发出 float32 数据。禁止只改元数据把 48 kHz/float32 冒充 16 kHz/int16。首次能力探测、样本数/时长一致性校验及格式异常回退是上线门槛。
 - iOS 当前时间戳实现直接使用 hostTime 差值换算；组包时按累计样本数计音频时长，UI 延迟用客户端单调时钟，不依赖未经验证的流时间戳精度。
-- `stop()` 释放音频资源，但当前源码未给 Wearing 承诺“所有末尾缓冲已经交付”的 fence。松手尾音测试必须覆盖；若存在末尾回调竞态，需要应用侧有界 drain 或原生修正，并届时采用 development build，不能虚称 JS 调用返回即代表原件完整。
+- `stop()` 释放音频资源，但当前源码未给 Pajio 承诺“所有末尾缓冲已经交付”的 fence。松手尾音测试必须覆盖；若存在末尾回调竞态，需要应用侧有界 drain 或原生修正，并届时采用 development build，不能虚称 JS 调用返回即代表原件完整。
 
 ## 已实现的输入与输出
 
@@ -32,7 +32,7 @@ Expo 57 的 `useAudioStream` 提供 `start/stop`、`ArrayBuffer`、实际采样�
 sequenceDiagram
     participant U as 用户
     participant A as iPhone
-    participant W as Wearing 身份内语音入口
+    participant W as Pajio 身份内语音入口
     participant S as 流式 ASR
     U->>A: 按住说话
     A->>A: 取得麦克风，记录本机 PCM 原件
@@ -55,7 +55,7 @@ sequenceDiagram
 
 1. **保持现在的入口。** 长按成立后才采音；准备阶段不伪装为已经在听。麦克风权限、开始失败、指针取消沿用现有手势语义。采音与建立网络连接并行，用有界缓冲接住首字；按本地上限结束整段，不通过提前丢帧维持“流畅”。
 2. **单路采音，两份用途。** 同一份 PCM 一路串行写应用私有文件，一路发流式网络；不能额外启动 M4A recorder。原件最终封成正确 WAV，保留格式、样本数、takeId，接入原有恢复/重试逻辑。文件增量写入先验证现有 Expo FileSystem 能力与帧预算；SQLite 只保存指针和最终状态。
-3. **最小二进制中继。** 新增受当前租户/身份约束的 Wearing WebSocket 端点；本机开发桥也单独实现同样的鉴权、过期和断开规则。起始按约 100–200 ms 音频组包试验，使用二进制而非逐帧 base64；按真实格式重采样。生产必须 WSS，供应商密钥不出服务端，不进 JS bundle/二维码/URL。
+3. **最小二进制中继。** 新增受当前租户/身份约束的 Pajio WebSocket 端点；本机开发桥也单独实现同样的鉴权、过期和断开规则。起始按约 100–200 ms 音频组包试验，使用二进制而非逐帧 base64；按真实格式重采样。生产必须 WSS，供应商密钥不出服务端，不进 JS bundle/二维码/URL。
 4. **整句输出，保留字幕扩展空间。** 当前收到完整 final 才带入可编辑草稿，沿用 voiceId 与回执去重。后续若采用双向接口，partial 仅供显示，不送给 Agent、建任务或写正式消息；分句定稿也不等于整段完成。
 5. **输入框稳定。** 保持 58 pt 输入栏和现有五入口；临时字幕在固定的紧凑字幕层展示，不触发键盘或撑高底栏。松手后仅在仍等待 final 时显示原位识别状态；final 后进入可编辑文字，仍需用户发送。
 6. **拥塞可恢复。** 每个 take 限制队列时长、总字节、最长录音和终包等待时间；网络掉线只关闭远端会话，本机原件继续封存。不能无提示地丢中间音频。重试为新远端会话，保留同一本地 takeId，绝不把重复 partial 拼成重复文本。
@@ -64,7 +64,7 @@ sequenceDiagram
 
 拟评估豆包 ASR 2.0 的优化双向接口 `wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async`，资源 `volc.seedasr.sauc.duration`。官方支持实时修正与二遍识别 `enable_nonstream`；`X-Api-Key / X-Api-Resource-Id / X-Api-Request-Id` 在服务端添加。首字加速可能降低首字准确率，暂不以牺牲准确率换动画速度。协议封装、序号、终包必须按官方 ASR 示例实现，不能拿 TTS 的事件定义套用。[豆包实时 ASR](https://docs.volcengine.com/docs/DoubaoVoice/bidirectional-streaming-automatic-speech-recognition-websocket?lang=zh)
 
-Wearing 的选择：先评估二遍结果是否改善人名、地点、金额和中英混说；默认不开会改变原意的“语义润色”。热词只取当前身份明确保存的人名/产品名和当前任务必要词，限制体积与生命周期；不能把整段聊天、全部记忆或其他身份内容发送给 ASR。供应商热词、上下文、二遍支持组合以实际评测确认。句末静音阈值用于分句，**不能代替用户松手**。
+Pajio 的选择：先评估二遍结果是否改善人名、地点、金额和中英混说；默认不开会改变原意的“语义润色”。热词只取当前身份明确保存的人名/产品名和当前任务必要词，限制体积与生命周期；不能把整段聊天、全部记忆或其他身份内容发送给 ASR。供应商热词、上下文、二遍支持组合以实际评测确认。句末静音阈值用于分句，**不能代替用户松手**。
 
 当前已采用流式输入、整句输出：用户说话时上传音频，缩短松手后的串行工作，没有边说边显示文字。[豆包一句话识别](https://docs.volcengine.com/docs/DoubaoVoice/unidirectional-streaming-automatic-speech-recognition-websocket?lang=zh)
 

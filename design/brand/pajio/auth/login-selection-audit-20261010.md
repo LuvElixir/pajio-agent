@@ -44,7 +44,7 @@ RN Web compatibility: the local primitive maps `aria-selected`, but the installe
 
 ## Web and desktop migration inventory
 
-Paths are relative to `src/wearing/web` unless noted.
+Paths are relative to `src/pajio/web` unless noted.
 
 | Surface | Sources | Required treatment |
 | --- | --- | --- |

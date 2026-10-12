@@ -1,6 +1,6 @@
 # 今天简报偏好与来源契约
 
-2026-10-08。补充 [每日简报](briefings-contract.md)，供 ZCode 只读对齐 Web / Desktop。实现位于 `src/wearing/briefing_preferences.py`、`briefing_api.py` 和 `clients/mobile/src/BriefPreferencesPanel.tsx`、`briefing-preferences.ts`、`BriefPanel.tsx`。本轮只使用临时数据与合成回执，不代表真实模型生成、原生界面或供应商读取验收。
+2026-10-08。补充 [每日简报](briefings-contract.md)，供 ZCode 只读对齐 Web / Desktop。实现位于 `src/pajio/briefing_preferences.py`、`briefing_api.py` 和 `clients/mobile/src/BriefPreferencesPanel.tsx`、`briefing-preferences.ts`、`BriefPanel.tsx`。本轮只使用临时数据与合成回执，不代表真实模型生成、原生界面或供应商读取验收。
 
 ## 已实现的设置
 

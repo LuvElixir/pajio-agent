@@ -6,10 +6,10 @@ import subprocess
 
 import pytest
 
-from wearing.cloud.device_provisioning import (DeviceSpec, Inventory, Owner, Policy, ProvisionBook,
+from pajio.cloud.device_provisioning import (DeviceSpec, Inventory, Owner, Policy, ProvisionBook,
                                                ProvisionError, Template, VM, inspect_capacity)
-from wearing.cloud.proxmox_devices import ProxmoxDevices
-from wearing.cloud.device_admission import AccountProof
+from pajio.cloud.proxmox_devices import ProxmoxDevices
+from pajio.cloud.device_admission import AccountProof
 
 NOW = 1000.0
 

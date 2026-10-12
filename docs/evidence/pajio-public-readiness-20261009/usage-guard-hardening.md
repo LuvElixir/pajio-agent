@@ -8,7 +8,7 @@
 - `runtime.py`：构造时固定 enabled、租户账本根目录和身份。生成子进程环境时以该配置覆盖环境变量；环境后续变动不能切换这三个值。
 - `usage_guard.py`：新增不可变 `UsageGuardConfig`，两条模型桥接入口在 provider dotenv 加载前捕获；实际安装、SDK 账本和 Agent fallback 检查都使用快照。不同配置不能覆盖已安装的守卫。账本路径和身份缺失/不合法时拒绝。
 - `engine_runner.py` 和 `capture_bridge.py`：执行引擎与记录整理均在 dotenv 前捕获同类配置，dotenv 不能关闭限额或把调用记到另一租户。
-- `deploy/tenant/wearing-tenant.service`：显式启用限额；整棵服务 cgroup 配置 `CPUQuota=150%`、`MemoryHigh=2G`、`MemoryMax=3G`、`TasksMax=256`。这些是当前 2C4G 模板的保守进程资源护栏；不等于 VM/microVM 内核隔离，也不是自有 PC 的已验证容量。未在目标 Linux 宿主应用或实测这些限制。
+- `deploy/tenant/pajio-tenant.service`：显式启用限额；整棵服务 cgroup 配置 `CPUQuota=150%`、`MemoryHigh=2G`、`MemoryMax=3G`、`TasksMax=256`。这些是当前 2C4G 模板的保守进程资源护栏；不等于 VM/microVM 内核隔离，也不是自有 PC 的已验证容量。未在目标 Linux 宿主应用或实测这些限制。
 - 公开租户相关测试显式开启环境开关，没有产品中的测试 bypass；网关测试文件由另一开发任务负责。
 
 ## 验证

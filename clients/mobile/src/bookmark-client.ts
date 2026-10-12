@@ -12,7 +12,7 @@ export function bookmarkFetch(fetcher: typeof fetch, current: () => boolean, sig
     if (init?.signal?.aborted) abort();
     try {
       // These are JSON API requests. Keep the deadline and both abort signals
-      // alive until the body has arrived, including WearingApi's own deadline.
+      // alive until the body has arrived, including PajioApi's own deadline.
       return await Promise.race([cancelled,(async()=>{
         const response = await fetcher(input,{...init,signal:controller.signal});
         if(!current()||controller.signal.aborted)throw new ApiError('身份或连接已切换。',409);
@@ -32,7 +32,7 @@ export class BookmarkClient {
     if (!this.current()) throw new ApiError('身份或连接已切换。', 409);
     if (query.length > 120 || /[\x00-\x1f]/.test(query)) throw new ApiError('检索词最多 120 字。', 422);
     const params = new URLSearchParams({query: query.trim(), archived: String(archived), limit: '30'}); if (cursor) params.set('cursor', cursor);
-    const response = await bookmarkFetch(this.fetcher,this.current,this.signal)(new URL('/api/bookmarks?' + params, connectionEndpoint(this.connection)), {headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity}, redirect: 'error'});
+    const response = await bookmarkFetch(this.fetcher,this.current,this.signal)(new URL('/api/bookmarks?' + params, connectionEndpoint(this.connection)), {headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity}, redirect: 'error'});
     if (!this.current()) throw new ApiError('身份或连接已切换。', 409);
     const data = await response.json();
     if (!this.current()) throw new ApiError('身份或连接已切换。', 409);

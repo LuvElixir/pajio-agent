@@ -37,6 +37,6 @@ WebView 所有导航都进入 `onShouldStartLoadWithRequest`；只允许 `about:
 - `artifact-client.test.ts` 9 项 + `workspace-export.test.ts` 5 项通过：错误/越权 ID、收据字段、认证身份冻结、MIME/字节/哈希、UTF-8、只读重试、不可变版本、导航边界与身份切换期间禁止分享。
 - `npm run typecheck` 通过；4 个新文件 scoped ESLint 通过。
 - 独立 Playwright Chromium 会话 `art`，只读隔离 fixture `127.0.0.1:8892/preview`：`本地交互` 点击后为 `已交互`；父页面读取、`fetch` 外网、`window.open` 均被沙箱/CSP 拦截；请求记录只有两次本地 `/preview` GET。该临时预览服务与浏览器验证结束即关闭。
-- 主 QA 服务仍为 `127.0.0.1:8891`；`/_qa/manifest` 与审计日志可用于 App 点击核对。未访问真实 `.wearing` 数据、账号或模型。
+- 主 QA 服务仍为 `127.0.0.1:8891`；`/_qa/manifest` 与审计日志可用于 App 点击核对。未访问真实 `.pajio` 数据、账号或模型。
 
 待父任务完成：iOS/Android 原生 WebView 的嵌套滚动、触控、进程恢复与系统分享面板验收。Chromium 沙箱验证不是这些设备行为的替代。

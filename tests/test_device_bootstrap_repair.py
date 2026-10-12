@@ -4,9 +4,9 @@ from pathlib import Path
 from types import SimpleNamespace
 import pytest
 
-from wearing.cloud.device_bootstrap_repair import (
+from pajio.cloud.device_bootstrap_repair import (
     REPAIR_VALIDATION_SOURCE, GUEST_REPAIR_SOURCE, HOST_REPAIR_SOURCE, repair_bootstrap)
-from wearing.cloud.device_provisioning import DeviceSpec, Owner, ProvisionError, fingerprint
+from pajio.cloud.device_provisioning import DeviceSpec, Owner, ProvisionError, fingerprint
 
 
 def setup():

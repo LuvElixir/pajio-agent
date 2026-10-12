@@ -36,8 +36,8 @@ test('privacy resources bind by extension phase UUID, never the main Resources c
 test('official target generation is overridden after template copy, with only intake app-group', async () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'pajio-share-plugin-'));
   try {
-    const config = plugin({_internal: {projectRoot: path.resolve(__dirname, '..')}, name: 'Pajio', slug: 'pajio-test', scheme: ['pajio', 'wearing'], ios: {bundleIdentifier: 'test.pajio', entitlements: {'existing': true}}, android: {package: 'test.pajio'}});
-    assert.deepEqual(config.scheme, ['pajio', 'wearing']);
+    const config = plugin({_internal: {projectRoot: path.resolve(__dirname, '..')}, name: 'Pajio', slug: 'pajio-test', scheme: ['pajio'], ios: {bundleIdentifier: 'test.pajio', entitlements: {'existing': true}}, android: {package: 'test.pajio'}});
+    assert.deepEqual(config.scheme, ['pajio']);
     assert.equal(config.ios.entitlements.existing, true);
     assert.deepEqual(config.ios.entitlements['com.apple.security.application-groups'], [plugin.APP_GROUP]);
     const ext = config.extra.eas.build.experimental.ios.appExtensions;
@@ -62,7 +62,7 @@ test('official target generation is overridden after template copy, with only in
 });
 
 test('Android scheme remains a string and only supported SEND MIME types are declared', async () => {
-  const config = plugin({_internal: {projectRoot: path.resolve(__dirname, '..')}, name: 'Pajio', slug: 'pajio-test', scheme: ['pajio', 'wearing'], ios: {bundleIdentifier: 'test.pajio'}, android: {package: 'test.pajio'}});
+  const config = plugin({_internal: {projectRoot: path.resolve(__dirname, '..')}, name: 'Pajio', slug: 'pajio-test', scheme: ['pajio'], ios: {bundleIdentifier: 'test.pajio'}, android: {package: 'test.pajio'}});
   const strings = await config.mods.android.strings({...config, modRequest: {}, modResults: {resources: {}}});
   assert.equal(strings.modResults.resources.string.find(s => s.$.name === 'share_into_scheme')._, 'pajio');
   const activity = {$: {'android:name': '.MainActivity'}, 'intent-filter': []};

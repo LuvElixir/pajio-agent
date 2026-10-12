@@ -60,7 +60,7 @@ export class NativeChatApi {
     this.check();
     const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),15000); this.requests.add(controller);
     try {
-      const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body===undefined?'GET':'POST',redirect:'error',signal:controller.signal,headers:{...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity,...(body===undefined?{}:{'Content-Type':'application/json','X-Wearing-Token':this.token})},...(body===undefined?{}:{body:JSON.stringify(body)})});
+      const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body===undefined?'GET':'POST',redirect:'error',signal:controller.signal,headers:{...connectionHeaders(this.connection),'X-Pajio-Identity':this.connection.identity,...(body===undefined?{}:{'Content-Type':'application/json','X-Pajio-Token':this.token})},...(body===undefined?{}:{body:JSON.stringify(body)})});
       this.check(); if(controller.signal.aborted) throw new Error('cancelled');
       const data=await response.json(); this.check(); if(controller.signal.aborted)throw new Error('cancelled');
       if(!response.ok) {if(response.status===403)this.token='';throw new ApiError(typeof data.detail==='string'?data.detail:'暂时无法连接，请重试。',response.status);}

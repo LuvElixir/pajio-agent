@@ -13,11 +13,11 @@ from sqlalchemy import create_engine, event, select, text, update
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import DBAPIError
 
-from wearing.cloud.control import (ControlError, ControlStore, bundles, bundle_activations,
+from pajio.cloud.control import (ControlError, ControlStore, bundles, bundle_activations,
                                     invitations, members, ownership, users)
-from wearing.cloud.invitations import InvitationError, InvitationStore, code_hash
-from wearing.cloud.bundle_activation import ActivationStore
-from wearing.cloud.postgres import migrate_database, DatabaseBoundaryError
+from pajio.cloud.invitations import InvitationError, InvitationStore, code_hash
+from pajio.cloud.bundle_activation import ActivationStore
+from pajio.cloud.postgres import migrate_database, DatabaseBoundaryError
 
 
 def issue_bundle(ops, issuer, *, tenant=None, directory=None):
@@ -76,7 +76,7 @@ def test_outbox_failure_rolls_back_member_identity_and_code(sqlite_bundle):
     ops,web,_=sqlite_bundle
     code,*_=issue_bundle(ops,'https://fixture.example')
     def fail(conn,cursor,statement,parameters,context,executemany):
-        if statement.startswith('INSERT INTO wearing_bundle_activations'):
+        if statement.startswith('INSERT INTO pajio_bundle_activations'):
             raise RuntimeError('synthetic outbox fault')
     event.listen(web.engine,'before_cursor_execute',fail)
     try:
@@ -108,7 +108,7 @@ def test_plan_and_bundle_cannot_drift_and_expiry_has_grace(sqlite_bundle,tmp_pat
 
 @pytest.fixture
 def bundle_pg():
-    path=os.environ.get('WEARING_POSTGRES_TEST_CONFIG')
+    path=os.environ.get('PAJIO_POSTGRES_TEST_CONFIG')
     if not path:pytest.skip('requires explicit disposable PostgreSQL QA configuration')
     config=json.loads(Path(path).read_text());assert config.get('qa_only') is True
     database='bundle_qa_'+uuid.uuid4().hex
@@ -151,12 +151,12 @@ def test_pg_exactly_one_outbox_safe_owner_status_and_role_isolation(bundle_pg):
     assert set(status)=={'state','members','reason','updated_at','retry_after'}
     assert status['state']=='reserved' and set(status['members'])=={'core','linux','android'}
     with pg['web'].transaction(user_id=current.user_id,tenant_id='other') as db:
-        assert db.scalar(text('SELECT wearing_control.bundle_activation_status(:tenant)'),{'tenant':tenant}) is None
+        assert db.scalar(text('SELECT pajio_control.bundle_activation_status(:tenant)'),{'tenant':tenant}) is None
     for store in (pg['web'],pg['reg']):
         with pytest.raises(DBAPIError):
-            with store.transaction() as db:db.execute(text("SELECT wearing_control.activation_claim(:worker,120)"),{'worker':'a'*32})
-    for statement in ('SELECT * FROM wearing_control.wearing_users','SELECT * FROM wearing_control.wearing_bundle_activations',
-                      'DELETE FROM wearing_control.wearing_memberships','SET ROLE wearing_operator','SET ROLE wearing_web'):
+            with store.transaction() as db:db.execute(text("SELECT pajio_control.activation_claim(:worker,120)"),{'worker':'a'*32})
+    for statement in ('SELECT * FROM pajio_control.pajio_users','SELECT * FROM pajio_control.pajio_bundle_activations',
+                      'DELETE FROM pajio_control.pajio_memberships','SET ROLE pajio_operator','SET ROLE pajio_web'):
         with pytest.raises(DBAPIError):
             with pg['act'].transaction() as db:db.execute(text(statement))
     with pg['web'].transaction(user_id=current.user_id,tenant_id=tenant) as db:
@@ -170,11 +170,11 @@ def test_pg_lease_takeover_fences_old_worker_and_ready_requires_all(bundle_pg):
     assert api.claim('b'*32,30) is None
     assert api.heartbeat(one['id'],'a'*32,one['generation'],30)
     with pg['admin'].begin() as db:
-        db.execute(text('UPDATE wearing_control.wearing_bundle_activations SET lease_until=1 WHERE id=:id'),{'id':one['id']})
+        db.execute(text('UPDATE pajio_control.pajio_bundle_activations SET lease_until=1 WHERE id=:id'),{'id':one['id']})
     two=api.claim('b'*32,30);assert two['generation']==one['generation']+1
     assert api.heartbeat(one['id'],'a'*32,one['generation'],30) is None
     assert api.release(one['id'],'a'*32,one['generation']) is None
-    sql='SELECT wearing_control.activation_update(:id,:worker,:generation,:state,:step,:receipt,:reason,CAST(:members AS jsonb))'
+    sql='SELECT pajio_control.activation_update(:id,:worker,:generation,:state,:step,:receipt,:reason,CAST(:members AS jsonb))'
     args=dict(id=two['id'],worker='b'*32,generation=two['generation'],state='ready',step='complete',receipt='c'*64,reason=None,
               members=json.dumps({k:{'state':'pending'} for k in ('core','linux','android')}))
     with pg['act'].transaction() as db:assert db.scalar(text(sql),args) is None
@@ -191,9 +191,9 @@ def test_pg_owner_change_fences_lease_and_immutable_bundle(bundle_pg):
     assert api.heartbeat(lease['id'],'a'*32,lease['generation']) is None
     assert api.release(lease['id'],'a'*32,lease['generation']) is None
     with pytest.raises(ControlError):ActivationStore(pg['web']).status(current)
-    for statement in ("UPDATE wearing_control.wearing_bundles SET host='other'",
-                      "UPDATE wearing_control.wearing_invitations SET bundle_id=NULL",
-                      "UPDATE wearing_control.wearing_bundle_activations SET ownership_revision=99"):
+    for statement in ("UPDATE pajio_control.pajio_bundles SET host='other'",
+                      "UPDATE pajio_control.pajio_invitations SET bundle_id=NULL",
+                      "UPDATE pajio_control.pajio_bundle_activations SET ownership_revision=99"):
         with pytest.raises(DBAPIError):
             with pg['admin'].begin() as db:db.execute(text(statement))
 
@@ -201,7 +201,7 @@ def test_pg_owner_change_fences_lease_and_immutable_bundle(bundle_pg):
 def test_pg_outbox_insert_failure_rolls_back_and_new_issue_needs_bundle(bundle_pg):
     pg=bundle_pg;code,ident,tenant,bundle,_=issue_bundle(pg['ops'],pg['issuer'])
     with pg['admin'].begin() as db:
-        db.execute(text("ALTER TABLE wearing_control.wearing_bundle_activations ADD CHECK (state='never')"))
+        db.execute(text("ALTER TABLE pajio_control.pajio_bundle_activations ADD CHECK (state='never')"))
     with pytest.raises(DBAPIError):InvitationStore(pg['web']).redeem_hash(code_hash(code),issuer=pg['issuer'],subject='fixture')
     with pg['ops'].transaction() as db:
         for table in (users,members,ownership,bundle_activations):assert not db.execute(select(table)).all()

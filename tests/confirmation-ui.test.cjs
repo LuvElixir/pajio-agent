@@ -1,6 +1,6 @@
 const {test}=require('node:test');
 const assert=require('node:assert/strict');
-const ui=require('../src/wearing/web/confirmations.js');
+const ui=require('../src/pajio/web/confirmations.js');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const card={title:'保存测试笔记',action:'仅保存这条合成记录',impact:'仅当前测试身份',confirm_label:'确认保存'};
@@ -34,7 +34,7 @@ test('invalid card offers no action and receipts never claim business success',(
   assert(receipt.includes('已确认'));assert(receipt.includes('执行结果看后续回应'));assert(!receipt.includes('data-choice'));
 });
 test('secondary connector failure cannot starve the conversation or mark it offline',async()=>{
-  const source=fs.readFileSync(require.resolve('../src/wearing/web/app.js'),'utf8');
+  const source=fs.readFileSync(require.resolve('../src/pajio/web/app.js'),'utf8');
   const start=source.indexOf('async function pollConversation(){'),end=source.indexOf('setInterval(pollConversation,3000);',start);
   const calls=[];
   const context={state:{identityEpoch:1,token:'test',connected:true,deployment:'cloud',lastStatus:0},document:{hidden:false},window:{},Date,Promise,

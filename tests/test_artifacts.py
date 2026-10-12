@@ -5,11 +5,11 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from wearing.app import create_app
-from wearing.artifacts import ArtifactBook, ArtifactDraft, ArtifactError, MAX_HTML_BYTES
-from wearing.artifact_tools import dispatch
-from wearing.config import Settings
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.artifacts import ArtifactBook, ArtifactDraft, ArtifactError, MAX_HTML_BYTES
+from pajio.artifact_tools import dispatch
+from pajio.config import Settings
+from pajio.store import Store
 
 HTML = '<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"></head><body><button onclick="this.textContent=42">调整</button></body></html>'
 
@@ -25,7 +25,7 @@ def setup(store, identity="daily"):
 
 
 def test_publish_is_immutable_idempotent_and_bound_to_real_run(tmp_path):
-    store = Store(tmp_path / "wearing.sqlite3")
+    store = Store(tmp_path / "pajio.sqlite3")
     book, task, draft = setup(store)
     with ThreadPoolExecutor(max_workers=4) as pool:
         results = list(pool.map(lambda _: book.publish("daily", draft, "once"), range(4)))
@@ -48,7 +48,7 @@ def test_publish_is_immutable_idempotent_and_bound_to_real_run(tmp_path):
 
 
 def test_source_path_is_canonical_internal_and_old_rows_survive_concurrent_migration(tmp_path):
-    store = Store(tmp_path / 'wearing.sqlite3')
+    store = Store(tmp_path / 'pajio.sqlite3')
     book, _, draft = setup(store)
     prior = book.publish('daily', draft, 'legacy')
     with store.connection() as db:
@@ -73,7 +73,7 @@ def test_source_path_is_canonical_internal_and_old_rows_survive_concurrent_migra
 
 @pytest.mark.parametrize("path", ["../outside.html", "/tmp/outside.html", "bad\\path.html", "missing.html", "image.svg", "link.html"])
 def test_invalid_paths_and_symlinks_cannot_publish(tmp_path, path):
-    book, _, draft = setup(Store(tmp_path / "wearing.sqlite3"))
+    book, _, draft = setup(Store(tmp_path / "pajio.sqlite3"))
     (tmp_path / "outside.html").write_text(HTML)
     (book.workspace("daily") / "link.html").symlink_to(tmp_path / "outside.html")
     (book.workspace("daily") / "image.svg").write_text(HTML)
@@ -84,7 +84,7 @@ def test_invalid_paths_and_symlinks_cannot_publish(tmp_path, path):
 
 @pytest.mark.parametrize("raw", [b"", b"x" * (MAX_HTML_BYTES + 1), b"\xff<html></html>", b"<script>alert(1)</script>"])
 def test_unusable_files_not_reported_as_results(tmp_path, raw):
-    book, _, draft = setup(Store(tmp_path / "wearing.sqlite3"))
+    book, _, draft = setup(Store(tmp_path / "pajio.sqlite3"))
     (book.workspace("daily") / "result.html").write_bytes(raw)
     with pytest.raises(ArtifactError):
         book.publish("daily", draft, "invalid")
@@ -92,7 +92,7 @@ def test_unusable_files_not_reported_as_results(tmp_path, raw):
 
 
 def test_tools_are_scoped_and_checks_detect_corruption(tmp_path):
-    store = Store(tmp_path / "wearing.sqlite3")
+    store = Store(tmp_path / "pajio.sqlite3")
     book, _, draft = setup(store)
     item = dispatch(store, "daily", "artifact_publish", {"artifact": draft.model_dump(), "request_key": "one"})
     assert dispatch(store, "daily", "artifact_read", {"artifact_id": item["id"]})["html"] == HTML
@@ -144,7 +144,7 @@ async def test_http_results_conversation_download_and_preview_boundary(tmp_path)
 
 
 def test_design_guidance_is_medium_specific_and_does_not_publish(tmp_path):
-    store = Store(tmp_path / 'wearing.sqlite3')
+    store = Store(tmp_path / 'pajio.sqlite3')
     book = ArtifactBook(store)
     outputs = {kind: dispatch(store, 'daily', 'artifact_design_guide', {'presentation': kind})
                for kind in ('dashboard', 'diagram', 'interactive', 'explainer_video')}

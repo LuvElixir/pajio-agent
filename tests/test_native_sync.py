@@ -5,10 +5,10 @@ import httpx
 import pytest
 from fastapi import FastAPI, Request
 from pydantic import ValidationError
-from wearing.life import LifeBook
-from wearing.native_sync import NativeSyncBook, SyncError
-from wearing.native_sync_api import install_native_sync_routes
-from wearing.store import Store
+from pajio.life import LifeBook
+from pajio.native_sync import NativeSyncBook, SyncError
+from pajio.native_sync_api import install_native_sync_routes
+from pajio.store import Store
 
 PHONE, OWNER = 'a' * 32, 'b' * 64
 SOURCE = {'kind': 'event', 'id': 'calendar-synthetic', 'title': '测试日历'}
@@ -220,7 +220,7 @@ def test_eventkit_fixed_hour_timezone_preserves_instants_and_idempotency(book, n
 
 
 def test_native_timezone_never_relaxes_other_record_validation():
-    from wearing.native_sync import SyncItem
+    from pajio.native_sync import SyncItem
     item=snapshot()['items'][0]
     for zone in ['GMT+99','GMT+8/../../bad','Not/AZone']:
         item['record']['timezone']=zone

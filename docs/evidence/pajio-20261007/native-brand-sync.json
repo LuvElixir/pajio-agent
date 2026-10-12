@@ -7,7 +7,7 @@
       "after": "83497c46286425ce1635935af28d7a3d7fab6a2d09199eb9804e0819a1b0ccca"
     },
     {
-      "path": "app/src/main/java/io/luckyloading/wearing/mobile/MainActivity.kt",
+      "path": "app/src/main/java/io/luckyloading/pajio/mobile/MainActivity.kt",
       "before": "3c19db129015e8943d30e7131b65e8974a93fdfa7f38085cc3051218a08892a4",
       "after": "a2db87c0892296d0669b489789ccb4ae7052bbaf337f7d24d3e8d6eec2692f1b"
     },
@@ -198,10 +198,9 @@
     }
   ],
   "preserved_network_security_sha256": "4a76eae343d19a39c9cb2abeae646ac2adbc6c02fdd3186a454057b9404e7157",
-  "legacy_application_id": "io.luckyloading.wearing.mobile",
+  "legacy_application_id": "io.luckyloading.pajio.mobile",
   "schemes": [
-    "pajio",
-    "wearing"
+    "pajio"
   ],
   "native_build_status": "not_built_no_jdk_android_sdk_or_cocoapods",
   "checks": {

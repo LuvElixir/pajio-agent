@@ -75,7 +75,7 @@ test('lost stop response is never automatically repeated or reported stopped', a
 });
 test('confirmed control reads original task and preserves stopping as distinct from stopped', async () => {
   const calls:string[]=[];let stopped=false;
-  const api = new TaskDetailApi(connection, async (input,init) => {const path=new URL(String(input)).pathname;calls.push(path);if(path.endsWith('/bootstrap'))return response({token:'csrf',identities:[{id:'daily'}]});if(init?.method==='POST'){assert.equal(new Headers(init.headers).get('X-Wearing-Token'),'csrf');stopped=true;}return response(task({status:stopped?'stopping':'running'}));});
+  const api = new TaskDetailApi(connection, async (input,init) => {const path=new URL(String(input)).pathname;calls.push(path);if(path.endsWith('/bootstrap'))return response({token:'csrf',identities:[{id:'daily'}]});if(init?.method==='POST'){assert.equal(new Headers(init.headers).get('X-Pajio-Token'),'csrf');stopped=true;}return response(task({status:stopped?'stopping':'running'}));});
   const result=await api.control(snapshot(),'stop');assert.equal(result.status,'stopping');assert.equal(result.canStop,false);assert.equal(calls.at(-1),'/api/tasks/'+taskId);
 });
 test('switching account during bootstrap prevents a late control', async () => {

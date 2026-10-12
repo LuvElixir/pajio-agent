@@ -4,12 +4,12 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 
 const read=path=>fs.readFileSync(path,'utf8');
-const html=read('src/wearing/web/index.html');
-const css=read('src/wearing/web/pajio.css');
-const series=read('src/wearing/web/series.js');
-const reminders=read('src/wearing/web/reminders.js');
-const life=read('src/wearing/web/life.js');
-const briefings=read('src/wearing/web/briefings.js');
+const html=read('src/pajio/web/index.html');
+const css=read('src/pajio/web/pajio.css');
+const series=read('src/pajio/web/series.js');
+const reminders=read('src/pajio/web/reminders.js');
+const life=read('src/pajio/web/life.js');
+const briefings=read('src/pajio/web/briefings.js');
 
 test('all touched web modules compile as scripts (regex tests cannot catch syntax errors)',()=>{
   for(const [name,source] of [['series',series],['reminders',reminders],['life',life],['briefings',briefings]])
@@ -55,7 +55,7 @@ test('series mutations persist the request key before HTTP and replay the same c
   assert.match(series,/writeJournal\(slot,\{identity:state\.identityId,command\}\);/);
   assert.match(series,/const receipt=await post\(command\);/);
   assert.match(series,/pajio-series-pending:v1/);
-  assert.match(series,/window\.WearingStore\.get\(journalName\(slot\)\)/);
+  assert.match(series,/window\.PajioStore\.get\(journalName\(slot\)\)/);
   assert.match(series,/clearJournal\(slot\);/);
   assert.match(series,/上一次修改仍未确认，稍后会继续用同一请求取回。/);
   assert.match(series,/上一次修改没有保存：/);
@@ -105,7 +105,7 @@ test('record reminders use the closed target set, dual CAS body, and honest deli
   assert.ok(!/api\("(?!\/api\/record-reminders\/)/.test(reminders),'only record-reminders requests');
   assert.match(reminders,/revision:Number\(host\.dataset\.rmRevision\|\|0\),record_revision:recordRevision,/);
   assert.match(reminders,/advance_minutes:Number\(host\.querySelector\("\.rm-advance"\)\.value\)/);
-  assert.match(reminders,/request_key:window\.WearingIds\.uuid\(\)/);
+  assert.match(reminders,/request_key:window\.PajioIds\.uuid\(\)/);
   assert.match(reminders,/pajio-reminder-request:v1/);
   assert.match(reminders,/writeJournal\(target,body\);/);
   assert.match(reminders,/将用同一请求取回，不会重复设置。/);
@@ -122,19 +122,19 @@ test('life archive/restore carries a persisted request key only for lifecycle ac
   const start=life.indexOf('async function change('),end=life.indexOf('function savedFeedback(');
   const fn=life.slice(start,end);
   assert.match(fn,/journalKey=action==="edit"\?null:/);
-  assert.match(fn,/window\.WearingStore\.set\(journalKey,request_key\)/);
+  assert.match(fn,/window\.PajioStore\.set\(journalKey,request_key\)/);
   assert.match(fn,/body\.request_key=request_key;/);
-  assert.match(fn,/window\.WearingStore\.remove\(journalKey\);/);
+  assert.match(fn,/window\.PajioStore\.remove\(journalKey\);/);
   assert.match(fn,/pajio-life-action:v1/);
   // 移除先说明范围并二次确认；恢复同样确认。
   assert.match(life,/确认移除？会进入最近移除，可恢复/);
   assert.match(life,/确认恢复？回到原列表/);
   // 编辑器挂提醒、身份切换清系列面板、日历实例路由与查询窗口。
   assert.match(life,/renderReminder\(\)/);
-  assert.match(life,/window\.WearingSeries\?\.reset\?\.\(\)/);
-  assert.match(life,/window\.WearingSeries\?\.openInstance\?\.\(info\.event\.id\)/);
-  assert.match(life,/window\.WearingSeries\?\.decorate\?\.\(dayKey\(info\.view\.currentStart\),dayKey\(info\.view\.currentEnd\)\)/);
-  assert.match(life,/window\.WearingSeries\?\.decorate\?\.\(dayKey\(days\[0\]\),dayKey\(windowEnd\)\)/);
+  assert.match(life,/window\.PajioSeries\?\.reset\?\.\(\)/);
+  assert.match(life,/window\.PajioSeries\?\.openInstance\?\.\(info\.event\.id\)/);
+  assert.match(life,/window\.PajioSeries\?\.decorate\?\.\(dayKey\(info\.view\.currentStart\),dayKey\(info\.view\.currentEnd\)\)/);
+  assert.match(life,/window\.PajioSeries\?\.decorate\?\.\(dayKey\(days\[0\]\),dayKey\(windowEnd\)\)/);
   assert.match(life,/el\("life-series-add"\)\.hidden=view!=="calendar"/);
   assert.match(life,/calendar:\(\)=>life\.calendar/);
 });

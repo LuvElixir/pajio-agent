@@ -8,8 +8,8 @@ const assert = require("node:assert");
 const fs = require("node:fs");
 const vm = require("node:vm");
 
-const app = fs.readFileSync("src/wearing/web/app.js", "utf8");
-const html = fs.readFileSync("src/wearing/web/index.html", "utf8");
+const app = fs.readFileSync("src/pajio/web/app.js", "utf8");
+const html = fs.readFileSync("src/pajio/web/index.html", "utf8");
 
 test("app.js compiles (syntax gate; regex tests cannot catch parse errors)", () => {
   new vm.Script(app);
@@ -58,8 +58,8 @@ test("turnMarkup behavior: recovery vs legacy drafts, capability gating, failure
     esc: text => String(text ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])),
     state: {connected: true},
     active: new Set(["starting", "running", "stopping", "waiting_for_approval"]),
-    wearingFaceMarkup: () => "", artifactMarkup: () => "", researchMarkup: () => "", turnActions: () => "",
-    WearingConfirmations: {pending: () => "", history: () => ""},
+    pajioFaceMarkup: () => "", artifactMarkup: () => "", researchMarkup: () => "", turnActions: () => "",
+    PajioConfirmations: {pending: () => "", history: () => ""},
   };
   vm.runInNewContext(slice, context);
   const {turnMarkup} = context;

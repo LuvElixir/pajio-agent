@@ -7,9 +7,9 @@ import sqlite3
 
 import pytest
 
-from wearing.usage import UsageBook, UsageError, UsagePolicy
-from wearing.usage_guard import _AsyncStream, _Stream, receipt
-from wearing.usage_pricing import configuration
+from pajio.usage import UsageBook, UsageError, UsagePolicy
+from pajio.usage_guard import _AsyncStream, _Stream, receipt
+from pajio.usage_pricing import configuration
 
 
 def prices(*, budget="10", version="fixture-v1"):

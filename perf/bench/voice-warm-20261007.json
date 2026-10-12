@@ -16,8 +16,8 @@
   "model_manifest_sha256": "b51674e80d0c4b495175b5630ec7e29f38c92345497bd64a1f0288a10fd6f5f2",
   "sources": {
     "perf/bench/voice-cold-baseline.py": "9c7b8bd6f460dbc287b53e0fe918145068bd30125c34011a4fccce25aaa8cd67",
-    "src/wearing/capture_stt.py": "05341dfff4415dafd93eabaa9fe1afb8ecee187ad21d16037457365704437658",
-    "src/wearing/capture_worker.py": "d351b961d12c5ccabbd5b218d3c8c806e2b4a30b9a8343550ecc3662bb2fc5a6"
+    "src/pajio/capture_stt.py": "05341dfff4415dafd93eabaa9fe1afb8ecee187ad21d16037457365704437658",
+    "src/pajio/capture_worker.py": "d351b961d12c5ccabbd5b218d3c8c806e2b4a30b9a8343550ecc3662bb2fc5a6"
   },
   "method": "10 sequential pairs, alternating order. First warm-worker request reported separately; p95 is nearest-rank. Same local small/int8, 4 threads, beam=5, VAD and prompt. No remote provider, no accuracy claim.",
   "first_warm_worker_request": {

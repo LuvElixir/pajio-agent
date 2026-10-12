@@ -22,7 +22,7 @@
 - core-b: `/var/backups/pajio-web-v4/core-b-cf13afccde054b2982c086fb0e01d757`
 - core-a: `/var/backups/pajio-web-v4/core-a-15d29475cd8e473c84e2ed9fbb3e363a`
 
-私有部署脚本、intent、inspect/deploy/status、HTTP 证明及汇总位于 `.wearing/on-prem/20261009/personal-compute/device-files-20261010/`，不纳入提交。汇总 `web-static-v4-summary.json` 包含各证据 SHA。
+私有部署脚本、intent、inspect/deploy/status、HTTP 证明及汇总位于 `.pajio/on-prem/20261009/personal-compute/device-files-20261010/`，不纳入提交。汇总 `web-static-v4-summary.json` 包含各证据 SHA。
 
 ## 实测 HTTP
 
@@ -60,7 +60,7 @@ B 与 A 的 inspect 原像均与 v4 冻结哈希一致；B 完成 deploy/status 
 
 没有重启 Python 服务，没有操作设备或 GUI，没有提交第三方登录表单。测试账号登录仅通过既有 bearer 首页建立内存 cookie，未落盘凭据。该验证仍不是 WKWebView 实流或原生 App 文件交互验收。
 
-独立私有目录为 `.wearing/on-prem/20261009/personal-compute/web-static-v5-20261010/`；目录中的 v5 是提前准备的部署 attempt 名称，实际 remote-device 资源版本为 6。正式 manifest、不可覆盖 intent、原像备份、deploy/status 和 HTTP 证明独立保留；共享远端锁与旧版一致。
+独立私有目录为 `.pajio/on-prem/20261009/personal-compute/web-static-v5-20261010/`；目录中的 v5 是提前准备的部署 attempt 名称，实际 remote-device 资源版本为 6。正式 manifest、不可覆盖 intent、原像备份、deploy/status 和 HTTP 证明独立保留；共享远端锁与旧版一致。
 
 该四文件 attempt 的回滚入口是其目录中的 `python3 -I web-overlay.py core-a rollback` 或对应 core-b，恢复到本次 inspect 的 v4 原像。执行前必须先处理下述更新的单文件 attempt；若确需回到 v4 之前，再核对并使用旧目录回滚，不能直接覆盖第三方变化。
 
@@ -85,7 +85,7 @@ ZCode 将 `decisions.js?v=5` 与 `data-exports.js?v=3` 两个 script 标签之�
 
 最终 A/B 认证首页的响应正文 SHA 均为新 index.html 摘要；三个静态资源 HTTP 200、正文 SHA 未变，引用仍为 remote6 / app55 / CSS22。认证 API status 为 200；匿名首页 303、匿名资源 401、官方 IdP 登录表单 200，private/no-store 保留。没有操作 GUI、设备或重启 Python；本段仅记录静态 HTTP 验收。
 
-私有证据目录：`.wearing/on-prem/20261009/personal-compute/web-index-newline-20261010/`。`summary.json` SHA 为 `1fa3f4401ab950869efd0e65322622f2ce7a520a081edc7bef4e19e2cc79b654`，其中索引单文件 manifest、差异、inspect/intent/deploy/status、离线测试和 HTTP 证明。
+私有证据目录：`.pajio/on-prem/20261009/personal-compute/web-index-newline-20261010/`。`summary.json` SHA 为 `1fa3f4401ab950869efd0e65322622f2ce7a520a081edc7bef4e19e2cc79b654`，其中索引单文件 manifest、差异、inspect/intent/deploy/status、离线测试和 HTTP 证明。
 
 本次原像备份：
 
@@ -114,7 +114,7 @@ remote-device.js 保持 `9086adb6…`，pajio.css 保持 `dd5c280c…`，完整�
 
 最终两账户认证 HTML/app 正文 SHA 与新清单一致；remote/CSS 正文 SHA 未变，引用精确为 app58 / remote6 / CSS22，四资源均 200，API status 均 200。匿名首页仍 303、匿名资源 401、官方 IdP 登录表单 200，private/no-store 保留。部署过程未重启任何服务、未操作设备控制状态、GUI 或媒体。已打开页面需重新加载才使用新版本；本段不宣称 app58 的真实 UI 已复验。
 
-独立私有目录为 `.wearing/on-prem/20261009/personal-compute/web-control-return-v58-20261010/`。`summary.json` SHA：`1c8ecbe007b9ca548cce77c45272d42f06fda2ff33cc625afaeac2a8ce2e3a90`，包含 manifest、审查、两套测试、唯一 intent、inspect/deploy/status 与 HTTP 证明摘要。它沿用共享远端锁，保留全部此前 attempt。
+独立私有目录为 `.pajio/on-prem/20261009/personal-compute/web-control-return-v58-20261010/`。`summary.json` SHA：`1c8ecbe007b9ca548cce77c45272d42f06fda2ff33cc625afaeac2a8ce2e3a90`，包含 manifest、审查、两套测试、唯一 intent、inspect/deploy/status 与 HTTP 证明摘要。它沿用共享远端锁，保留全部此前 attempt。
 
 原像备份：
 
@@ -141,7 +141,7 @@ remote-device.js 保持 `9086adb6…`，pajio.css 保持 `dd5c280c…`，完整�
 
 两端真实认证 HTML 与 assets 均为 200，三项正文 SHA 与清单精确一致，引用为 views17/app59；remote6/CSS22 引用与完整 SHA 继续匹配前版。`/api/status` 两端均为 200，响应保留 private/no-store。控制面已独立启用邀请码入口：匿名 `/` 303→`/join`，`/join` 200且具有邀请码输入，四项静态资源匿名访问401，已有账号 `/auth/login` 转至 IdP 密码表单200。本次未提交邀请码或登录表单，不把 HTTP 结果视为 Desktop UI 注册/登录验收。
 
-私有证据目录 `.wearing/on-prem/20261009/personal-compute/invitation-entry-20261010/web59-prepared/`；`web59-http-b-proof.json` 还核实了 B 新版/A 原像同时存在的分阶段状态，`web59-http-final-proof.json` 核实两端最终状态，均未保留 cookie/token/响应正文。
+私有证据目录 `.pajio/on-prem/20261009/personal-compute/invitation-entry-20261010/web59-prepared/`；`web59-http-b-proof.json` 还核实了 B 新版/A 原像同时存在的分阶段状态，`web59-http-final-proof.json` 核实两端最终状态，均未保留 cookie/token/响应正文。
 
 `summary.json` SHA：`c4372a41a1225247b4707f7c253932f13ae1e45845eb8b8b6391f7437613037b`。原像备份：
 

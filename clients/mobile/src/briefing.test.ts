@@ -15,7 +15,7 @@ function fake(handler: (call: Call) => Response | Promise<Response>) {
   const calls: Call[] = [];
   const api = new BriefingApi(connection, (async (url, init) => {
     const headers = new Headers(init?.headers);
-    assert.equal(headers.get('X-Wearing-Identity'), 'daily'); assert.equal(init?.redirect, 'error'); assert.ok(init?.signal);
+    assert.equal(headers.get('X-Pajio-Identity'), 'daily'); assert.equal(init?.redirect, 'error'); assert.ok(init?.signal);
     const parsed = new URL(String(url)), call = {path: parsed.pathname + parsed.search, method: init?.method || 'GET', body: init?.body ? JSON.parse(String(init.body)) : null};
     calls.push(call); return handler(call);
   }) as typeof fetch);

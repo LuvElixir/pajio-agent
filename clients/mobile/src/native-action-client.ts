@@ -10,7 +10,7 @@ export class NativeActionClient {
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 12000);
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {method: body ? 'POST' : 'GET', redirect: 'error', signal: controller.signal,
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity':this.connection.identity, ...(body ? {'Content-Type':'application/json', 'X-Wearing-Token':this.token} : {})}, ...(body ? {body:JSON.stringify(body)} : {})});
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity':this.connection.identity, ...(body ? {'Content-Type':'application/json', 'X-Pajio-Token':this.token} : {})}, ...(body ? {body:JSON.stringify(body)} : {})});
       if (response.status === 403 && body && retry) {await this.bootstrap(); return this.request(path, body, false);}
       const value: unknown = await response.json();
       if (!response.ok) throw new ApiError(object(value) && typeof value.detail === 'string' ? value.detail : '手机请求未完成，请重新检查连接。', response.status);

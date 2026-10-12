@@ -1,8 +1,8 @@
 import json
 import pytest
-from wearing.cloud.device_adoption import AdoptionBook
-from wearing.cloud.device_adoption_ssh import HOST,GUEST
-from wearing.cloud.device_provisioning import VM,ProvisionError,fingerprint
+from pajio.cloud.device_adoption import AdoptionBook
+from pajio.cloud.device_adoption_ssh import HOST,GUEST
+from pajio.cloud.device_provisioning import VM,ProvisionError,fingerprint
 from test_device_provisioning import setup,spec,policy
 
 @pytest.fixture

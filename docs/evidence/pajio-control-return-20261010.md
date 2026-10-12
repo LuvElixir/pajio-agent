@@ -35,7 +35,7 @@ The operator read each live `app.py` and compared it locally with the candidate.
 | --- | --- | --- |
 | A and B `app.py` | `dfe035e84138cf4ad082ea7c5d5bffadce71e2a116a4159415f88a3aaaa0ff5d` | `2c825a17a664e2d105ef2ece3472d802d174ecaa3136eb7ac89a3919972f0175` |
 
-Only `wearing-tenant.service` was restarted on each tenant. Each new Core PID remained stable and passed five consecutive authenticated public `/api/status` checks with HTTP 200 and Hermes `reachable` before proceeding. The relay PID, start timestamp and restart count were identical before and after. The operation did not restart media services, change instance data directly, or send a resume command to a real device.
+Only `pajio-tenant.service` was restarted on each tenant. Each new Core PID remained stable and passed five consecutive authenticated public `/api/status` checks with HTTP 200 and Hermes `reachable` before proceeding. The relay PID, start timestamp and restart count were identical before and after. The operation did not restart media services, change instance data directly, or send a resume command to a real device.
 
 The continuous public probe observed **68 requests during the 39.961-second deployment window**:
 
@@ -46,7 +46,7 @@ The continuous public probe observed **68 requests during the 39.961-second depl
 
 The seven transient 502 responses occurred during the respective Core restarts. This was not a zero-downtime deployment. Both tenants recovered and passed the separate consecutive-ready checks described above.
 
-Sanitized deployment receipts, exact source diffs, backup references and the bounded probe snapshot are retained in the ignored local directory `.wearing/on-prem/20261009/personal-compute/control-return-core-20261010/`, with `summary.json` as the entry point. Credentials and raw device screens are not included in this record.
+Sanitized deployment receipts, exact source diffs, backup references and the bounded probe snapshot are retained in the ignored local directory `.pajio/on-prem/20261009/personal-compute/control-return-core-20261010/`, with `summary.json` as the entry point. Credentials and raw device screens are not included in this record.
 
 ## Native UI acceptance boundary
 

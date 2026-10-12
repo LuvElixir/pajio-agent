@@ -1,7 +1,7 @@
 """Exercise the installed public SDK, not a stub with renamed model fields."""
 from mcp import types
 
-from wearing.phone_proxy import extra_schemas, normalize_result, scoped_schema, stamp_observation
+from pajio.phone_proxy import extra_schemas, normalize_result, scoped_schema, stamp_observation
 
 
 def test_phone_tool_schema_serializes_standard_wire_names():

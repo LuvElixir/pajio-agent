@@ -10,19 +10,19 @@ from fastapi import FastAPI, Request
 import httpx
 import pytest
 
-from wearing.artifacts import ArtifactBook
-from wearing.capture import CaptureBook
-from wearing.goals import GoalBook
-from wearing.identity_export import IdentityExports, ExportError, MAX_EXPORT_BYTES
-from wearing.identity_export_api import install_identity_export_routes
-from wearing.life import LifeBook
-from wearing.schedules import ScheduleBook
-from wearing.store import Store, now
+from pajio.artifacts import ArtifactBook
+from pajio.capture import CaptureBook
+from pajio.goals import GoalBook
+from pajio.identity_export import IdentityExports, ExportError, MAX_EXPORT_BYTES
+from pajio.identity_export_api import install_identity_export_routes
+from pajio.life import LifeBook
+from pajio.schedules import ScheduleBook
+from pajio.store import Store, now
 
 
 @pytest.fixture
 def book(tmp_path):
-    store = Store(tmp_path / 'wearing.sqlite3')
+    store = Store(tmp_path / 'pajio.sqlite3')
     life = LifeBook(store)
     GoalBook(store); ScheduleBook(store); CaptureBook(life); ArtifactBook(store)
     return IdentityExports(store)
@@ -97,7 +97,7 @@ def test_links_changes_size_and_expiry_are_explicit(book, monkeypatch):
     assert error.value.status == 410
     book.purge_expired()
     assert not (book.root / (receipt['id'] + '.zip')).exists()
-    monkeypatch.setattr('wearing.identity_export.MAX_DATA_BYTES', 50)
+    monkeypatch.setattr('pajio.identity_export.MAX_DATA_BYTES', 50)
     book.store.create_message('large message' * 30)
     with pytest.raises(ExportError) as error: book.create('daily', 'test_request_key_002')
     assert error.value.status == 413
@@ -146,7 +146,7 @@ def test_export_routes_enforce_identity_and_safe_download_headers(book):
     app = FastAPI()
     @app.middleware('http')
     async def scope(request: Request, next):
-        request.state.identity_id = request.headers.get('X-Wearing-Identity', 'daily')
+        request.state.identity_id = request.headers.get('X-Pajio-Identity', 'daily')
         return await next(request)
     install_identity_export_routes(app, book)
     other = book.store.save_identity('Other')['id']
@@ -155,7 +155,7 @@ def test_export_routes_enforce_identity_and_safe_download_headers(book):
             response = await client.post('/api/data-exports', json={'request_key': 'test_request_key_001'})
             assert response.status_code == 201
             receipt = response.json()
-            denied = await client.get('/api/data-exports/' + receipt['id'] + '/file', headers={'X-Wearing-Identity': other})
+            denied = await client.get('/api/data-exports/' + receipt['id'] + '/file', headers={'X-Pajio-Identity': other})
             assert denied.status_code == 404
             file = await client.get('/api/data-exports/' + receipt['id'] + '/file')
             assert file.headers['cache-control'] == 'no-store'

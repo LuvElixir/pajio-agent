@@ -5,16 +5,16 @@ import json
 import httpx
 import pytest
 
-from wearing.activity import ActivityBook
-from wearing.app import create_app, public_task
-from wearing.cloud.worker import TenantBoundary
-from wearing.config import Settings
-from wearing.durable_confirmations import DurableConfirmations
-from wearing.identity_export import IdentityExports
-from wearing.search import SearchBook
-from wearing.service import ACTIVE, TaskService, TaskError
-from wearing.store import Store
-from wearing.task_presentation import present_messages, recovery_label, EXECUTION_LIMIT_MESSAGE
+from pajio.activity import ActivityBook
+from pajio.app import create_app, public_task
+from pajio.cloud.worker import TenantBoundary
+from pajio.config import Settings
+from pajio.durable_confirmations import DurableConfirmations
+from pajio.identity_export import IdentityExports
+from pajio.search import SearchBook
+from pajio.service import ACTIVE, TaskService, TaskError
+from pajio.store import Store
+from pajio.task_presentation import present_messages, recovery_label, EXECUTION_LIMIT_MESSAGE
 
 A, B = 'a' * 64, 'b' * 64
 CARD = {'title': 'QA 保存这份测试笔记？', 'action': '只修改合成记录。', 'impact': '无真实服务。'}
@@ -30,7 +30,7 @@ class SyntheticClient:
         if self.entered:
             self.entered.set()
             await self.release.wait()
-        return {'state': 'reachable', 'wearing': {'confirmation_guard': 'durable-v1'} if self.capable else {}}
+        return {'state': 'reachable', 'pajio': {'confirmation_guard': 'durable-v1'} if self.capable else {}}
 
     async def start(self, payload, request_key):
         self.calls.append((payload, request_key))
@@ -85,7 +85,7 @@ async def test_http_activity_search_and_export_hide_legacy_recovery_internals_an
     _, _, task = prepare(store)
     prompt = legacy_text(store, task)
     message = next(m for m in store.conversation() if m['task_id'] == task)
-    headers = {'Authorization': 'Bearer fixture-key', 'X-Wearing-Tenant': 'fixture', 'X-Pajio-Storage-Scope': A}
+    headers = {'Authorization': 'Bearer fixture-key', 'X-Pajio-Tenant': 'fixture', 'X-Pajio-Storage-Scope': A}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver', headers=headers) as client:
         detail = (await client.get('/api/tasks/' + task)).json()
         assert detail['title'] == detail['prompt'] == LABEL and detail['can_retry'] and detail['can_cancel']

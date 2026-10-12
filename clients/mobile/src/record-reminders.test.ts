@@ -50,7 +50,7 @@ test('failed persistence sends nothing, account cleanup fences prevent late rest
 test('transport freezes account and identity, no owner/URL accepted from payload',async()=>{
   const c:Connection={...connection,session:{userId:'user_'+'a'.repeat(32),tenantId:'tenant_a',credentialId:'c'.repeat(32),accessToken:'s'.repeat(64),expiresAt:new Date(Date.now()+3_600_000).toISOString()}};
   const h=client([()=>json(bootstrap),()=>json(result)],c);c.identity='other';c.session!.accessToken='later';await h.api.save(target,request);
-  assert.equal(h.calls[1].headers.get('authorization'),'Bearer '+'s'.repeat(64));assert.equal(h.calls[1].headers.get('X-Wearing-Identity'),identity);assert.deepEqual(h.calls[1].body,request);
+  assert.equal(h.calls[1].headers.get('authorization'),'Bearer '+'s'.repeat(64));assert.equal(h.calls[1].headers.get('X-Pajio-Identity'),identity);assert.deepEqual(h.calls[1].body,request);
 });
 test('record taps only navigate authenticated exact record and occurrence resolution',async()=>{
   const base={v:1 as const,type:'pajio.record' as const,identity_id:identity,server_id:'a'.repeat(32),event_key:'b'.repeat(64),record_id:target};

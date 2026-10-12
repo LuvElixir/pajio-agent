@@ -1,8 +1,8 @@
 import httpx
 import pytest
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.cloud.worker import TenantBoundary
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.cloud.worker import TenantBoundary
 
 A, B = 'a' * 64, 'b' * 64
 
@@ -21,7 +21,7 @@ async def test_keyset_windows_watch_and_owner_boundary(tmp_path):
         tasks.append(task['id'])
     foreign=store.create_message('private other owner')
     with store.connection() as db: store.bind_task_principal(db,foreign['id'],B)
-    headers={'Authorization':'Bearer fixture-internal','X-Wearing-Tenant':'fixture','X-Pajio-Storage-Scope':A}
+    headers={'Authorization':'Bearer fixture-internal','X-Pajio-Tenant':'fixture','X-Pajio-Storage-Scope':A}
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),base_url='http://testserver',headers=headers) as client:
         old=(await client.get('/api/conversation')).json()
         assert len(old)==105

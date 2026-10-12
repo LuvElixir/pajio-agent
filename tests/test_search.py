@@ -3,15 +3,15 @@ import pytest
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from wearing.life import LifeBook, LifeDraft
-from wearing.search import SearchBook, SearchError
-from wearing.search_api import install_search_routes
-from wearing.store import Store
+from pajio.life import LifeBook, LifeDraft
+from pajio.search import SearchBook, SearchError
+from pajio.search_api import install_search_routes
+from pajio.store import Store
 
 
 @pytest.fixture
 def corpus(tmp_path):
-    store = Store(tmp_path/'wearing.sqlite3')
+    store = Store(tmp_path/'pajio.sqlite3')
     life = LifeBook(store)
     other = store.save_identity('工作')['id']
     task = store.create('查一下台北旅行', '研究')
@@ -119,17 +119,17 @@ async def test_http_boundary_identity_cursor_and_detail_contract(corpus):
     @app.middleware('http')
     async def boundary(request: Request,next):
         if request.headers.get('authorization') != 'Bearer qa-only':return JSONResponse({},status_code=401)
-        request.state.identity_id=request.headers.get('x-wearing-identity','daily')
+        request.state.identity_id=request.headers.get('x-pajio-identity','daily')
         return await next(request)
     install_search_routes(app,book)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app),base_url='http://testserver') as client:
         assert (await client.get('/api/search?q=旅行')).status_code==401
-        headers={'authorization':'Bearer qa-only','x-wearing-identity':'daily'}
+        headers={'authorization':'Bearer qa-only','x-pajio-identity':'daily'}
         first=await client.get('/api/search',params={'q':'旅行','limit':1,'identity':other},headers=headers)
         assert first.status_code==200 and first.json()['identity_id']=='daily'
-        assert (await client.get('/api/search',params={'q':'旅行','cursor':first.json()['next_cursor']},headers={**headers,'x-wearing-identity':other})).status_code==409
+        assert (await client.get('/api/search',params={'q':'旅行','cursor':first.json()['next_cursor']},headers={**headers,'x-pajio-identity':other})).status_code==409
         hit=book.page('daily','大稻埕')['items'][0]
         path=f"/api/search/messages/{hit['target']['message_id']}"
         assert (await client.get(path,headers=headers)).status_code==200
-        assert (await client.get(path,headers={**headers,'x-wearing-identity':other})).status_code==404
+        assert (await client.get(path,headers={**headers,'x-pajio-identity':other})).status_code==404
         assert (await client.get('/api/search?q=test&limit=100',headers=headers)).status_code==422

@@ -6,8 +6,8 @@ Final result: **BUILD SUCCEEDED**, exit **0**. Pajio 0.2.0 is packaged as a stan
 
 ## Deliverables
 
-- App: `/Users/archieliew/Documents/facet/artifacts/pajio-20261007/ios-simulator/Pajio.app`
-- Archive: `/Users/archieliew/Documents/facet/artifacts/pajio-20261007/ios-simulator/Pajio-ios-simulator-arm64.zip`
+- App: `/Users/archieliew/Documents/pajio/artifacts/pajio-20261007/ios-simulator/Pajio.app`
+- Archive: `/Users/archieliew/Documents/pajio/artifacts/pajio-20261007/ios-simulator/Pajio-ios-simulator-arm64.zip`
 - Archive size: 26,586,403 bytes.
 - Archive SHA-256: `4af8b6b7e3e9674eced8593d77133e32037c470c646cb54f21ac5f25c802bbf9`
 - App copy: 92 file hashes match the original build output; archive passed `unzip -t`.
@@ -51,13 +51,13 @@ The build script runs `xcodebuild -workspace ios/Pajio.xcworkspace -scheme Pajio
 - `node node_modules/typescript/bin/tsc --noEmit`: passed.
 - `node node_modules/eslint/bin/eslint.js src`: passed.
 - Standard `npm run lint` initially failed in the existing global npx wrapper because `npm/bin/package.json` has `type: module`; the local ESLint binary passed. No global npm files were changed.
-- Generated configuration audit: Pajio display name; legacy bundle identifier `io.luckyloading.wearing.mobile`; schemes `pajio`, `wearing`, and the bundle ID; opaque 1024×1024 icon; 72/144/216 px light and dark splash assets. All confirmed in the final app's plist/resource presence checks.
+- Generated configuration audit: Pajio display name; legacy bundle identifier `io.luckyloading.pajio.mobile`; schemes `pajio`, `pajio`, and the bundle ID; opaque 1024×1024 icon; 72/144/216 px light and dark splash assets. All confirmed in the final app's plist/resource presence checks.
 - 356 native/Pods reference files and symlinks had no reference back to active mobile source.
 - Final app declares `DTPlatformName=iphonesimulator`, `MinimumOSVersion=16.4`; `Assets.car`, `SplashScreen.storyboardc`, and `main.jsbundle` are present.
 - Compiler emitted upstream deprecation and Hermes static-global warnings; there were no build errors.
 - Runtime connection, bright/dark appearance, deep-link behavior and user flows require later simulator/device acceptance. File/build success alone does not prove those behaviors.
 
-Logs and locks are preserved under `/Users/archieliew/Documents/facet/artifacts/pajio-20261007/ios-simulator/logs` and `/Users/archieliew/Documents/facet/artifacts/pajio-20261007/ios-simulator/toolchain`; their scripts record the isolated setup and are intended to run from the retained candidate.
+Logs and locks are preserved under `/Users/archieliew/Documents/pajio/artifacts/pajio-20261007/ios-simulator/logs` and `/Users/archieliew/Documents/pajio/artifacts/pajio-20261007/ios-simulator/toolchain`; their scripts record the isolated setup and are intended to run from the retained candidate.
 
 ## Official references
 

@@ -16,7 +16,7 @@
 
 ## 实际浏览器过程
 
-隔离服务 `127.0.0.1:8794`，独立数据库在 `.wearing/qa/product-standard-20261006`。Hermes 使用本机 MockTransport 合成回执；设备关闭。3 条内容明确标注“验收示例”：一条尚未送出、一条执行中、一条结果返回。QA 无租户 relay，因此测试夹具给 input-approvals 返回空列表，不改产品设备校验。
+隔离服务 `127.0.0.1:8794`，独立数据库在 `.pajio/qa/product-standard-20261006`。Hermes 使用本机 MockTransport 合成回执；设备关闭。3 条内容明确标注“验收示例”：一条尚未送出、一条执行中、一条结果返回。QA 无租户 relay，因此测试夹具给 input-approvals 返回空列表，不改产品设备校验。
 
 1. 初次 GET 的状态为 attention=1、active=1、results=1、unread=1；进展面板显示三组。
 2. 关闭整个网页标签，再把合成执行回执改为 completed。后台轮询自行保存结果。

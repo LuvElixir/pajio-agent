@@ -12,10 +12,10 @@ from test_control_postgres import pg
 from test_invitations_postgres import fresh
 from test_native_enrollment import start, proof, account, BrokerWire
 from test_registration import Provider, KEY, URL
-from wearing.cloud.control import ControlStore, OIDCStateCache, states
-from wearing.cloud.mobile_auth import exchange_handoff
-from wearing.cloud.native_enrollment import NativeEnrollment, PREFIX, operation_key
-from wearing.cloud.registration import RegistrationBroker, RegistrationClient
+from pajio.cloud.control import ControlStore, OIDCStateCache, states
+from pajio.cloud.mobile_auth import exchange_handoff
+from pajio.cloud.native_enrollment import NativeEnrollment, PREFIX, operation_key
+from pajio.cloud.registration import RegistrationBroker, RegistrationClient
 
 
 async def test_pg_native_states_scoped_insert_delete_recovery_and_real_invitation_membership(pg, tmp_path):

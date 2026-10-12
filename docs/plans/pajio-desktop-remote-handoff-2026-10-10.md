@@ -15,14 +15,14 @@
 - `clients/mobile/src/remote-viewer-document.ts`
 - `clients/mobile/src/remote-text-input.ts`
 - `docs/private-media-host.md`、`docs/device-gateway.md`（若存在，以源码合同为准）
-- `src/wearing/device_access.py` 与 `src/wearing/app.py` 中 `/api/devices/access/` 路由；实际文件名先搜索。
+- `src/pajio/device_access.py` 与 `src/pajio/app.py` 中 `/api/devices/access/` 路由；实际文件名先搜索。
 - `docs/evidence/personal-compute-delivery-2026-10-10.md`
 
 现有生产 A/B 已有真实 Linux / Android、短期 TURN、DTLS/SRTP/SCTP、设备确认与重放拒绝。私密接管时 Agent 必须暂停读取和输入。源码和已有通道可以只读研究，不得改 App/Python/部署配置，也不要操作真实用户数据。
 
 ## 实现范围与体验
 
-1. `src/wearing/web/` 增加独立远程接管模块与真实设备入口，接入已有账户、身份、注销冻结和模态交接。保持 App WebView 宿主分支不加载新功能。
+1. `src/pajio/web/` 增加独立远程接管模块与真实设备入口，接入已有账户、身份、注销冻结和模态交接。保持 App WebView 宿主分支不加载新功能。
 2. 复用现有公开 API 状态机：request → 等设备 ACK → transport/offer → 视频 ready → 用户显式开始操作 → 双确认 return → 等设备 ACK。未知状态、断网、过期、页面隐藏/关闭、换身份/退出立即停止输入与视频；不自动恢复 Agent，不自动重发输入。
 3. 支持浏览器与 Tauri WKWebView 的 WebRTC；鼠标/触控、滚动、键盘按设备能力展示。Linux 输入 32 码点及 4096 字节、Android 4096 字节，按 ready 能力整体预检；超长保留未发草稿，不截断、不分段、不回显私密文本。禁止 clipboard/日志/本地持久化/截图留存。
 4. 布局适合桌面大屏，远程画面按真实宽高等比，控制状态始终明确，云手机竖屏有足够显示高度。交还不能只关弹窗，要有设备确认；意外关闭保持暂停。

@@ -9,7 +9,7 @@
 | `Pajio-0.2.0-arm64-standalone-test.apk` | `1ca187b67c55dfdc10a9e83c7b4d8b97110ec2585d7f7f0876cd2edf47f7d4e3` | 内嵌 JS、关闭 debuggable；Release 变体但使用 Android Debug 测试签名 |
 | `Pajio-0.2.0-arm64-debug-metro.apk` | `64f15165d27406410069565ffae1897888e09a5a8b804d1a37211750d3cbc253` | 94,980,487 bytes；没有 JS bundle，需要 Metro，仅开发调试 |
 
-`README.md`、`SHA256SUMS.txt`、`build-verification.json`、签名报告与最终 Gradle 日志随包提供，下载目录内再次执行哈希核验两包均为 OK。包名为 `io.luckyloading.wearing.mobile`，应用名称 Pajio，版本 0.2.0 / versionCode1，minSdk24、target/compile36，ABI 仅 arm64-v8a。
+`README.md`、`SHA256SUMS.txt`、`build-verification.json`、签名报告与最终 Gradle 日志随包提供，下载目录内再次执行哈希核验两包均为 OK。包名为 `io.luckyloading.pajio.mobile`，应用名称 Pajio，版本 0.2.0 / versionCode1，minSdk24、target/compile36，ABI 仅 arm64-v8a。
 
 完成的实际验证：
 
@@ -41,7 +41,7 @@
 
 - 官方 Adoptium API 返回 Temurin `17.0.20.1+1` macOS aarch64 JDK archive；已下载、解压并通过 SHA-256 校验：`196d13ba5f10414bef7f6a05a9b3f00edacb18ebacef2b99485db9e2ee18f0e8`。
 - `JAVA_HOME=/tmp/pajio-android-toolchain-kcb_a3hp/jdk-17.0.20.1+1/Contents/Home`，`java -version` 成功。项目 wrapper 的 Gradle `9.3.1` 在该 JDK 启动成功，`GRADLE_USER_HOME` 为工具链下 `gradle-cache`；日志 `gradle-version.log`，清单 `toolchain-manifest.json`。这只证明工具能够启动，未编译 Android 工程。
-- 当时没有设置中的 SDK 路径；`~/Library/Android/sdk` 及 Homebrew 常用 SDK 位置均不存在，已有 `.wearing/runtime/android` 只有 platform-tools/Expo Go，没有 `licenses`。当时没有找到可直接复用的已接受 SDK 许可。
+- 当时没有设置中的 SDK 路径；`~/Library/Android/sdk` 及 Homebrew 常用 SDK 位置均不存在，已有 `.pajio/runtime/android` 只有 platform-tools/Expo Go，没有 `licenses`。当时没有找到可直接复用的已接受 SDK 许可。
 - 官方下载页的 Mac ARM command-line tools `commandlinetools-mac_arm64-15859902_latest.zip` 在下载前要求本人勾选 Android SDK License Agreement，页面日期为 `2026-04-28`。此前按任务边界停在这一许可步骤；收到本人明确同意后才继续安装与构建。
 - SDK 许可完成后所需平台依据当前已安装 RN Gradle catalog，而非泛化示例：`platforms;android-36`、`build-tools;36.0.0`、`ndk;27.1.12297006`；若实际构建要求 CMake，再按构建指明的版本安装。无需为 APK 编译下载模拟器系统镜像。
 - 许可等待阶段尚未执行 `assembleDebug`；当前 APK 与哈希证据见顶部。候选 Gradle 配置的 debug 使用模板调试签名；release 也引用同一 debug 配置，不能据 variant 名称视为正式发布签名。默认 debug variant 跳过内嵌 JS/资源，需要 Metro，不能作为独立正式外测包。
@@ -65,7 +65,7 @@ SDK pending read 是消耗式且不提供 operation id。第二次进程死亡�
 
 ## Android 平台核对
 
-- 生成 manifest：Pajio 名称、`io.luckyloading.wearing.mobile` 稳定包标识、`pajio`/旧 `wearing` scheme、singleTask、predictive back；allowBackup=false。
+- 生成 manifest：Pajio 名称、`io.luckyloading.pajio.mobile` 稳定包标识、`pajio`/旧 `pajio` scheme、singleTask、predictive back；allowBackup=false。
 - 网络安全：正式默认禁止 cleartext，仅 localhost/127.0.0.1/::1 例外。HTTPS 云账户可用；当前短期 LAN HTTP 开发配对在 Android 会被这层阻止，不能当作已验收链路。本轮不扩大 cleartext 范围。
 - 分享：仅已声明 MIME 的 SEND/SEND_MULTIPLE；冷/热启动 Kotlin hook 将携带文本文件 EXTRA_STREAM 的 text/plain 交回 SDK 文件分支。接收实现使用受限 content:// 只读流，先复制私有文件再消费 intent，无 URL 解析/抓取。SDK57 FileSystem 原生实现支持 content URI 的 read-only FileHandle。
 - 权限：照片使用系统选择器，不需要广泛图库读取权限；相机/麦克风/前台位置/日历按用户动作请求。主 manifest 阻止外部存储、广泛图片/视频读取和悬浮窗权限。

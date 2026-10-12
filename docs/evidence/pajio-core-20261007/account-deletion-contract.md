@@ -1,6 +1,6 @@
 # 持久账户删除作业核心与操作者入口
 
-2026-10-08。实现：`src/wearing/account_deletion.py`、`account_deletion_cli.py`、`account_deletion_fixture.py`。独立作业核心已实现并通过22项隔离测试；**未挂 App 按钮、未挂 gateway/API、未配置真实控制面/云删除适配器，因此不代表真实账户可注销或外测门槛已解除。**
+2026-10-08。实现：`src/pajio/account_deletion.py`、`account_deletion_cli.py`、`account_deletion_fixture.py`。独立作业核心已实现并通过22项隔离测试；**未挂 App 按钮、未挂 gateway/API、未配置真实控制面/云删除适配器，因此不代表真实账户可注销或外测门槛已解除。**
 
 ## 登记与请求
 
@@ -33,7 +33,7 @@ receipt = jobs.run(job['id'], adapter=None)  # waiting / adapter_unconfigured
 
 ## CLI
 
-独立入口 `python -m wearing.account_deletion_cli --journal <独立私有目录> [--mode operator|synthetic] <command>`：
+独立入口 `python -m pajio.account_deletion_cli --journal <独立私有目录> [--mode operator|synthetic] <command>`：
 
 - `init`：只初始化独立journal，拒绝采用含其他文件的目录。
 - `register --tenant … --classification private|shared|unknown --owner … --member … --instance … [--revision …]`：operator登记。

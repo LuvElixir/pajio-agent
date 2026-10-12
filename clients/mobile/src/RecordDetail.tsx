@@ -2,7 +2,7 @@ import {useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState} from
 import {AppState, View} from 'react-native';
 import {Button, Text, TextInput} from 'react-native-paper';
 import * as Crypto from 'expo-crypto';
-import {ApiError, scopeOf, WearingApi, type Connection, type RecordItem} from './core';
+import {ApiError, scopeOf, PajioApi, type Connection, type RecordItem} from './core';
 import {recordEdit, recordEditChanged, recordPatch, validRecordEdit, withRecordDraft, type RecordEdit} from './record-editor';
 import {RecordMutations, lifecycleMutation, mutationAction, mutationDraft, mutationLabel, mutationSyncedLabel, observeRecordMutations, projectRecordMutation, type MutationAction, type RecordMutation} from './record-mutations';
 import {commitRecordReceipt, localRecords, mergeRecordVersions} from './record-sync';
@@ -20,7 +20,7 @@ type Props = {record: RecordItem; connection: Connection; onChanged: (record: Re
 export default function RecordDetail(props: Props) {return <RecordDetailSession key={`${scopeOf(props.connection)}|${props.record.id}|${props.connection.session?.credentialId || ''}`} {...props}/>;}
 function RecordDetailSession({record, connection, onChanged, onChat}: Props) {
   const {colors: c} = useAppTheme(), scope = scopeOf(connection), key = `record-edit:${scope}:${record.id}`;
-  const mutations = useMemo(() => new RecordMutations(storage, () => Crypto.randomUUID()), []), api = useMemo(() => new WearingApi(connection, serviceFetch), [connection]);
+  const mutations = useMemo(() => new RecordMutations(storage, () => Crypto.randomUUID()), []), api = useMemo(() => new PajioApi(connection, serviceFetch), [connection]);
   const [base, setBase] = useState(record), [edit, setEdit] = useState(() => recordEdit(record));
   const [entry, setEntry] = useState<RecordMutation | null>(null), [latest, setLatest] = useState<RecordItem | null>(null), [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false), [ready, setReady] = useState(false), [confirmArchive, setConfirmArchive] = useState(false);

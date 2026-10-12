@@ -7,14 +7,14 @@ from concurrent.futures import ThreadPoolExecutor
 import httpx
 import pytest
 
-from wearing.activity import ActivityBook
-from wearing.app import create_app
-from wearing.config import Settings
-from wearing.goals import GoalBook, GoalCoordinator
-from wearing.hermes import HermesClient
-from wearing.schedules import ScheduleBook, ScheduleCoordinator, ScheduleDraft
-from wearing.service import ACTIVE, TaskError, TaskService
-from wearing.store import MessageConflict, Store
+from pajio.activity import ActivityBook
+from pajio.app import create_app
+from pajio.config import Settings
+from pajio.goals import GoalBook, GoalCoordinator
+from pajio.hermes import HermesClient
+from pajio.schedules import ScheduleBook, ScheduleCoordinator, ScheduleDraft
+from pajio.service import ACTIVE, TaskError, TaskService
+from pajio.store import MessageConflict, Store
 from test_goals import GoalWire
 
 
@@ -187,7 +187,7 @@ async def test_due_schedule_is_not_blocked_by_legacy_draft(rig, monkeypatch):
     legacy = store.create_message("历史草稿")
     book = ScheduleBook(store)
     clock = ["2026-01-01T00:00:00+00:00"]
-    monkeypatch.setattr("wearing.schedules.now", lambda: clock[0])
+    monkeypatch.setattr("pajio.schedules.now", lambda: clock[0])
     book.create("daily", ScheduleDraft(title="测试定时", instruction="只看测试资料", kind="once", at="2026-01-01T00:05:00+00:00"), "fixture-schedule")
     clock[0] = "2026-01-01T00:05:00+00:00"
     await ScheduleCoordinator(book, service).tick()
@@ -207,7 +207,7 @@ async def test_queue_and_goals_take_turns_instead_of_starving_existing_goal(rig)
     store.update(first["task"]["id"], status="completed_unverified")
     restarted = GoalCoordinator(GoalBook(Store(store.path)), service)
     await restarted.tick()
-    assert len(wire.runs) == 2 and "wearing-goal-" in wire.runs[-1]["session_id"]
+    assert len(wire.runs) == 2 and "pajio-goal-" in wire.runs[-1]["session_id"]
     assert store.get(second["task"]["id"])["status"] == "draft"
     step = goals.detail(goal["id"])["steps"][0]
     store.update(step["task_id"], status="completed_unverified", output=wire.output)
@@ -377,14 +377,14 @@ async def test_api_receipts_validation_identity_and_cancel_superset(tmp_path):
     settings = Settings(tmp_path, hermes_key="fixture")
     client = HermesClient(settings, httpx.MockTransport(wire))
     app = create_app(settings, hermes=client, engine_autostart=False, local_devices=False)
-    from wearing.cloud.worker import TenantBoundary
+    from pajio.cloud.worker import TenantBoundary
     app.add_middleware(TenantBoundary, tenant_id='fixture', gateway_key='fixture-key')
     store = app.state.store
     block(store)
     other = store.save_identity("另外一个身份")["id"]
-    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver", headers={'Authorization': 'Bearer fixture-key', 'X-Wearing-Tenant': 'fixture', 'X-Pajio-Storage-Scope': 'a' * 64}) as http:
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://testserver", headers={'Authorization': 'Bearer fixture-key', 'X-Pajio-Tenant': 'fixture', 'X-Pajio-Storage-Scope': 'a' * 64}) as http:
         token = (await http.get("/api/bootstrap")).json()["token"]
-        headers = {"X-Wearing-Token": token}
+        headers = {"X-Pajio-Token": token}
         body = {"content": "重复请求只保存一次", "request_id": request()}
         first = (await http.post("/api/conversation", json=body, headers=headers)).json()
         duplicate = (await http.post("/api/conversation", json=body, headers=headers)).json()
@@ -400,7 +400,7 @@ async def test_api_receipts_validation_identity_and_cancel_superset(tmp_path):
         old_client = await http.post("/api/conversation", json={"content": "旧客户端没有key也能排队"}, headers=headers)
         assert old_client.status_code == 201 and old_client.json()["queued"]
         url = f'/api/tasks/{first["task"]["id"]}/cancel-message'
-        assert (await http.post(url, json={}, headers={**headers, "X-Wearing-Identity": other})).status_code == 404
+        assert (await http.post(url, json={}, headers={**headers, "X-Pajio-Identity": other})).status_code == 404
         assert (await http.post(url, json={})).status_code == 403
         assert (await http.post(url, json={}, headers=headers)).json()["status"] == "stopped"
     assert wire.runs == []

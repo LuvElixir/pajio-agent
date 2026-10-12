@@ -4,7 +4,7 @@
 
 ## 真实 Mac 与云端
 
-1. 产品运行与设备动作空闲后，加载新连接器代码，并迁入现有 `com.wearing.connector.tencent-first` LaunchAgent。任务定义和配对令牌/资源权限保持一致。
+1. 产品运行与设备动作空闲后，加载新连接器代码，并迁入现有 `com.pajio.connector.tencent-first` LaunchAgent。任务定义和配对令牌/资源权限保持一致。
 2. `service stop` 先报告 stopping，随后运行锁释放，状态为 stopped。云端 Mac 和 MI 6X 均立即变为 disconnected/offline，无进行中命令或新的待核对动作。
 3. `service start` 建立新连接代次，原配对继续有效。两台设备恢复在线，原暂停状态保留，云端控制在新连接上重新得到确认。
 4. 再通过真实云端链路取得 `computer.status` 与 `phone.mobile_list_elements_on_screen` 的 completed 回执。未发起设备输入或业务交易。最终常驻运行、两台设备在线、本机 started 动作数为 0。
@@ -18,7 +18,7 @@
 
 已安装 wheel SHA-256：`65089e87811408a5b4acec0e5318b7f9c87a77f6fe9a8bb232743d8693b45122`。80 个包内代码与资产文件均与当前源码匹配，并逐项核对实际云端安装；私人配置、令牌、账本、验收脚本不进发布包。
 
-私有证据在 `.wearing/qa/connector-service-20261003/`：部署输出、包清单、运行状态/离线/上线记录、本机前后快照、实际网页截图。云端仅保存私有只读回执；没有打印设备界面内容或传送其他用户凭据。
+私有证据在 `.pajio/qa/connector-service-20261003/`：部署输出、包清单、运行状态/离线/上线记录、本机前后快照、实际网页截图。云端仅保存私有只读回执；没有打印设备界面内容或传送其他用户凭据。
 
 ## 自动测试与边界
 

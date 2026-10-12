@@ -9,7 +9,7 @@ from sqlalchemy import create_engine, insert, select, text
 from sqlalchemy.exc import DBAPIError
 
 from test_control_postgres import pg
-from wearing.cloud.control import states
+from pajio.cloud.control import states
 
 spec=importlib.util.spec_from_file_location('state_cleanup',Path(__file__).parents[1]/'deploy/control/cleanup-expired-states.py')
 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
@@ -19,10 +19,10 @@ def test_cleanup_cannot_read_change_tables_or_other_functions(pg):
     if 'cleanup' not in pg:pytest.skip('requires disposable dedicated cleanup role')
     engine=create_engine(pg['cleanup'],hide_parameters=True)
     try:
-        for sql in ('SELECT * FROM wearing_control.wearing_oidc_states',
-                    'DELETE FROM wearing_control.wearing_users',
-                    "SELECT wearing_control.invitation_check('x','y')",
-                    'SET ROLE wearing_web','SET ROLE wearing_operator','SET ROLE wearing_registration','SET ROLE inv_owner'):
+        for sql in ('SELECT * FROM pajio_control.pajio_oidc_states',
+                    'DELETE FROM pajio_control.pajio_users',
+                    "SELECT pajio_control.invitation_check('x','y')",
+                    'SET ROLE pajio_web','SET ROLE pajio_operator','SET ROLE pajio_registration','SET ROLE inv_owner'):
             with pytest.raises(DBAPIError),engine.begin() as db:db.execute(text(sql))
         for key in ('app','operator','registration','migration'):
             with pytest.raises(ValueError):module.cleanup(pg[key])

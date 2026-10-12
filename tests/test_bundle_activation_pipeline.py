@@ -14,13 +14,13 @@ import time
 
 import pytest
 
-from wearing.cloud import bundle_activation_pipeline as pipeline
-from wearing.cloud.bundle_activation import ActivationError, STAGE_ORDER
-from wearing.cloud.bundle_activation_worker import LeaseLost
-from wearing.cloud.device_bootstrap import BootstrapSpec
-from wearing.cloud.device_enrollment import EnrollmentBook
-from wearing.cloud.device_provisioning import ProvisionBook, ProvisionError, ResourcePromise, fingerprint
-from wearing.mobile import resource_id
+from pajio.cloud import bundle_activation_pipeline as pipeline
+from pajio.cloud.bundle_activation import ActivationError, STAGE_ORDER
+from pajio.cloud.bundle_activation_worker import LeaseLost
+from pajio.cloud.device_bootstrap import BootstrapSpec
+from pajio.cloud.device_enrollment import EnrollmentBook
+from pajio.cloud.device_provisioning import ProvisionBook, ProvisionError, ResourcePromise, fingerprint
+from pajio.mobile import resource_id
 from test_device_bootstrap import KEY, settings
 from test_device_enrollment import Adapter, config
 from test_device_provisioning import Provider, SyntheticAdmission, policy, spec
@@ -246,7 +246,7 @@ def test_exact_core_probe_rejects_configured_but_unreachable_engine(monkeypatch,
     import sys
     import urllib.request
     from contextlib import contextmanager
-    from wearing.cloud import instance
+    from pajio.cloud import instance
     calls = []
     monkeypatch.setattr(os, 'geteuid', lambda: 0)
     monkeypatch.setattr(pwd, 'getpwnam', lambda name: SimpleNamespace(pw_uid=123, pw_gid=123))
@@ -287,7 +287,7 @@ def test_exact_core_probe_rejects_configured_but_unreachable_engine(monkeypatch,
 def test_actual_host_qga_query_only_known_cold_start_condition_is_pending(monkeypatch, failure, expected):
     import re
     import subprocess
-    from wearing.cloud.device_delivery_ssh import HOST
+    from pajio.cloud.device_delivery_ssh import HOST
     # Execute the exact query in the host program after its owner/network
     # checks; stderr is a synthetic provider fixture, never a real log.
     query = HOST.split('source=__QGA_SOURCE__', 1)[-1] if '__QGA_SOURCE__' in HOST else HOST

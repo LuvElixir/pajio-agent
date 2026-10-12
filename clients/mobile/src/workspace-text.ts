@@ -43,7 +43,7 @@ export class WorkspaceTextApi {
   private async request(path: string, body?: TextRequest, retry = true): Promise<unknown> {
     const timer = new AbortController(), timeout = setTimeout(() => timer.abort(), 20000);
     try {
-      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method: body ? 'POST' : 'GET', redirect: 'error', signal: timer.signal, headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity, ...(body ? {'Content-Type': 'application/json', 'X-Wearing-Token': this.token} : {})}, ...(body ? {body: JSON.stringify(body)} : {})});
+      const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)), {method: body ? 'POST' : 'GET', redirect: 'error', signal: timer.signal, headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity, ...(body ? {'Content-Type': 'application/json', 'X-Pajio-Token': this.token} : {})}, ...(body ? {body: JSON.stringify(body)} : {})});
       if (body && response.status === 403 && retry) {await this.bootstrap(); return this.request(path, body, false);}
       if (!response.ok) throw new ApiError(response.status === 409 ? '文档已有更新，草稿已保留。请读取最新版并比较。' : response.status === 423 ? '当前身份的任务还在执行。草稿保留，完成或停止后再保存。' : response.status === 403 ? '这份文档不开放编辑，请检查类型和权限。' : response.status === 413 ? '直接编辑支持不超过 64 KB 的文字。' : response.status === 404 ? '文档已移动或不存在，请刷新文件夹。' : '读写文档暂时失败，请重试核对原请求。', response.status);
       return await response.json();

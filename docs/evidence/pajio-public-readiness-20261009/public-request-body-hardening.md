@@ -4,7 +4,7 @@
 
 ## 实现
 
-- 新增 [request_body.py](../../../src/wearing/cloud/request_body.py)：纯 ASGI `receive` 包装，只有端点确实读取正文时才计数。拒绝歧义/损坏 Content-Length，声明超过上限时不读取正文；没有长度头的分块请求也按实际累计字节限制。
+- 新增 [request_body.py](../../../src/pajio/cloud/request_body.py)：纯 ASGI `receive` 包装，只有端点确实读取正文时才计数。拒绝歧义/损坏 Content-Length，声明超过上限时不读取正文；没有长度头的分块请求也按实际累计字节限制。
 - HTTP 上传连续 **15 秒没有新数据**，或从开始读取算起累计 **120 秒**仍未结束，返回 `408 / request_body_timeout`。超限返回 `413 / request_too_large`；错误响应禁止缓存，不记录 body、token 或提供商回调。
 - 保留普通 Worker 代理 1 MiB、工作区文件导入 20 MiB、素材 15 MiB、设备 relay 8 MiB、移动登录交接 2048 字节。门户空间切换与注销 JSON 上限 4096 字节；其余 `/auth/` 留 64 KiB，保留原编码供 Authlib/表单解析。
 - gateway 仍先验证会话与权限，再读需要代理的内容；上传中的撤权照常中断，不派发上游。错误空间切换 JSON 返回 422，避免误报入口服务故障。

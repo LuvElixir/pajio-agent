@@ -8,13 +8,13 @@
 
 | 层次 | 本轮完成 | 源码入口 |
 |---|---|---|
-| 本机所有权 | 持久 epoch、精确 tenant/identity/actor/connector/resource 作用域、私密会话、超时/重启保持 paused | `src/wearing/device_gateway.py:57` |
-| 本机手机 MCP | 实际调用前后检查同一网关；人工接管/暂停拒绝截图、节点与输入；切换期间返回的旧结果丢弃 | `src/wearing/phone_proxy.py:224,275,290` |
-| 原生动作互斥 | 接管激活使用 phone_proxy 已持有的同一路径文件锁，等旧原生动作退出后才能确认私密状态 | `src/wearing/device_gateway.py:151,160` |
-| 远程连接器 | NativeAdapter 的实际手机执行入口同样前后验证；受信配置才可发布私密能力 | `src/wearing/connectors/remote/adapter.py:22,40,47,164` |
-| 云端控制 | RelayStore 持久接管状态；申请接管清空未完成结果、阻断 queued/executing、增加控制代次；enqueue/claim 和旧“恢复”不能穿过私密/paused 状态 | `src/wearing/cloud/device_access.py:79,88`；`src/wearing/cloud/relay.py:310,379,426` |
-| 连接器控制循环 | 实际 poll 收发会话指令/ACK，先核对配对作用域再调用网关；网络错误、退出和取消触发暂停 | `src/wearing/connectors/remote/client.py:219,223,285,329` |
-| HTTP | 根任务实现的 GET status、POST request/close/return 与真实 RelayStore 方法签名匹配，并已通过实际持久层测试 | `src/wearing/device_access_api.py:48`；`src/wearing/app.py:483` |
+| 本机所有权 | 持久 epoch、精确 tenant/identity/actor/connector/resource 作用域、私密会话、超时/重启保持 paused | `src/pajio/device_gateway.py:57` |
+| 本机手机 MCP | 实际调用前后检查同一网关；人工接管/暂停拒绝截图、节点与输入；切换期间返回的旧结果丢弃 | `src/pajio/phone_proxy.py:224,275,290` |
+| 原生动作互斥 | 接管激活使用 phone_proxy 已持有的同一路径文件锁，等旧原生动作退出后才能确认私密状态 | `src/pajio/device_gateway.py:151,160` |
+| 远程连接器 | NativeAdapter 的实际手机执行入口同样前后验证；受信配置才可发布私密能力 | `src/pajio/connectors/remote/adapter.py:22,40,47,164` |
+| 云端控制 | RelayStore 持久接管状态；申请接管清空未完成结果、阻断 queued/executing、增加控制代次；enqueue/claim 和旧“恢复”不能穿过私密/paused 状态 | `src/pajio/cloud/device_access.py:79,88`；`src/pajio/cloud/relay.py:310,379,426` |
+| 连接器控制循环 | 实际 poll 收发会话指令/ACK，先核对配对作用域再调用网关；网络错误、退出和取消触发暂停 | `src/pajio/connectors/remote/client.py:219,223,285,329` |
+| HTTP | 根任务实现的 GET status、POST request/close/return 与真实 RelayStore 方法签名匹配，并已通过实际持久层测试 | `src/pajio/device_access_api.py:48`；`src/pajio/app.py:483` |
 
 云端接管 epoch、命令 lease epoch、本机所有权 epoch 各司其职，接管通过云端 fence 和本机确认连接起来；不能把它们描述为已经覆盖整台宿主所有进程的安全隔离。实际本机手机 MCP 和远程 NativeAdapter 共享默认的 OS 用户级网关与动作锁；不以项目目录隔离出多个相互不知情的设备持有者。
 

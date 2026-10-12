@@ -6,7 +6,7 @@ This contract stores optional self-selected facts and preferences. It does not c
 
 - `GET /api/onboarding` and `POST /api/onboarding` use the host's existing authentication, Origin/CSRF, and identity gates.
 - Both reads and writes additionally bind to the trusted account owner (`local` for local mode, validated server storage scope for cloud mode) and current identity. The body accepts neither owner nor identity. Missing cloud owner is `401`.
-- Storage is two tables in the existing `wearing.sqlite3`: `onboarding_profiles` and `onboarding_requests`; both have compound owner/identity keys.
+- Storage is two tables in the existing `pajio.sqlite3`: `onboarding_profiles` and `onboarding_requests`; both have compound owner/identity keys.
 - A profile is `draft`, `completed`, or `skipped`. A missing row is represented as revision `0`, `draft`, step `0`, empty values, and null timestamps, without writing a row.
 - Draft choices are resumable but do not enter agent context or briefing interests. Only the final completed snapshot is used.
 - Reopening completed settings is a local edit. `completed → draft/skipped` is rejected with `409`; exiting without saving leaves the prior confirmed profile active. To clear choices, explicitly save a new completed all-empty/null snapshot. That changes future profile use, not past chat/task history.

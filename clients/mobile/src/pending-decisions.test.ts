@@ -13,9 +13,9 @@ test('a lost response and a remounted screen reuse the saved recovery request ke
   const saved=new Map<string,unknown>(), keys:string[]=[];let networkLost=true, ids=0;
   const store={get:async<T>(key:string)=>saved.get(key) as T||null,put:async(key:string,value:unknown)=>{saved.set(key,value);}};
   const fetcher=(async(url:unknown,init:RequestInit)=>{
-    assert.equal((init.headers as Record<string,string>)['X-Wearing-Identity'],'daily');
+    assert.equal((init.headers as Record<string,string>)['X-Pajio-Identity'],'daily');
     if(String(url).endsWith('/api/bootstrap'))return Response.json({version:'0.2.0',deployment:'local',token:'private-csrf',identities:[{id:'daily',name:'日常'}]});
-    assert.equal((init.headers as Record<string,string>)['X-Wearing-Token'],'private-csrf');
+    assert.equal((init.headers as Record<string,string>)['X-Pajio-Token'],'private-csrf');
     assert.equal(init.redirect,'error');keys.push(JSON.parse(init.body as string).request_key);
     if(networkLost){networkLost=false;throw new Error('response lost');}
     return Response.json({task:{id:'c'.repeat(32)},authorized:false,delivery:'submitted',created:false});

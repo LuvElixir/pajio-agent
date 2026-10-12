@@ -50,8 +50,8 @@ export class ArtifactChoiceApi {
     try {
       const response = await this.fetcher(new URL(path, connectionEndpoint(this.connection)).toString(), {
         method: body ? 'POST' : 'GET', redirect: 'error', signal: controller.signal,
-        headers: {...connectionHeaders(this.connection), 'X-Wearing-Identity': this.connection.identity,
-          ...(body ? {'X-Wearing-Token': this.token, 'Content-Type': 'application/json'} : {})},
+        headers: {...connectionHeaders(this.connection), 'X-Pajio-Identity': this.connection.identity,
+          ...(body ? {'X-Pajio-Token': this.token, 'Content-Type': 'application/json'} : {})},
         ...(body ? {body: JSON.stringify(body)} : {}),
       });
       if (body && response.status === 403 && refresh) {await this.bootstrap(); return await this.request(path, body, false);}

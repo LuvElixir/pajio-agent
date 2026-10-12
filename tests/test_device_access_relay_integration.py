@@ -11,10 +11,10 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from wearing.cloud.relay import (
+from pajio.cloud.relay import (
     ConnectionRequest, PairRequest, PollRequest, RelayError, RelayStore,
 )
-from wearing.device_access_api import install_device_access_routes
+from pajio.device_access_api import install_device_access_routes
 
 ACTOR = 'a' * 64
 TOKEN = 'b' * 64

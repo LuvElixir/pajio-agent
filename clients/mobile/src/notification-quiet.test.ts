@@ -19,8 +19,8 @@ test('preference read and save bind identity, installation, CSRF and exact next 
   assert.deepEqual(await api.quietHours(),policy);
   assert.equal((await api.saveQuietHours({...policy,enabled:true})).revision,1);
   assert.equal(calls[2].path,'/api/notifications/preferences');
-  assert.equal(calls[2].headers.get('X-Wearing-Identity'),'daily');
-  assert.equal(calls[2].headers.get('X-Wearing-Token'),'synthetic-csrf');
+  assert.equal(calls[2].headers.get('X-Pajio-Identity'),'daily');
+  assert.equal(calls[2].headers.get('X-Pajio-Token'),'synthetic-csrf');
   assert.deepEqual(calls[2].body,{installation_id:install,revision:0,enabled:true,start_minute:1320,end_minute:480,timezone:'Asia/Shanghai'});
 });
 test('unknown save outcome preserves server CAS instead of claiming success or changing revision', async () => {

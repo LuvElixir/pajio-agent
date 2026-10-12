@@ -2,23 +2,23 @@
 
 > **本文为当前终稿，取代此前版本的全部验收表述。** 早先版本（onboarding.js v1–v4 时期）曾写「QA 全流验收完成／188 通过」等结论——该状态已被独立复核推翻（见「独立复核与修复史」），请勿引用。当前有效结论以本文为准。
 
-分工：ZCode 负责 Web/桌面（`src/wearing/web/`、`clients/desktop/`）；App 与 Python 后端只读未改。QA `http://127.0.0.1:8891/?identity=qa`（root 维护；本轮进程 PID 18337，`--resume-root` 保留既有合成数据；库规模为 root 完整统计记录：**83 表 429 行＋usage 2 表 1 行**（health 类可新增）——本人未独立核对，引用 root 记录）。生产 8765 零写入、未部署、未 Git push、未真实授权/模型/推送。
+分工：ZCode 负责 Web/桌面（`src/pajio/web/`、`clients/desktop/`）；App 与 Python 后端只读未改。QA `http://127.0.0.1:8891/?identity=qa`（root 维护；本轮进程 PID 18337，`--resume-root` 保留既有合成数据；库规模为 root 完整统计记录：**83 表 429 行＋usage 2 表 1 行**（health 类可新增）——本人未独立核对，引用 root 记录）。生产 8765 零写入、未部署、未 Git push、未真实授权/模型/推送。
 
 ## 已实现（当前版本）
 
-- **`src/wearing/web/onboarding.js` v7**（window.WearingOnboarding；v7＝从设置进入引导时关闭父设置面板，完成/退出不再叠加双模态）：六步点选（见个面 → 你的日常 → 常用应用 → 兴趣与表达 → 带上资料 → 确认偏好），枚举/上限/文案与 App onboarding-model.ts 一致（roles≤3、apps≤10、interests≤5、reply_detail/reply_tone 单选可空）。
-  - **草稿/确认分离**：草稿（`onboarding-draft:v1:<identity>`，WearingStore）只留本机；completed 账户重开编辑翻页零 POST，最终「确认并进入」才提交 completed（CAS）。清空选择＝显式保存全空 completed，不伪装跳过。
+- **`src/pajio/web/onboarding.js` v7**（window.PajioOnboarding；v7＝从设置进入引导时关闭父设置面板，完成/退出不再叠加双模态）：六步点选（见个面 → 你的日常 → 常用应用 → 兴趣与表达 → 带上资料 → 确认偏好），枚举/上限/文案与 App onboarding-model.ts 一致（roles≤3、apps≤10、interests≤5、reply_detail/reply_tone 单选可空）。
+  - **草稿/确认分离**：草稿（`onboarding-draft:v1:<identity>`，PajioStore）只留本机；completed 账户重开编辑翻页零 POST，最终「确认并进入」才提交 completed（CAS）。清空选择＝显式保存全空 completed，不伪装跳过。
   - **规范化**：新请求与草稿按枚举序 canonicalValues 持久；同意图按语义比较（revision/status/step＋规范化 values）；旧 pending 保留原 key/正文原样重试，回执比较两侧规范化——点击顺序不再造成回执指纹死循环。
-  - **持久回执**：`onboarding-request:v1:<identity>`（`{identity,body}`）必须 `WearingStore.set` 持久成功（返回 true）后才 POST；失败如实提示「本机暂时没能保留这次保存，没有发出请求。」；未知结果重试完全相同请求；同 key 改意图拒绝。
+  - **持久回执**：`onboarding-request:v1:<identity>`（`{identity,body}`）必须 `PajioStore.set` 持久成功（返回 true）后才 POST；失败如实提示「本机暂时没能保留这次保存，没有发出请求。」；未知结果重试完全相同请求；同 key 改意图拒绝。
   - **晚回执**：POST 后重读 GET，fresh 低于回执或同版不同 status/step/values →「最新偏好还没有核对」且保留 pending（与 App 一致）；fresh 更新则采用 fresh。
   - **409 双选择**：保留本机选择，重新核对 / 使用已保存的最新偏好；仅 fresh.revision>pending.revision 才废弃原请求；**先换快照为 fresh 再落草稿检查点**（刷新后不再二次冲突）。
   - **围栏与忙态（票据分离）**：`ui.generation` 仅作面板会话围栏（reset/注销冻结作废）；load/save/feishu 各持独立票据（loadTicket/saveTicket/feishuTicket）——只读来源查询与面板重读不得作废业务保存票据，杜绝「确认按钮永久禁用」；reset 清 busy/feishuBusy；旧请求晚归不写新会话。
-  - **注销冻结**：`WearingDeletion.workAllowed()===false` 时 choose/go/retain/save/授权全拒（不写草稿/journal、不 POST，如实提示）；`registerWorkGate({stop})` 冻结时作废会话围栏并解锁；缓存清理见 account-deletion 条。
+  - **注销冻结**：`PajioDeletion.workAllowed()===false` 时 choose/go/retain/save/授权全拒（不写草稿/journal、不 POST，如实提示）；`registerWorkGate({stop})` 冻结时作废会话围栏并解锁；缓存清理见 account-deletion 条。
   - **来源真实状态**：日历如实「网页端不读取系统日历；请在手机 App 中连接」；飞书仅 apps 含 feishu 时出现，读真实 `/api/cloud-apps/feishu`；**撤销中优先于已连接**（connected+revocation_pending 不显示「已授权/连接已建立」，成功分支须 `!revocation_pending`）；授权结果手动「我已授权，检查结果」，**不声称自动回跳同步**；无开发者凭据表单、无假连接、不声称已读取。404 文案对齐 App「这台服务还未提供初始偏好设置，可以先进入产品。」。
   - **入口与面板交接**：设置「初始偏好」（进入引导时关闭父设置面板——完成进入「今天」、退出回到原页面，均无叠加模态）；`maybeOffer()` 在 `initialize()`（openFromLink＋activity_task 恢复之后）与 switchIdentity 末尾调用；`?view=`/`life_record`/`activity_task` 或非聊天视图不自动弹（深链恢复优先）；已有面板打开或读取失败不弹。
   - **返回链**「上一步/退出初始设置」；首步 draft 快照「先进去看看」（skip＝全空 skipped）；空步骤「这一项暂时不补充」；「稍后继续」保留草稿；completed 保存后的 close 事件不回写草稿。
-- **`src/wearing/web/account-deletion.js` v7**：`clearAccountCaches` 业务键清理补 `onboarding-draft:v1`/`onboarding-request:v1`（原仅 chat/voice/native——独立复核确认的真实遗漏）；按账户 scope 前缀精确清理、他账保留。
-- **`index.html`**：`#onboarding-panel` 中心模态＋设置入口＋脚本（onboarding.js?v=7、app.js?v=51、pajio.css?v=18）；**`app.js` v51**：maybeOffer 钩子移至入口恢复之后＋switchIdentity 末尾、switchIdentity 增加 `WearingOnboarding?.reset()`；`pajio.css` 全部 `html:not(.mobile-host)` 门控 ob-* 样式。
+- **`src/pajio/web/account-deletion.js` v7**：`clearAccountCaches` 业务键清理补 `onboarding-draft:v1`/`onboarding-request:v1`（原仅 chat/voice/native——独立复核确认的真实遗漏）；按账户 scope 前缀精确清理、他账保留。
+- **`index.html`**：`#onboarding-panel` 中心模态＋设置入口＋脚本（onboarding.js?v=7、app.js?v=51、pajio.css?v=18）；**`app.js` v51**：maybeOffer 钩子移至入口恢复之后＋switchIdentity 末尾、switchIdentity 增加 `PajioOnboarding?.reset()`；`pajio.css` 全部 `html:not(.mobile-host)` 门控 ob-* 样式。
 
 ## 独立复核与修复史（按发生顺序）
 

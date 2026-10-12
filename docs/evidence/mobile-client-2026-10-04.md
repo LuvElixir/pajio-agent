@@ -1,10 +1,10 @@
 # 手机客户端实际验收 · 2026-10-04
 
-本轮新增 `clients/mobile`（Expo 57.0.26 / React Native 0.86.3），用官方 Expo Go 57.0.9 在小米 6X Android 9 上运行。**没有 Wearing 独立 APK/IPA；iOS 仅运行资源导出。**
+本轮新增 `clients/mobile`（Expo 57.0.26 / React Native 0.86.3），用官方 Expo Go 57.0.9 在小米 6X Android 9 上运行。**没有 Pajio 独立 APK/IPA；iOS 仅运行资源导出。**
 
 ## 隔离与方法
 
-- 验收服务：本机回环 8766，数据在 `.wearing/qa/mobile-client-20261004`，模型入口设为不可用的隔离地址，`local_devices=False`。
+- 验收服务：本机回环 8766，数据在 `.pajio/qa/mobile-client-20261004`，模型入口设为不可用的隔离地址，`local_devices=False`。
 - 网页适配预览 8788；手机通过既有授权 USB reverse 访问服务与 Metro 8081。
 - 相机、麦克风由用户本轮明确授权。录音选「本次运行允许」。原件只在手机和 Mac 隔离目录，关闭整理（`organize=false`），没有转写、模型发送或真实对话消息。
 - 相机/录音原件不纳入仓库；证明截图不含相机现场画面。测试服务数据保留可复查。
@@ -47,7 +47,7 @@ UI 指定三项修复经独立复核为 `disposition: ship`，仅是该界面范
 
 待完成：旧 WebView 对话兼容、独立 Android APK、iOS 真机、系统分享/日历/通知、已有记录离线编辑合并、正式登录/签名/更新、安全与许可审计。Expo Go 开发预览依赖 Mac Metro 和 USB，不代表脱离电脑即可长期使用的正式 App。未恢复云机、未产生新的云资源费用。
 
-验收后将手机切回实际本地 Wearing 8765。QA 与真实服务身份/队列分区，无测试记录迁入真实服务。临时 8766/8788 服务及 QA USB reverse 已关闭；8765 本地服务、8787 网页代码预览、8081 Metro 和对应 USB 连接保留。
+验收后将手机切回实际本地 Pajio 8765。QA 与真实服务身份/队列分区，无测试记录迁入真实服务。临时 8766/8788 服务及 QA USB reverse 已关闭；8765 本地服务、8787 网页代码预览、8081 Metro 和对应 USB 连接保留。
 
 ## 原件元数据
 

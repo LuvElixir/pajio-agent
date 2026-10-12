@@ -42,7 +42,7 @@ export class RecordReminderClient {
   private check(){if(!this.current()||this.signal?.aborted)throw new ApiError('当前身份已切换，原操作留在原身份。',0);}
   private async request(path:string,body?:ReminderRequest,retry=true):Promise<unknown>{
     this.check();const timer=new AbortController(),abort=()=>timer.abort(),timeout=setTimeout(abort,20000);this.signal?.addEventListener('abort',abort,{once:true});
-    try{const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body?'POST':'GET',redirect:'error',signal:timer.signal,headers:{...connectionHeaders(this.connection),'X-Wearing-Identity':this.connection.identity,...(body?{'Content-Type':'application/json','X-Wearing-Token':this.token}:{})},...(body?{body:JSON.stringify(body)}:{})});this.check();
+    try{const response=await this.fetcher(new URL(path,connectionEndpoint(this.connection)),{method:body?'POST':'GET',redirect:'error',signal:timer.signal,headers:{...connectionHeaders(this.connection),'X-Pajio-Identity':this.connection.identity,...(body?{'Content-Type':'application/json','X-Pajio-Token':this.token}:{})},...(body?{body:JSON.stringify(body)}:{})});this.check();
       if(body&&response.status===403&&retry){await this.bootstrap();return this.request(path,body,false);}
       const value:unknown=await response.json().catch(()=>{throw bad(body?0:422);});
       if(!response.ok)throw new ApiError(object(value)&&typeof value.detail==='string'?value.detail:'提醒操作未完成，请重新读取。',response.status);return value;

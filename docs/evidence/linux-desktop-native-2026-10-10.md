@@ -63,7 +63,7 @@
 3. native/media 环境使用 `pajio-desktop-bus`；`systemctl --user` 必须使用用户管理器 `bus`，二者不能混用。connector 已修正管理命令的环境，避免桌面总线导致找不到 systemd 服务。
 4. 当前 `Requires` + `After` 可处理显式依赖启动/重启；`Restart=on-failure` 处理进程异常退出。干净退出、X server/DBus 异常连锁恢复必须做维护窗口故障注入。没有未经验证增加会不断重新打开用户已关闭浏览器的配置。
 5. 冷启动验收须先暂停租户任务和接管、等待原生锁排空并记录控制 epoch，重启后验证 cookie 更新、旧媒体失效、文件散列保留、登录仅由用户确认、native/relay 就绪，明确交还后才恢复 Agent。不能以服务 active 自动恢复旧输入。
-6. 安装脚本新增专用 VM 检查，拒绝 Proxmox 宿主与存在 `/var/lib/wearing/instance` 的核心 VM，并拒绝复用有交互式 shell 的同名桌面账号。本次只更新可复用源码，未借此重跑活跃桌面安装。
+6. 安装脚本新增专用 VM 检查，拒绝 Proxmox 宿主与存在 `/var/lib/pajio/instance` 的核心 VM，并拒绝复用有交互式 shell 的同名桌面账号。本次只更新可复用源码，未借此重跑活跃桌面安装。
 
 systemd 依赖语义核对：[官方 v255 systemd.unit 源文档](https://github.com/systemd/systemd/blob/v255/man/systemd.unit.xml)。
 

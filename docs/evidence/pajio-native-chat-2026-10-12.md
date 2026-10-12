@@ -41,12 +41,12 @@ to selected rows. Foreign-owner cursors and watch IDs cannot expose history.
 - TypeScript and direct source ESLint passed. The direct ESLint entrypoint avoids
   the existing local Expo/npm launcher issue.
 - Scoped Core deployment compared live file hashes and retained a rollback
-  backup before restarting `wearing-tenant`. Public authenticated history reads
+  backup before restarting `pajio-tenant`. Public authenticated history reads
   returned HTTP 200 in 110–176 ms for the real account's four existing messages.
   Those are route measurements from the control server, not iPhone render times.
 
 Private receipts, source hashes, test logs and screenshots are retained under
-`.wearing/qa/20261012-native-chat/`, excluded from version control.
+`.pajio/qa/20261012-native-chat/`, excluded from version control.
 
 ## Device acceptance
 

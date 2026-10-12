@@ -7,13 +7,13 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from wearing.app import create_app
-from wearing.chat_imports import ChatImports, ChatImportError, CreateChatImport, MAX_BODY_BYTES
-from wearing.chat_imports_tools import dispatch
-from wearing.config import Settings
-from wearing.identity_export import IdentityExports
-from wearing.search import SearchBook
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.chat_imports import ChatImports, ChatImportError, CreateChatImport, MAX_BODY_BYTES
+from pajio.chat_imports_tools import dispatch
+from pajio.config import Settings
+from pajio.identity_export import IdentityExports
+from pajio.search import SearchBook
+from pajio.store import Store
 
 A, B = 'a' * 64, 'b' * 64
 
@@ -34,7 +34,7 @@ def request(**change):
 
 @pytest.fixture
 def corpus(tmp_path):
-    store = Store(tmp_path / 'wearing.sqlite3')
+    store = Store(tmp_path / 'pajio.sqlite3')
     return store, ChatImports(store)
 
 
@@ -69,7 +69,7 @@ def test_scoped_receipts_replay_and_parallel_commit(corpus, tmp_path):
         for fn, arg in [(book.detail, receipt['import_id']), (book.receipt, request().request_key), (book.delete, receipt['import_id'])]:
             with pytest.raises(ChatImportError) as error: fn(identity, arg, owner_scope=owner)
             assert error.value.status == 404
-    second = ChatImports(Store(tmp_path / 'second' / 'wearing.sqlite3'))
+    second = ChatImports(Store(tmp_path / 'second' / 'pajio.sqlite3'))
     assert not second.page('daily', owner_scope=A)['items']
     with store.connection() as db:
         assert db.execute('SELECT count(*) FROM chat_import_batches').fetchone()[0] == 1
@@ -114,8 +114,8 @@ def test_search_and_agent_tools_use_actual_principal_and_references(corpus):
     assert read['messages'][0]['reference']['message_id'] == 'm1'
     assert read['messages'][0]['text'] == request().messages[0].text
     assert '长期人格' in read['data_notice']
-    from wearing.life import LifeBook
-    from wearing.life_proxy import TOOLS, dispatch as proxy_dispatch
+    from pajio.life import LifeBook
+    from pajio.life_proxy import TOOLS, dispatch as proxy_dispatch
     assert {'chat_import_search', 'chat_import_read'} <= {tool.name for tool in TOOLS}
     assert proxy_dispatch(LifeBook(store), 'daily', 'chat_import_search', {'query': '看展'}) == found
     with pytest.raises(ChatImportError): dispatch(store, 'daily', 'chat_import_read', {'import_id': foreign})
@@ -170,7 +170,7 @@ async def test_http_auth_confirmation_body_limits_and_unknown_outcome(tmp_path):
     try:
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
             token = (await client.get('/api/bootstrap')).json()['token']
-            headers = {'X-Wearing-Token': token}
+            headers = {'X-Pajio-Token': token}
             assert (await client.post('/api/chat-imports', json=payload())).status_code == 403
             assert (await client.post('/api/chat-imports', json=payload(), headers=headers | {'Origin': 'https://evil.invalid'})).status_code == 403
             assert (await client.post('/api/chat-imports', json=payload() | {'confirmed': False}, headers=headers)).status_code == 422
@@ -195,14 +195,14 @@ async def test_cloud_without_trusted_owner_is_denied(tmp_path):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as client:
             token = (await client.get('/api/bootstrap')).json()['token']
             assert (await client.get('/api/chat-imports')).status_code == 401
-            assert (await client.post('/api/chat-imports', json=payload(), headers={'X-Wearing-Token': token})).status_code == 401
+            assert (await client.post('/api/chat-imports', json=payload(), headers={'X-Pajio-Token': token})).status_code == 401
     finally:
         await app.state.service.hermes.close()
 
 
 def test_private_tenant_lifecycle_erases_batches_receipts_and_indexes_from_all_storage(tmp_path):
-    from wearing.account_deletion import DeletionJobs, digest
-    from wearing.account_deletion_fixture import SyntheticDeletionAdapter
+    from pajio.account_deletion import DeletionJobs, digest
+    from pajio.account_deletion_fixture import SyntheticDeletionAdapter
     rows = [dict(tenant_id=t, classification='private', owner_user_id=u, member_ids=[u], instance_id='instance_' + t)
             for t, u in [('one', 'user_one'), ('two', 'user_two')]]
     jobs = DeletionJobs(tmp_path / 'journal', initialize=True, mode='synthetic')
@@ -227,11 +227,11 @@ def test_private_tenant_lifecycle_erases_batches_receipts_and_indexes_from_all_s
 
 async def test_real_tenant_freeze_rejects_import_mutation_and_reads(tmp_path, monkeypatch):
     monkeypatch.setenv('PAJIO_TRIAL_LIMITS', '1')
-    from wearing.account_deletion import digest
-    from wearing.cloud.instance import initialize_instance
-    from wearing.cloud.worker import create_tenant_app
-    from wearing.cloud.account_deletion_tenant import PATH
-    from wearing.profile import write_private_text
+    from pajio.account_deletion import digest
+    from pajio.cloud.instance import initialize_instance
+    from pajio.cloud.worker import create_tenant_app
+    from pajio.cloud.account_deletion_tenant import PATH
+    from pajio.profile import write_private_text
     root = tmp_path / 'instance'
     instance = initialize_instance(root, 'tenant_a', 'https://fixture.invalid')
     write_private_text(root / 'deletion-operator.key', 'x' * 64)

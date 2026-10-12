@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from wearing.cloud.tencent import TencentError, TencentQuoteRequest
+from pajio.cloud.tencent import TencentError, TencentQuoteRequest
 
 
 spec = importlib.util.spec_from_file_location("tencent_trial", Path(__file__).parents[1] / "deploy/vm/tencent-trial.py")

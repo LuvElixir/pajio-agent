@@ -1,4 +1,4 @@
-# Wearing daily comfort and folded W — 2026-10-05
+# Pajio daily comfort and folded W — 2026-10-05
 
 Scope: shared web/desktop daily tools, native mobile source + web preview, application identifier. Extensive unrelated work preserved. Cloud VM remains stopped. No model or cloud provisioning used for verification.
 
@@ -6,7 +6,7 @@ Scope: shared web/desktop daily tools, native mobile source + web preview, appli
 
 The user requested comfortable rounded polished interfaces, then clarified one focal point / one primary next action per state. Existing cobalt/white world and wordmark remain. Comp A under `.impeccable/mocks/comfort-20261004/` records delegated approval. The plus disclosure intentionally supersedes its always-visible toolbar. Navigation remains available but visually quiet.
 
-Muse's actual official store icon was inspected: white field, broad blue flowing M-like symbol, no IP character. Sources: [Muse official](https://ai.meta.com/muse/download/), [Google Play listing](https://play.google.com/store/apps/details?gl=us&id=com.facebook.aura), [App Store](https://apps.apple.com/us/app/muse-from-meta/id6760173601). The useful reference is the separation of identifier and companion. Wearing uses its own folded W geometry. User explicitly chose A from `design/icons/20261004/symbol-concepts.png`.
+Muse's actual official store icon was inspected: white field, broad blue flowing M-like symbol, no IP character. Sources: [Muse official](https://ai.meta.com/muse/download/), [Google Play listing](https://play.google.com/store/apps/details?gl=us&id=com.facebook.aura), [App Store](https://apps.apple.com/us/app/muse-from-meta/id6760173601). The useful reference is the separation of identifier and companion. Pajio uses its own folded W geometry. User explicitly chose A from `design/icons/20261004/symbol-concepts.png`.
 
 `design/icons/folded-w/` holds a five-path SVG master, two colors, monochrome/reverse, full-bleed mobile icon, macOS/Windows tile, Android foreground/themed layers, ICO/ICNS/PNGs and the actual small-size test board. At the folded-W checkpoint the original companion remained; the final 3D-only steering below supersedes the small-avatar decision. Existing companion videos are unchanged. Symbol is implemented as vector from the approved concept, not a screenshot crop. Native launcher appearance on a standalone mobile install is not yet verified; Expo Go is a development host.
 
@@ -20,7 +20,7 @@ Muse's actual official store icon was inspected: white field, broad blue flowing
 - 1280x900 and 390x844 UI captures. Mobile fixed-bottom navigation bug (`top:0` inherited from old CSS) corrected with explicit `top:auto`.
 - Review found stale capture kind label after restoration; fixed by synchronizing label from actual selected control. After task save: input empty, label待办, helper待办, record actually in task list. Evidence `web-task-before-save.png`, `web-task-after-save.png`.
 - Review placeholder contrast fixed to existing muted #666d78 (>5:1 against white).
-- Tauri debug application build passes. Updated `.wearing/desktop/Wearing.app` launched and renders real8765 with new comfort UI. Prior app backed up under `.wearing/qa/comfort-20261004/Wearing-before.app`. Installed ICNS matches source hash prefix75acd006468e388c. Actual native screenshot `desktop-native-final.png`.
+- Tauri debug application build passes. Updated `.pajio/desktop/Pajio.app` launched and renders real8765 with new comfort UI. Prior app backed up under `.pajio/qa/comfort-20261004/Pajio-before.app`. Installed ICNS matches source hash prefix75acd006468e388c. Actual native screenshot `desktop-native-final.png`.
 
 ## Evidence and limits
 

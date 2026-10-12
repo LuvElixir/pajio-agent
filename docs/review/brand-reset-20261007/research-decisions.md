@@ -20,7 +20,7 @@
 | 非聊天页面收敛输入 | 聊天显示完整输入；今天、任务、记忆等显示「交代一件事／继续草稿」紧凑入口；设置、我的、本机能力、连接和采集页隐藏共用输入 | [Mobile](../../../clients/mobile/src/Mobile.tsx)、[Conversation](../../../clients/mobile/src/Conversation.tsx)。返回保留同一连接／身份下的 WebView 和草稿控制器；采集页仍有自己的记录表单 |
 | 今天先看需介入事项，结束不等于交付成功 | 已去掉问候大卡，待处理前置；待处理数量取 counts.attention；显示最近返回、运行、排队、历史及截断说明 | [TodayPanel](../../../clients/mobile/src/TodayPanel.tsx)。今天、进展和任务已共用按服务、身份与配对凭据隔离的内存首页快照；请求与轮询去重。它尚不提供带事件游标的完整离开期间变化摘要 |
 | 任务状态有不同含义与下一步 | 共用 activityPresentation，分别显示未完成、停止、结案、结果返回、已核对与未知；列表支持分页和加载更多 | [状态投影](../../../clients/mobile/src/activity-presentation.ts)、[AgentTaskList](../../../clients/mobile/src/AgentTaskList.tsx)、[分页合并](../../../clients/mobile/src/activity-pages.ts)。verified 才使用成功语义；revision/cursor 不一致返回 409 并保留已显示内容，要求明确刷新；任务档案仍有下表中的来源与直接交付缺口 |
-| 保留可靠基础，而不以换肤破坏它 | 原生输入继续按 pageId/contextKey/ackSeq/ackVoiceId 对接；语音转成可编辑草稿并显式发送；结果保留版本、下载、依据及隔离预览 | [VoiceComposer](../../../clients/mobile/src/VoiceComposer.tsx)、[native-composer](../../../clients/mobile/src/native-composer.ts)、[artifacts.js](../../../src/wearing/web/artifacts.js)。这些是既有合同延续，不是本次新实现，也不自动证明所有断网和外部动作路径通过 |
+| 保留可靠基础，而不以换肤破坏它 | 原生输入继续按 pageId/contextKey/ackSeq/ackVoiceId 对接；语音转成可编辑草稿并显式发送；结果保留版本、下载、依据及隔离预览 | [VoiceComposer](../../../clients/mobile/src/VoiceComposer.tsx)、[native-composer](../../../clients/mobile/src/native-composer.ts)、[artifacts.js](../../../src/pajio/web/artifacts.js)。这些是既有合同延续，不是本次新实现，也不自动证明所有断网和外部动作路径通过 |
 
 最终移动端测试计数、TypeScript、源码 ESLint 与 iOS bundle 导出状态统一记录在 [交付证据](../../evidence/pajio-delivery-2026-10-07.md)，共享活动缓存增量纳入最终回归。浏览器宿主 200% 文本缩放未见横向溢出。[原生同步证据](../../evidence/pajio-20261007/native-brand-sync.json)另行区分资源生成与实际安装包：当前本机缺少 Android JDK/SDK 与 iOS CocoaPods 依赖，未产出 APK 或独立 iOS App。这些不证明实体 iPhone、App 关闭后的持续执行、推送、跨夜稳定性或市场需求。
 
@@ -36,7 +36,7 @@
 | 返回概览与恢复原上下文 | 当前概览可以呈现未解决和最近读取内容；没有因此获得完整离开期间变化追踪 | 增加事件或版本游标；冷启动、已有草稿、后台返回和深链接分别确定优先级；不突然打断阅读或跳页 |
 | 记忆逐条纠正与来源 | 记忆详情已增加逐条纠正，真实选中条目和分区进入可编辑草稿；较长内容明确标注节选，由用户填写修正后发送，不自动改记忆 | entries 仍为字符串数组；来源、更新时间、适用范围、对象 ID、修改／停用／删除对检索与缓存的作用，仍需完整后端数据合同及验收 |
 | 结果的主操作与继续调整 | 当前结果入口有版本、下载、依据和预览；任务列表「查看结果」仍先进入任务／原对话 | 可用产物直达，继续调整绑定产物 ID 与版本；返回保留位置；泛化评分按钮移除后仍保留实际业务核对。旧 HTML 字节与哈希不因换品牌静默改写 |
-| 过期待决定事项的安全接续 | [confirmations.py](../../../src/wearing/confirmations.py) 已有过期与原运行绑定，不能当作跨时段决策收件箱 | 真实过期 UI、新意图重新核对对象／权限／条件、持久待决定记录与新的有效确认；旧 run/request 不复活。未知是否送达时先核对，不盲目重发 |
+| 过期待决定事项的安全接续 | [confirmations.py](../../../src/pajio/confirmations.py) 已有过期与原运行绑定，不能当作跨时段决策收件箱 | 真实过期 UI、新意图重新核对对象／权限／条件、持久待决定记录与新的有效确认；旧 run/request 不复活。未知是否送达时先核对，不盲目重发 |
 | 离开后的运行与通知承诺 | 本轮界面没有证明后台跨时段持续执行、系统推送、费用与权限失效恢复 | App 关闭、换网、服务重启、权限失效、决策超时和返回同一任务逐项验收；持久接收前不说「已接下」，无推送时只说结果留在这里 |
 
 ## 必须用户研究：代码与专家建议无法代答

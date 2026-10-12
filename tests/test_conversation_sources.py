@@ -5,13 +5,13 @@ from concurrent.futures import ThreadPoolExecutor
 import httpx
 import pytest
 from fastapi import FastAPI, Request
-from wearing.conversation_sources import ConversationSources, SourceError, generation
-from wearing.conversation_sources_api import install_conversation_source_routes
-from wearing.session_recall_guard import RecallConfig, RecallGuard
-from wearing.service import ACTIVE, TaskError, TaskService
-from wearing.store import Store
-from wearing.hermes import HermesClient
-from wearing.config import Settings
+from pajio.conversation_sources import ConversationSources, SourceError, generation
+from pajio.conversation_sources_api import install_conversation_source_routes
+from pajio.session_recall_guard import RecallConfig, RecallGuard
+from pajio.service import ACTIVE, TaskError, TaskService
+from pajio.store import Store
+from pajio.hermes import HermesClient
+from pajio.config import Settings
 from test_session_recall_guard import A, B, case, admit
 from test_lifecycle import HermesStub
 
@@ -48,7 +48,7 @@ def test_receipt_restart_private_export_and_history_retained(sources):
     assert len(restarted.page('daily', owner_scope=B)['items']) == 1
     assert restarted.page('daily', owner_scope=B)['revision'] == 0
     with pytest.raises(SourceError): restarted.exclude('daily', owner_scope=A, **{**request, 'revision': 1})
-    from wearing.identity_export import IdentityExports
+    from pajio.identity_export import IdentityExports
     data, _, _ = IdentityExports(store)._snapshot('daily', owner_scope=A)
     assert len(data['conversation_source_exclusions']) == 1
     assert set(data['conversation_source_exclusions'][0]) == {'source_id', 'source_task_id', 'revision', 'created_at'}
@@ -146,7 +146,7 @@ def test_catalog_pagination_snapshot_and_bounded_journal(sources, monkeypatch):
     assert len(first['items']) == 10 and len(second['items']) == 4 and second['next_offset'] is None
     exclude(book)
     with pytest.raises(SourceError, match='列表已变化'): book.page('daily', owner_scope=A, offset=10, snapshot=first['snapshot'])
-    monkeypatch.setattr('wearing.conversation_sources.MAX_SESSIONS', 1)
+    monkeypatch.setattr('pajio.conversation_sources.MAX_SESSIONS', 1)
     with pytest.raises(SourceError): exclude(book, task=current['id'])
 
 
@@ -176,7 +176,7 @@ async def test_start_capability_gate_preserves_draft_before_dispatch(sources, ca
     async def transport(request):
         response = await stub(request)
         if request.url.path == '/v1/capabilities':
-            data = response.json(); data['wearing']['session_recall_guard'] = capability
+            data = response.json(); data['pajio']['session_recall_guard'] = capability
             return httpx.Response(200, json=data)
         return response
     client = HermesClient(Settings(store.path.parent, hermes_key='fixture-key'), httpx.MockTransport(transport))
@@ -208,7 +208,7 @@ def test_admission_rejects_context_prepared_before_source_boundary(sources):
 
 
 def test_goal_raw_source_is_omitted_but_saved_objective_is_kept(sources):
-    from wearing.goals import GoalBook
+    from pajio.goals import GoalBook
     book, (store, _, old, _, _, _) = sources
     goals = GoalBook(store)
     goal = goals.create('daily', 'Saved product objective', 'Synthetic scope', 'Synthetic evidence', 1, old['id'], owner_scope=A)
@@ -256,7 +256,7 @@ def test_explicit_local_sources_and_symlink_rejection(sources):
 
 def test_qa_seed_targets_only_qa_identity_directory(tmp_path, monkeypatch):
     import source_controls_qa_seed as helper
-    from wearing.store import now
+    from pajio.store import now
     store = Store(tmp_path / 'qa.sqlite3')
     with pytest.raises(ValueError): helper.seed(store)
     with store.connection() as db:

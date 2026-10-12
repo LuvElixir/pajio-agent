@@ -7,12 +7,12 @@ import sys
 from pathlib import Path
 import httpx
 import pytest
-from wearing.app import create_app
-from wearing.capture import CaptureBook
-from wearing.capture_worker import CaptureWorker
-from wearing.config import Settings
-from wearing.life import LifeBook, LifeError
-from wearing.store import Store
+from pajio.app import create_app
+from pajio.capture import CaptureBook
+from pajio.capture_worker import CaptureWorker
+from pajio.config import Settings
+from pajio.life import LifeBook, LifeError
+from pajio.store import Store
 
 
 def wav():
@@ -25,7 +25,7 @@ def wav():
 
 @pytest.fixture
 def voice(tmp_path, monkeypatch):
-    book = CaptureBook(LifeBook(Store(tmp_path / 'wearing.sqlite3')))
+    book = CaptureBook(LifeBook(Store(tmp_path / 'pajio.sqlite3')))
     asset = book.upload('daily', wav(), 'voice.wav', 'audio/wav', 'voice-test')
     worker = CaptureWorker(book)
     monkeypatch.setattr(worker, 'capabilities', lambda: {'transcription': 'test'})
@@ -98,7 +98,7 @@ async def test_decoder_failure_protocol_preserves_audio_and_never_saves_error_te
     assert book.transcript('daily',asset['id']) is None and book.file('daily',asset['id'])[0].exists()
 
 
-@pytest.mark.parametrize('command', [[sys.executable,'-c','raise SystemExit(1)'],['/nonexistent-wearing-decoder']])
+@pytest.mark.parametrize('command', [[sys.executable,'-c','raise SystemExit(1)'],['/nonexistent-pajio-decoder']])
 async def test_subprocess_unavailable_is_retryable_and_releases_lease(voice,command):
     _,_,worker=voice
     with pytest.raises(LifeError) as error:await worker.command(command)
@@ -135,7 +135,7 @@ async def test_real_subprocess_timeout_releases_local_decoder_slot(voice):
 
 @pytest.mark.parametrize('invalid,code', [(True,'invalid_audio'),(False,'duration_limit')])
 async def test_audio_validation_precedes_cloud_upload(voice,tmp_path,invalid,code,monkeypatch):
-    from wearing.speech import decode_wav, SpeechError
+    from pajio.speech import decode_wav, SpeechError
     source=tmp_path/'decoder-input.wav'
     if invalid:
         source.write_bytes(b'RIFF'+b'\x00'*4+b'WAVE'+b'invalid')
@@ -154,7 +154,7 @@ async def test_route_enforces_token_origin_and_identity(tmp_path, monkeypatch):
     async def command(*args, **kwargs): return json.dumps({'text': '周末出去走走。'})
     monkeypatch.setattr(CaptureWorker, 'command', command)
     async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='http://testserver') as c:
-        headers = {'X-Wearing-Token': (await c.get('/api/bootstrap')).json()['token']}
+        headers = {'X-Pajio-Token': (await c.get('/api/bootstrap')).json()['token']}
         response = await c.post('/api/life/assets?name=voice.wav&request_key=voice-api', content=wav(), headers={**headers, 'Content-Type':'audio/wav'})
         assert response.status_code == 201
         url = '/api/life/assets/' + response.json()['id'] + '/transcribe'
@@ -163,4 +163,4 @@ async def test_route_enforces_token_origin_and_identity(tmp_path, monkeypatch):
         result = await c.post(url, json={}, headers=headers)
         assert result.status_code == 200 and result.json()['text'] == '周末出去走走。'
         other = (await c.post('/api/identities', json={'name':'其他', 'description':'', 'region':'international'}, headers=headers)).json()['id']
-        assert (await c.post(url, json={}, headers={**headers, 'X-Wearing-Identity':other})).status_code == 404
+        assert (await c.post(url, json={}, headers={**headers, 'X-Pajio-Identity':other})).status_code == 404

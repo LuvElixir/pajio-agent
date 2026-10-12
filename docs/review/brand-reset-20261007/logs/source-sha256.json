@@ -12,5 +12,5 @@
   "clients/mobile/src/CompanionPreferencePanel.tsx": "8f6468a368a60080c327c846210b155ab9d097ee4540bd2339a2bbf32d75bd0c",
   "clients/mobile/src/wardrobe.ts": "e94a10ff63683357b57f3d7dcaba4a773f638d75dd9887c6167c6401feeadfae",
   "clients/mobile/src/experience/primitives.tsx": "61a5887ffd2b2b2bbb4016ea3044d3d6323225703fd9b6c61e983501e7257669",
-  "src/wearing/web/mobile-host.css": "a731d6497641df3048189e4db71f31da22b796569dd3c8da5340e947668ad454"
+  "src/pajio/web/mobile-host.css": "a731d6497641df3048189e4db71f31da22b796569dd3c8da5340e947668ad454"
 }

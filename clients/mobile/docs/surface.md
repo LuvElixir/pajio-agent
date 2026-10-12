@@ -1,8 +1,8 @@
-# Wearing 手机随手输入
+# Pajio 手机随手输入
 
-MODE: Operate。范围是既有随手输入与生活记录的原生适配；继承已确认的 Wearing 品牌、信息与任务顺序。
+MODE: Operate。范围是既有随手输入与生活记录的原生适配；继承已确认的 Pajio 品牌、信息与任务顺序。
 
-THESIS: 先留住一句话、一张图或一段录音，网络恢复后再交给 Wearing。
+THESIS: 先留住一句话、一张图或一段录音，网络恢复后再交给 Pajio。
 
 OWN-WORLD: 近白底、钴蓝动作、原有卷袖角色 PNG、原有描边字标 SVG。React Native Paper 提供可操作的原生控件，保持自然中文和清楚的连接状态。
 
@@ -14,4 +14,4 @@ FORM: 本轮是既有 capture 表单的指定原生适配，不是开放式全�
 
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 
-受众是同一位 Wearing 使用者。相机、麦克风、SQLite 离线恢复已在小米 6X 的 Expo Go 中实测，安装包与 iOS 仍未验证；网页截图只证明网页适配。QA 服务与实际用户记录隔离，测试媒体不交给模型。
+受众是同一位 Pajio 使用者。相机、麦克风、SQLite 离线恢复已在小米 6X 的 Expo Go 中实测，安装包与 iOS 仍未验证；网页截图只证明网页适配。QA 服务与实际用户记录隔离，测试媒体不交给模型。

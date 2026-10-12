@@ -1,4 +1,4 @@
-# Wearing 电脑接入与持续陪伴 · 2026-10-02
+# Pajio 电脑接入与持续陪伴 · 2026-10-02
 
 历史记录：后续的实际电脑验收与角色交互替换见 [2026-10-03 验证](character-states-2026-10-03.md)。下文记录当时状态，非当前交付状态。
 
@@ -6,15 +6,15 @@
 
 ## 电脑控制
 
-选择已有 Hermes `computer_use`，底层为 Cua Driver，未另写点击或读屏驱动。当前 Hermes 固定提交 `367441274c48a03d12ee9f8d3d9ccd9bc1585392`，其 PM 锁定 Cua Driver `0.21.0`。本机通过 PM 安装并校验，驱动未打包进 Wearing 的 wheel。参考：[Hermes 官方说明](https://hermes-agent.nousresearch.com/docs/user-guide/features/computer-use)、[Cua 源码](https://github.com/trycua/cua)。
+选择已有 Hermes `computer_use`，底层为 Cua Driver，未另写点击或读屏驱动。当前 Hermes 固定提交 `367441274c48a03d12ee9f8d3d9ccd9bc1585392`，其 PM 锁定 Cua Driver `0.21.0`。本机通过 PM 安装并校验，驱动未打包进 Pajio 的 wheel。参考：[Hermes 官方说明](https://hermes-agent.nousresearch.com/docs/user-guide/features/computer-use)、[Cua 源码](https://github.com/trycua/cua)。
 
-Wearing 新增安装、实际权限检查、显式接入、暂停与交回。接入后才把 `computer_use` 放入模型工具集；保留 standard/manual 权限，不开放 terminal、任意代码、消息平台或调度器。默认后续观察为 AX 文本，适合当前文本模型；截图仍属于需要视觉模型的独立能力。
+Pajio 新增安装、实际权限检查、显式接入、暂停与交回。接入后才把 `computer_use` 放入模型工具集；保留 standard/manual 权限，不开放 terminal、任意代码、消息平台或调度器。默认后续观察为 AX 文本，适合当前文本模型；截图仍属于需要视觉模型的独立能力。
 
-暂停直接使用 Hermes 的跨进程控制 lease：不排队等待当前模型回合结束，后续观察和操作被拒绝，操作过程中发生接管时丢弃该次观察结果。已发出的输入无法保证撤回。该 lease 按 Wearing/Hermes profile 生效；这不是阻止其他软件或其他 profile 使用电脑的系统级隔离。
+暂停直接使用 Hermes 的跨进程控制 lease：不排队等待当前模型回合结束，后续观察和操作被拒绝，操作过程中发生接管时丢弃该次观察结果。已发出的输入无法保证撤回。该 lease 按 Pajio/Hermes profile 生效；这不是阻止其他软件或其他 profile 使用电脑的系统级隔离。
 
-最终探测：Cua Driver 已安装；辅助功能已由用户开启并读回为 `true`，屏幕录制仍为 `false`，电脑尚未接入。已在系统设置中定位并选中实际运行目录里的 CuaDriver.app，停在添加前，等待用户点击打开并授权。Wearing 也新增了缺项提示与实际应用路径说明。真实读屏、点击、中文填写仍待系统权限后验收，不能把代码接入等同于真机成功。Windows 路由沿用上游跨平台实现，尚未真机验收。
+最终探测：Cua Driver 已安装；辅助功能已由用户开启并读回为 `true`，屏幕录制仍为 `false`，电脑尚未接入。已在系统设置中定位并选中实际运行目录里的 CuaDriver.app，停在添加前，等待用户点击打开并授权。Pajio 也新增了缺项提示与实际应用路径说明。真实读屏、点击、中文填写仍待系统权限后验收，不能把代码接入等同于真机成功。Windows 路由沿用上游跨平台实现，尚未真机验收。
 
-准备了独立原生测试窗口（私有 QA 目录中的 `ComputerProbe.swift`／`WearingProbe`），仅用于后续输入→点击→读回实验，本轮未启动或操作该测试窗口。
+准备了独立原生测试窗口（私有 QA 目录中的 `ComputerProbe.swift`／`PajioProbe`），仅用于后续输入→点击→读回实验，本轮未启动或操作该测试窗口。
 
 ## 交互
 
@@ -37,4 +37,4 @@ Wearing 新增安装、实际权限检查、显式接入、暂停与交回。接
 - wheel 与 sdist 构建通过。
 - 主服务重启后引擎正常，原 4 条消息的完整 JSON SHA-256 与重启前一致。
 
-私有检查记录在 `.wearing/qa-desktop-presence-20261002/`。本轮未修改 API key、提交外部内容或进行真实业务交易。
+私有检查记录在 `.pajio/qa-desktop-presence-20261002/`。本轮未修改 API key、提交外部内容或进行真实业务交易。

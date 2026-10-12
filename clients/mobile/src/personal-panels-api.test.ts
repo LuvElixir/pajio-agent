@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {WearingApi} from './core';
+import {PajioApi} from './core';
 
-const connection = {endpoint: 'https://wearing.example/', identity: 'daily'};
+const connection = {endpoint: 'https://pajio.example/', identity: 'daily'};
 function api(value: unknown, seen: string[] = []) {
-  return new WearingApi(connection, (async (url, init) => {
+  return new PajioApi(connection, (async (url, init) => {
     seen.push(new URL(String(url)).pathname);
     assert.equal(init?.method, 'GET');
-    assert.equal(new Headers(init?.headers).get('X-Wearing-Identity'), 'daily');
+    assert.equal(new Headers(init?.headers).get('X-Pajio-Identity'), 'daily');
     return Response.json(value);
   }) as typeof fetch);
 }

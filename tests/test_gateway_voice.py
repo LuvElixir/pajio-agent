@@ -6,8 +6,8 @@ import pytest
 from starlette.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 from starlette.middleware.trustedhost import TrustedHostMiddleware
-from wearing.cloud.gateway import create_gateway_app
-from wearing.cloud.worker import TenantBoundary
+from pajio.cloud.gateway import create_gateway_app
+from pajio.cloud.worker import TenantBoundary
 from test_gateway import lab, ORIGIN, ISSUER
 
 class Remote:
@@ -42,13 +42,13 @@ async def test_gateway_voice_routes_with_server_credential_and_streams_without_e
         try:
             access=control.login(ISSUER,'alice')
             client=TestClient(app,base_url=ORIGIN)
-            with client.websocket_connect('wss://wearing.example/api/voice/stream') as ws:
+            with client.websocket_connect('wss://pajio.example/api/voice/stream') as ws:
                 ws.send_json(start(access));assert ws.receive_json()['type']=='ready'
                 ws.send_bytes(b'\0\0'*80);ws.send_json({'type':'finish','bytes':160})
                 assert ws.receive_json()['text']=='合成测试'
             url,kwargs,remote=connector.calls[0]
             assert url=='ws://127.0.0.1:39001/api/voice/stream'
-            assert kwargs['additional_headers']=={'Authorization':'Bearer '+(a/'gateway.key').read_text().strip(),'X-Wearing-Tenant':'tenant_A'}
+            assert kwargs['additional_headers']=={'Authorization':'Bearer '+(a/'gateway.key').read_text().strip(),'X-Pajio-Tenant':'tenant_A'}
             assert kwargs['origin']==ORIGIN and kwargs['proxy'] is None
             assert 'access' not in json.loads(remote.messages[0]) and access not in str(remote.messages)
             assert remote.messages[1]==b'\0\0'*80
@@ -62,24 +62,24 @@ async def test_gateway_voice_rejects_missing_foreign_oversize_and_revoked_access
             client=TestClient(app,base_url=ORIGIN)
             for path,headers in [('/api/voice/stream?token=leak',{}),('/api/voice/stream',{'Origin':'https://other.example'}),('/wrong',{})]:
                 with pytest.raises(WebSocketDisconnect):
-                    with client.websocket_connect('wss://wearing.example'+path,headers=headers): pass
+                    with client.websocket_connect('wss://pajio.example'+path,headers=headers): pass
             for payload in [start(None),start('bad'),start('x'*64)]:
-                with client.websocket_connect('wss://wearing.example/api/voice/stream') as ws:
+                with client.websocket_connect('wss://pajio.example/api/voice/stream') as ws:
                     ws.send_json(payload)
                     with pytest.raises(WebSocketDisconnect):ws.receive_json()
             assert connector.calls==[]
             access=control.login(ISSUER,'alice')
-            with client.websocket_connect('wss://wearing.example/api/voice/stream') as ws:
+            with client.websocket_connect('wss://pajio.example/api/voice/stream') as ws:
                 ws.send_json({**start(access),'expected_tenant':'tenant_B'})
                 with pytest.raises(WebSocketDisconnect):ws.receive_json()
             assert connector.calls==[]
             access=control.login(ISSUER,'alice')
-            with client.websocket_connect('wss://wearing.example/api/voice/stream') as ws:
+            with client.websocket_connect('wss://pajio.example/api/voice/stream') as ws:
                 ws.send_json(start(access));ws.receive_json();control.logout(access);ws.send_bytes(b'\0\0')
                 with pytest.raises(WebSocketDisconnect):ws.receive_json()
             assert len(connector.calls)==1 and len(connector.calls[0][2].messages)==1
             access=control.login(ISSUER,'bob')
-            with client.websocket_connect('wss://wearing.example/api/voice/stream') as ws:
+            with client.websocket_connect('wss://pajio.example/api/voice/stream') as ws:
                 ws.send_json(start(access));ws.receive_json();ws.send_bytes(b'x'*32001)
                 with pytest.raises(WebSocketDisconnect):ws.receive_json()
             assert connector.calls[-1][0].endswith(':39002/api/voice/stream')
@@ -91,7 +91,7 @@ async def test_tenant_boundary_accepts_only_authenticated_voice_path_and_strips_
     seen=[]
     async def app(scope,receive,send):seen.append(scope)
     gate=TenantBoundary(app,'tenant_A','k'*64)
-    for path,headers,allowed in [('/api/voice/stream',[],False),('/wrong',[(b'authorization',b'Bearer '+b'k'*64),(b'x-wearing-tenant',b'tenant_A')],False),('/api/voice/stream',[(b'authorization',b'Bearer '+b'k'*64),(b'x-wearing-tenant',b'tenant_B')],False),('/api/voice/stream',[(b'authorization',b'Bearer '+b'k'*64),(b'x-wearing-tenant',b'tenant_A')],True)]:
+    for path,headers,allowed in [('/api/voice/stream',[],False),('/wrong',[(b'authorization',b'Bearer '+b'k'*64),(b'x-pajio-tenant',b'tenant_A')],False),('/api/voice/stream',[(b'authorization',b'Bearer '+b'k'*64),(b'x-pajio-tenant',b'tenant_B')],False),('/api/voice/stream',[(b'authorization',b'Bearer '+b'k'*64),(b'x-pajio-tenant',b'tenant_A')],True)]:
         sent=[]
         async def send(data):sent.append(data)
         await gate({'type':'websocket','path':path,'headers':headers},None,send)
@@ -103,20 +103,20 @@ async def test_private_voice_upstream_host_is_normalized_only_after_service_auth
     seen = []
     async def inner(scope, receive, send):
         seen.append(scope)
-    gate = TenantBoundary(TrustedHostMiddleware(inner, allowed_hosts=['wearing.example']),
-                          'tenant_A', 'k' * 64, public_host='wearing.example')
+    gate = TenantBoundary(TrustedHostMiddleware(inner, allowed_hosts=['pajio.example']),
+                          'tenant_A', 'k' * 64, public_host='pajio.example')
     credentials = [(b'authorization', b'Bearer ' + b'k' * 64),
-                   (b'x-wearing-tenant', b'tenant_A')]
+                   (b'x-pajio-tenant', b'tenant_A')]
     for private_host in (b'10.0.0.4:8000', b'tenant-a.internal:8000', b'127.0.0.1:39001'):
         sent = []
         async def send(value): sent.append(value)
         await gate({'type': 'websocket', 'path': '/api/voice/stream',
                     'headers': [(b'host', private_host), *credentials]}, None, send)
-        assert dict(seen[-1]['headers']) == {b'host': b'wearing.example'}
+        assert dict(seen[-1]['headers']) == {b'host': b'pajio.example'}
         assert not sent
     count = len(seen)
     for auth in ([], credentials[:1], [(b'authorization', b'Bearer invalid'), credentials[1]],
-                 [credentials[0], (b'x-wearing-tenant', b'tenant_B')]):
+                 [credentials[0], (b'x-pajio-tenant', b'tenant_B')]):
         sent = []
         async def send(value): sent.append(value)
         await gate({'type': 'websocket', 'path': '/api/voice/stream',
@@ -135,7 +135,7 @@ async def test_worker_session_lease_is_bounded_stripped_and_available_only_in_tr
     seen=[]
     async def inner(scope,receive,send):seen.append(scope)
     gate=TenantBoundary(inner,'tenant_A','k'*64)
-    credentials=[(b'authorization',b'Bearer '+b'k'*64),(b'x-wearing-tenant',b'tenant_A')]
+    credentials=[(b'authorization',b'Bearer '+b'k'*64),(b'x-pajio-tenant',b'tenant_A')]
     expiry=str(time.time()+3600).encode()
     for lease,allowed in [([expiry],True),([],True),([b'1'],False),([b'nan'],False),([b'inf'],False),([b'bad'],False),([str(time.time()+86400).encode()],False),([expiry,expiry],False)]:
         seen.clear();sent=[]

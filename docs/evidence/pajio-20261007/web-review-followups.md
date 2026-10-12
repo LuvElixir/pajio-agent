@@ -10,7 +10,7 @@ Review of the served Web UI while ZCode was implementing Desktop. These findings
 
 3. **Delegation copy.** The served chat still says `和 Pajio 说说`, `想到哪儿，聊到哪儿。`, `我在，接着说。` and `用「日常」，想做些什么？`. Align the active composer/empty-state guidance with the App's `说一声，我来做…` and concrete task handoff. Historical messages should remain unchanged.
 
-4. **Desktop bundle signing evidence.** ZCode's delivery says the local candidate is ad-hoc signed. Independent `codesign --verify --deep --strict clients/desktop/src-tauri/target/release/bundle/macos/Pajio.app` reports `code has no resources but signature indicates they must be present`. The inner arm64 executable's linker signature does not establish a valid app-bundle signature. Produce and verify a complete local ad-hoc bundle (no Developer ID, notarization or deployment requested), or explicitly describe it as unsigned/unverified. The Pajio display name and preserved `io.luckyloading.wearing.desktop` identifier were independently confirmed.
+4. **Desktop bundle signing evidence.** ZCode's delivery says the local candidate is ad-hoc signed. Independent `codesign --verify --deep --strict clients/desktop/src-tauri/target/release/bundle/macos/Pajio.app` reports `code has no resources but signature indicates they must be present`. The inner arm64 executable's linker signature does not establish a valid app-bundle signature. Produce and verify a complete local ad-hoc bundle (no Developer ID, notarization or deployment requested), or explicitly describe it as unsigned/unverified. The Pajio display name and preserved `io.luckyloading.pajio.desktop` identifier were independently confirmed.
 
 ## Observations that passed
 

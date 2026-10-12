@@ -139,13 +139,13 @@ def test_builder_uses_explicit_pinned_wheel_over_old_assets(tmp_path):
     assets = tmp_path / 'assets';assets.mkdir()
     for name in installer.COMMON:
         (assets / name).write_text('fixture public asset')
-    (assets / 'wearing-0.1.0-py3-none-any.whl').write_bytes(b'old')
+    (assets / 'pajio-0.1.0-py3-none-any.whl').write_bytes(b'old')
     (assets / 'dep-1-py3-none-any.whl').write_bytes(b'dep')
-    wheel = tmp_path / 'wearing-0.2.0-py3-none-any.whl';wheel.write_bytes(b'new approved bytes')
+    wheel = tmp_path / 'pajio-0.2.0-py3-none-any.whl';wheel.write_bytes(b'new approved bytes')
     out = tmp_path / 'built'
     result = builder.build('linux', assets, out, wheel=wheel, wheel_sha256=hashlib.sha256(wheel.read_bytes()).hexdigest())
     assert (out / wheel.name).read_bytes() == wheel.read_bytes()
-    assert not (out / 'wearing-0.1.0-py3-none-any.whl').exists()
+    assert not (out / 'pajio-0.1.0-py3-none-any.whl').exists()
     assert installer.verify_bundle(out, result['artifact_sha256'])[1] == wheel.name
     with pytest.raises(ValueError, match='wheel_changed'):
         builder.build('linux', assets, tmp_path / 'wrong', wheel=wheel, wheel_sha256='0' * 64)
@@ -154,7 +154,7 @@ def test_builder_uses_explicit_pinned_wheel_over_old_assets(tmp_path):
 def test_only_fixed_official_tar_can_exceed_general_file_limit(tmp_path):
     installer = module('install-device-runtime')
     manifest = {'version': 1, 'kind': 'android', 'files': {}}
-    for name in installer.ANDROID | installer.COMMON | {'wearing-0.2.0-py3-none-any.whl'}:
+    for name in installer.ANDROID | installer.COMMON | {'pajio-0.2.0-py3-none-any.whl'}:
         raw = b'fixture';(tmp_path / name).write_bytes(raw)
         manifest['files'][name] = {'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
     def verify():

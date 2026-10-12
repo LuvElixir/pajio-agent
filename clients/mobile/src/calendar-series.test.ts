@@ -56,8 +56,8 @@ test('cloud client pins account identity tenant and current revision, rejected r
   const seen:RequestInit[]=[];const fetcher=(async(url:unknown,init:RequestInit)=>{seen.push(init);return String(url).endsWith('/api/bootstrap')?Response.json({token:'csrf',identities:[{id:'daily'}]}):Response.json({detail:'changed'},{status:409});}) as typeof fetch;
   const s=store(),client=new CalendarSeriesClient(connection,fetcher,()=>true);
   await assert.rejects(submitSeriesMutation(s.data,'scope','new',client,command),(e:unknown)=>e instanceof ApiError&&e.status===409);
-  for(const request of seen){const headers=request.headers as Record<string,string>;assert.equal(headers.Authorization,'Bearer '+connection.session!.accessToken);assert.equal(headers['X-Pajio-Expected-Tenant'],'team');assert.equal(headers['X-Wearing-Identity'],'daily');assert.equal(request.redirect,'error');}
-  assert.equal((seen[1].headers as Record<string,string>)['X-Wearing-Token'],'csrf');assert.deepEqual(s.rows.get(seriesPendingKey('scope','new')),command);
+  for(const request of seen){const headers=request.headers as Record<string,string>;assert.equal(headers.Authorization,'Bearer '+connection.session!.accessToken);assert.equal(headers['X-Pajio-Expected-Tenant'],'team');assert.equal(headers['X-Pajio-Identity'],'daily');assert.equal(request.redirect,'error');}
+  assert.equal((seen[1].headers as Record<string,string>)['X-Pajio-Token'],'csrf');assert.deepEqual(s.rows.get(seriesPendingKey('scope','new')),command);
 });
 test('latest selected occurrence is validated against series revision rather than trusting stale calendar card',async()=>{
   const fetcher=(async(url:unknown)=>String(url).endsWith('/api/bootstrap')?Response.json({token:'csrf',identities:[{id:'daily'}]}):Response.json({...row,revision:2,selected:item})) as typeof fetch;

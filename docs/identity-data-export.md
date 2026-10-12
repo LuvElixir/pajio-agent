@@ -41,8 +41,8 @@ App 下载需要当前连接凭据和身份头，拒绝重定向。核对 Conten
 必须安装在主应用现有 auth / identity / CSRF 中间件之后，不能独立公开运行。
 
 ```python
-from wearing.identity_export import IdentityExports
-from wearing.identity_export_api import install_identity_export_routes
+from pajio.identity_export import IdentityExports
+from pajio.identity_export_api import install_identity_export_routes
 exports = IdentityExports(store)
 install_identity_export_routes(app, exports)
 # Existing lifecycle poll, outside any business transaction:

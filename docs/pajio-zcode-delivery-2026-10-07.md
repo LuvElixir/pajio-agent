@@ -4,25 +4,25 @@
 
 ## 改动文件
 
-### Web（`src/wearing/web/`）
+### Web（`src/pajio/web/`）
 
 | 文件 | 改动 |
 | --- | --- |
 | `pajio.css`（新增，替代已删除的 `today.css`） | 日/夜语义配色（数值对齐 `appearance.ts`：日 `#F6F7F9/#FFF/#202228/#3156C8`，夜 `#14161A/#1C1F25/#F0F2F5/#A3B7FF`），覆盖旧 CSS 变量使全部既有组件随之换肤；实色分层卡片、紧凑输入入口、今天/任务行、账户摘要与分组、外观/衣橱面板、搜索浮层、窄屏底部 Dock。**全部规则 `html:not(.mobile-host)` 门控**（新增测试逐规则断言）。 |
 | `pajio.js`（新增） | 日夜三态（浅色/深色/跟随系统，`appearance:v1` 持久保存，随系统变化即时切换并同步 `theme-color`）；八套睡衣衣橱存储（`wardrobe:v2:web:{identity}` 显式保存、预览不落盘、v1 只读迁移、保存失败保留现妆）；品牌字标/单星/小熊 markup；App 宿主下整模块 return。 |
 | `views.js`（重写） | 今天视图（真实活动分区：等你处理/最近返回/正在推进/已排队/历史 + 今日安排 + 读取时间 + 简报草稿入口，零状态如实呈现）；任务页「交给 Pajio 的事」分页区（`limit=20` 首页、`cursor` 加载更多、跨页去重纯函数 `appendActivityPage`、409 保留内容并转刷新、`已显示 X / Y 项`）；我的视图（实色账户摘要：字标+单星+身份+连接点+真实模型服务名；能力与连接/数据与身份/偏好分组）；外观与个性化二级页（日夜单选、陪伴形象、衣橱三级页：预览→「穿上X并显示小熊」显式保存）；记忆视图沿用。 |
-| `index.html` | 标题/meta/主题引导内联脚本（宿主参数跳过）；字标轮廓 SVG、单星 favicon；聊天入口与进展入口挂小熊芯片 `[data-pajio-chip]`；欢迎页小熊（简洁模式显示单星）；`#compact-entry`；五入口 `data-life-view="today"` 成为真实视图；用户可见 Wearing→Pajio（CLI 命令与隐藏旧形象元素保留）。 |
-| `life.js` | `today` 独立视图（不再别名 capture，补记表单保留在 capture）；渲染委托 `WearingViews.render`；紧凑入口（宿主隐藏、有草稿时显示「继续草稿 · 摘要」）；身份切换通知 `WearingViews.reset` 与 `WearingPajio.identityChanged`。 |
-| `app.js` / `capture.js` / `activity.js` / `schedules.js` | 用户可见文案 Wearing→Pajio；标题 `身份名 · Pajio`；协议头、`wearing-` 存储键与代码标识不动。 |
+| `index.html` | 标题/meta/主题引导内联脚本（宿主参数跳过）；字标轮廓 SVG、单星 favicon；聊天入口与进展入口挂小熊芯片 `[data-pajio-chip]`；欢迎页小熊（简洁模式显示单星）；`#compact-entry`；五入口 `data-life-view="today"` 成为真实视图；用户可见 Pajio→Pajio（CLI 命令与隐藏旧形象元素保留）。 |
+| `life.js` | `today` 独立视图（不再别名 capture，补记表单保留在 capture）；渲染委托 `PajioViews.render`；紧凑入口（宿主隐藏、有草稿时显示「继续草稿 · 摘要」）；身份切换通知 `PajioViews.reset` 与 `PajioBrand.identityChanged`。 |
+| `app.js` / `capture.js` / `activity.js` / `schedules.js` | 用户可见文案 Pajio→Pajio；标题 `身份名 · Pajio`；协议头、`pajio-` 存储键与代码标识不动。 |
 | `bear/*.png`、`pajio-symbol.svg`、`pajio-wordmark.svg`（新增资产） | 来自 `clients/mobile/assets/bear/`（八套生产图）与 `design/brand/pajio/`。 |
 
 ### 桌面（`clients/desktop/`）
 
 | 文件 | 改动 |
 | --- | --- |
-| `src-tauri/tauri.conf.json` | `productName: "Pajio"`；`identifier io.luckyloading.wearing.desktop` 保留。 |
+| `src-tauri/tauri.conf.json` | `productName: "Pajio"`；`identifier io.luckyloading.pajio.desktop` 保留。 |
 | `src-tauri/src/main.rs` | 窗口标题「Pajio」「连接 Pajio」「Pajio · 原件」；菜单「打开 Pajio」/产品子菜单；托盘 tooltip「Pajio — 随时记一下」；panic 文案；移除强制 `Theme::Light`，窗口随系统日夜。 |
-| `src-tauri/src/endpoint.rs` | 用户可见错误文案 Wearing→Pajio（测试夹具 `wearing.example` 保留）。 |
+| `src-tauri/src/endpoint.rs` | 用户可见错误文案 Pajio→Pajio（测试夹具 `pajio.example` 保留）。 |
 | `frontend/index.html` `connection.js` `connection.css` | 连接页 Pajio 品牌：轮廓字标、雾蓝条纹小熊、「连接 Pajio」；CSS 换日夜语义配色并 `prefers-color-scheme` 跟随系统。 |
 | `src-tauri/icons/*` | `tauri icon` 从品牌包 `app-icon.png` 全量再生成；`tray.png` 换单星模板。 |
 | `frontend/pajio-wordmark.svg`、`frontend/bear/mist-blue.png` | 品牌资产副本。 |
@@ -44,11 +44,11 @@
 
 ### 原生构建产物（已实际编译）
 
-`clients/desktop/src-tauri/target/release/bundle/macos/Pajio.app`（13.69 MiB，本地 ad-hoc 签名，未公证）。核验：`CFBundleName/CFBundleDisplayName = Pajio`，`CFBundleIdentifier = io.luckyloading.wearing.desktop`（保留），可执行文件名 `wearing-desktop`（保留），`icon.icns` 为品牌单星。二进制含「Pajio desktop could not start」等新文案。
+`clients/desktop/src-tauri/target/release/bundle/macos/Pajio.app`（13.69 MiB，本地 ad-hoc 签名，未公证）。核验：`CFBundleName/CFBundleDisplayName = Pajio`，`CFBundleIdentifier = io.luckyloading.pajio.desktop`（保留），可执行文件名 `pajio-desktop`（保留），`icon.icns` 为品牌单星。二进制含「Pajio desktop could not start」等新文案。
 
 **桌面真实运行**：按路径显式启动 `Pajio.app`，进程运行于新二进制路径；Computer Use 读到 App 名「Pajio」、窗口标题「Pajio」（1156×804，988 个可访问性元素 = 自动连接 127.0.0.1:8765 后网页已加载）。像素截图被本机屏幕录制权限（TCC）拒绝，`screencapture` 同因失败——这是本次唯一未取得的桌面视觉证据，窗口标题/元素树为程序化证据。验证后已退出该实例。
 
-**运行环境说明**：本机 `~/.wearing/desktop/Wearing.app` 旧预览与 LaunchServices 注册发生冲突（按 bundle id 启动会拉起旧预览），验证期间旧预览进程被误停一次，**已重新启动恢复**（文件未动）；后续启动新包需按路径 `open .../bundle/macos/Pajio.app` 或先重新注册。另：`clients/mobile/src/Mobile.tsx` 在本轮进行中被主任务并行修改（18:57），本轮未触碰 `clients/mobile/**`。
+**运行环境说明**：本机 `~/.pajio/desktop/Pajio.app` 旧预览与 LaunchServices 注册发生冲突（按 bundle id 启动会拉起旧预览），验证期间旧预览进程被误停一次，**已重新启动恢复**（文件未动）；后续启动新包需按路径 `open .../bundle/macos/Pajio.app` 或先重新注册。另：`clients/mobile/src/Mobile.tsx` 在本轮进行中被主任务并行修改（18:57），本轮未触碰 `clients/mobile/**`。
 
 ## 浏览器实跑验证（本机 8765，Pajio/profile24，真实数据）
 
@@ -60,14 +60,14 @@
 - **任务分页**：任务页显示「已显示 9 / 9 项 · 读取于 HH:MM」与真实分组；接口链路实测 `limit=3` 首页 → cursor 下一页无重叠、篡改游标 422 拒绝；409 保留行为由后端 87 项分页测试与前端结构/纯函数测试覆盖（本地 9 条数据无法自然触发跨修订 409，未伪造任务）。
 - **搜索/输入收敛**：页内搜索零请求；非聊天页紧凑入口「交代一件事/继续草稿」回到聊天续用同一草稿（capture 与宿主除外）。
 - **窄屏**：390px 底部五入口 Dock（含小熊聊天入口），正文不挤压，输入坞上移无重叠。
-- **App 宿主回归**（`?host=mobile&composer=native`）：`WearingPajio`/`WearingViews` 均未注册、body 透明、无渐变层、header/紧凑入口隐藏、受控 17px 字号、助手正文样式由宿主 CSS 掌控、进展横幅隐藏；`WearingHost.openReview` goals 面板与 draft 注入正常。
+- **App 宿主回归**（`?host=mobile&composer=native`）：`PajioBrand`/`PajioViews` 均未注册、body 透明、无渐变层、header/紧凑入口隐藏、受控 17px 字号、助手正文样式由宿主 CSS 掌控、进展横幅隐藏；`PajioHost.openReview` goals 面板与 draft 注入正常。
 
 ## 未完成与边界
 
 - 桌面像素截图缺失（TCC 屏幕录制权限）；以窗口标题与可访问性树为证。
 - Windows NSIS 包未在本机构建（无 Windows 环境）；`tauri.windows.conf.json` 保留。
 - 跨修订 409 未在浏览器自然复现（数据量不足，不允许伪造任务），由后端测试 + 前端结构测试覆盖。
-- 旧 `.wearing/desktop/Wearing.app` 预览与 LaunchServices 的 bundle id 冲突需用户择一清理；本轮未删除任何数据目录内容。
+- 旧 `.pajio/desktop/Pajio.app` 预览与 LaunchServices 的 bundle id 冲突需用户择一清理；本轮未删除任何数据目录内容。
 - 未做：外部 OAuth、会员计费、自动简报生成链路、公证签名、应用商店与商标事务。
 
 ## 复核收尾 · 2026-10-07（独立复核四项）
@@ -77,7 +77,7 @@
 1. **长聊天导航与进展入口可达**：`pajio.css` 将网页顶栏改为 `position:sticky;top:0`（实色画布底、z-index 6），唯一进展入口 `#activity-return` 钉在 `calc(var(--pajio-header) + 8px)`（桌面 86px / 窄屏 104px 变量）；未新增第二块进展、未改宿主布局。实测 1280×720 自动滚底（scrollY 1434）：顶栏 top 0 高 87、五入口与搜索/设置在视口内、进展入口 top 94 在视口、输入坞在底；390×844（scrollY 1766）：顶栏 0、进展入口 112、底部 Dock 768 全部可达且无横向溢出。
 2. **字标尺寸与填充**：通用 `svg{20×20;fill:none}` 规则会压垮属性尺寸——新增分级规则显式恢复：顶栏字标 72×31、账户卡 76×33、单星 18/22、欢迎星 44，全部 `fill:currentColor;stroke:none`。实测计算值 72×31、fill 日间 `rgb(32,34,40)`/夜间 `rgb(240,242,245)`、stroke none。
 3. **交代式文案**：占位符「说一声，我来做…」、脚注与待机状态「说一声，我来做。/交代要做的事，有进展会回到这里。」、sr-only 标签「说一声，Pajio 来做」；历史消息未动。测试断言旧闲聊引导（想到哪儿/我在接着说/想做些什么）不再出现。
-4. **桌面签名**：对 bundle 执行 `codesign --force --deep --sign -` 后 `codesign --verify --deep --strict` 通过（`valid on disk` + `satisfies its Designated Requirement`），`Signature=adhoc`、`Identifier=io.luckyloading.wearing.desktop`；签名后的包实际启动运行（App/窗口名 Pajio）后退出。注意：bundle 重建后需重新执行该签名命令（当前 Cargo.toml 的 release strip 设置仍需 `CARGO_PROFILE_RELEASE_STRIP=none` 构建绕过）。
+4. **桌面签名**：对 bundle 执行 `codesign --force --deep --sign -` 后 `codesign --verify --deep --strict` 通过（`valid on disk` + `satisfies its Designated Requirement`），`Signature=adhoc`、`Identifier=io.luckyloading.pajio.desktop`；签名后的包实际启动运行（App/窗口名 Pajio）后退出。注意：bundle 重建后需重新执行该签名命令（当前 Cargo.toml 的 release strip 设置仍需 `CARGO_PROFILE_RELEASE_STRIP=none` 构建绕过）。
 
 新增回归：`tests/pajio-web-ui.test.cjs` 第 10 项「follow-ups」；全套 `node --test tests/*-ui.test.cjs` **104 通过 / 0 失败**。复验期间写入的日间偏好已恢复跟随系统；`tests/test_life.py` 按复核方修复后 19 项通过，本轮未触碰该测试与 profile 运行配置。新截图：`docs/qa-web-desktop-20261007/pajio-followups-long-chat-day.png`（390×844 长聊天日间：粘性顶栏 + 进展入口 + 底部 Dock 同屏）。
 
@@ -87,7 +87,7 @@
 
 1. **应用图标**：以 `design/brand/pajio/app-icon.png`（sha256 `9ea5a71b…`，与 `clients/mobile/assets/icon.png` 逐字节一致）为新 master，`tauri icon` 重新导出桌面全套（icon.icns/icon.ico/各尺寸 PNG/Windows Square 系列）；托盘保持单星模板（UI 单星不变）。favicon/launcher 改为 P+熊：网页 `<link rel=icon>` 指向 `/assets/pajio-icon.png`（品牌包 icon-32）。从 bundle icns 提取 128px 图标目检确认为「睡衣布料 P + 下方毛绒熊头」，非单星、非坐熊候选。
 2. **原创字标**：`wordmark-custom-v2.svg`（5 条原创填充 path，viewBox `12 20 574 240`，比例 574/240）替换网页顶栏与「我的」账户卡内联 SVG、`pajio.js` `wordmarkMarkup`、桌面连接页字标（内联 currentColor，112×47）。CSS 尺寸按新比例：顶栏 72×30、账户卡 76×32（72px 宽按新母版可读）。黑白正式版（`wordmark-black/white.svg`，你方导出）确认存在于品牌目录；未采用 icon-studies 候选与旧素材。
-3. **构建与签名**：重建 `Pajio.app`（16.29 MiB）→ `codesign --force --deep --sign -` → `codesign --verify --deep --strict` 通过（valid on disk + satisfies Designated Requirement）；`CFBundleName=Pajio`、`io.luckyloading.wearing.desktop` 与存储路径不变。构建仍需 `CARGO_PROFILE_RELEASE_STRIP=none`（见上节）。
+3. **构建与签名**：重建 `Pajio.app`（16.29 MiB）→ `codesign --force --deep --sign -` → `codesign --verify --deep --strict` 通过（valid on disk + satisfies Designated Requirement）；`CFBundleName=Pajio`、`io.luckyloading.pajio.desktop` 与存储路径不变。构建仍需 `CARGO_PROFILE_RELEASE_STRIP=none`（见上节）。
 4. **单实例验收（不停旧预览）**：旧预览（pid 2533）全程运行；按路径启动新 Pajio.app 后新进程经单实例转发立即退出，旧预览 pid 不变——同标识双包共存行为符合预期。
 5. **复验**：实机计算值 72×30、5 path、viewBox 正确，日夜填充 `rgb(32,34,40)`/`rgb(240,242,245)`；favicon 指向新图标；测试新增第 11 项「brand assets」，全套 `node --test tests/*-ui.test.cjs` **105 通过 / 0 失败**。新截图：`pajio-wordmark-v2-day.png`（顶栏新字标特写）、bundle 图标提取件见本节描述。后端全组 131/131（[backend-profile-regression](evidence/pajio-20261007/backend-profile-regression.md)）与本轮改动无关，未触碰。
 
@@ -96,7 +96,7 @@
 用户否决上一节的 P+熊应用图标，本节为最新状态，覆盖上一节的图标结论（该图标**未完成、不得标记为交付**）：
 
 - **立即暂停**：图标替换与桌面图标重建全部停止；在新的定稿 master 送达前，不再从 `design/brand/pajio/app-icon*` 读取任何 P+熊候选执行 `tauri icon` 或构建。
-- **已回退**：网页 favicon 恢复为单星 `/assets/pajio-symbol.svg`（实测指向正确）；本轮复制进生产目录的 `src/wearing/web/pajio-icon.png` 已删除。UI 内单星标记（starPath）本就未动。
+- **已回退**：网页 favicon 恢复为单星 `/assets/pajio-symbol.svg`（实测指向正确）；本轮复制进生产目录的 `src/pajio/web/pajio-icon.png` 已删除。UI 内单星标记（starPath）本就未动。
 - **桌面现状（待重做）**：`clients/desktop/src-tauri/icons/` 与现有 `Pajio.app` bundle 内 icns 仍是上一轮生成的被否决 P+熊版本（覆盖了此前的单星图标集；品牌目录中的旧 master 亦已被替换，本地无法回导出单星集）。该 bundle 视为**作废候选**，不得作为图标交付或分发；待用户提供新 master 后重新生成、重建、重签并复验。
 - **保留有效**：custom-v2 原创五 path 字标同步（Web 顶栏 72×30 / 账户卡 76×32 / 桌面连接页 112×47、日夜填充）与此前已批准的四项修复（粘性导航与进展入口、字标尺寸填充、交代式文案、ad-hoc 签名流程）均不受否决影响，实测仍生效。
 - **测试**：`pajio-web-ui.test.cjs` 品牌断言已改为「favicon 维持单星、禁止引用被否决图标文件」；全套 `node --test tests/*-ui.test.cjs` **105 通过 / 0 失败**。
@@ -108,15 +108,15 @@
 1. **进展卡与导航小熊**：`pajio.js` 移植 App 的 `bearBounds`/`bearFrame` 实测 alpha 注册框（1254px 源图、portrait zoom 1.92 头肩裁切）。进展卡改为左侧 52px 圆形头肩熊紧邻两行文字（标题/摘要）+ 右侧箭头；顶导航聊天入口为 28px 头肩熊（不再把整熊压成 20px）。修复了 `activity.css` 的 `#activity-return>span{flex:1}` 把芯片拉宽到 397px 的问题（`flex:0 0 auto`）。实测截图：进展卡与窄屏均呈现可辨认熊头、左右留白正常。
 2. **简洁标记移除**：外观页删除「陪伴形象」面板与 `setCompanion`；读取迁移把历史 symbol 存档按 bear 显示并保留 outfit（与 App `wardrobe.ts` 同语义），写回仍为 `{version:2,outfit,companion:'bear'}`；历史消息未动。
 3. **八套衣橱**：模块加载即预载并 decode 八图（`bearReady` 门控换装）；衣橱舞台移植 WardrobeStage——八图常驻叠放，试衣帘（左右帘 + 三道折痕）闭合 180ms 提交、开启 300ms，快速连点只提交最新目标，`prefers-reduced-motion` 下直接切换、无帘；未给整熊图片加任何晃动动画（Hypit 真动作待用户交付）。实测：8 层 + 2 帘、连点 rose-dot→cocoa-moon 最终提交 cocoa-moon。
-4. **实际改名运行**：旧预览进程确认路径为仓库数据目录 `/Users/archieliew/Documents/facet/.wearing/desktop/Wearing.app`（pid 2533）后仅退出该进程；其 WebUI 草稿随输入即时保存在该应用容器 localStorage，退出不清数据。启动新 `Pajio.app`（pid 15570）并**保持运行**（不再恢复旧 Wearing）。AX 实测 App 名/窗口标题均为 "Pajio"（1180×820，自动连接 8765 加载 Web）；菜单/托盘文案以二进制字符串（"Pajio"、"Pajio desktop could not start" 等 11 处）与源码为准——本机屏幕录制 TCC 仍拒绝像素截图。
-5. **临时开发图标（非定稿）**：被否决的 P+熊图标未再使用。从旧预览 bundle 的 icns（石墨底 #202630 奶油单星，即首个 Pajio 图标）恢复 1024 母版，存为 `clients/desktop/dev-icon-TEMP-star-not-final.png`，仅用于本轮重建验证；正式图标待用户新 master 定稿后替换。`tauri icon` 重导出 → 重建（13.74 MiB）→ `codesign --force --deep --sign -` → `codesign --verify --deep --strict` 通过（valid on disk + satisfies Designated Requirement），`io.luckyloading.wearing.desktop` 与存储路径不变。
+4. **实际改名运行**：旧预览进程确认路径为仓库数据目录 `/Users/archieliew/Documents/pajio/.pajio/desktop/Pajio.app`（pid 2533）后仅退出该进程；其 WebUI 草稿随输入即时保存在该应用容器 localStorage，退出不清数据。启动新 `Pajio.app`（pid 15570）并**保持运行**（不再恢复旧 Pajio）。AX 实测 App 名/窗口标题均为 "Pajio"（1180×820，自动连接 8765 加载 Web）；菜单/托盘文案以二进制字符串（"Pajio"、"Pajio desktop could not start" 等 11 处）与源码为准——本机屏幕录制 TCC 仍拒绝像素截图。
+5. **临时开发图标（非定稿）**：被否决的 P+熊图标未再使用。从旧预览 bundle 的 icns（石墨底 #202630 奶油单星，即首个 Pajio 图标）恢复 1024 母版，存为 `clients/desktop/dev-icon-TEMP-star-not-final.png`，仅用于本轮重建验证；正式图标待用户新 master 定稿后替换。`tauri icon` 重导出 → 重建（13.74 MiB）→ `codesign --force --deep --sign -` → `codesign --verify --deep --strict` 通过（valid on disk + satisfies Designated Requirement），`io.luckyloading.pajio.desktop` 与存储路径不变。
 6. **验证与证据**：全套 UI 测试 **105/105**；截图新增 `pajio-bear-day-wide / pajio-bear-night-wide / pajio-bear-night-narrow / pajio-wardrobe-stage`（docs/qa-web-desktop-20261007/）。备注：IAB 内 `getComputedStyle` 对该 span 报 0×0/block 的测量怪象与渲染无关，实际布局以截图与 `#activity-return` 52px 芯片实测为准。
 
 ## Hypit 真实动作接入 · 2026-10-07（本轮）
 
 用户审定的两段真实动作（`clients/mobile/assets/bear-motion/`，只读来源）已接入 Web/Desktop，语义对齐只读参考 `LivingPajamaBear.tsx`、`WardrobeFilm.tsx`、`WardrobeStage.tsx`：
 
-1. **顶部进展熊 idle（仅雾蓝）**：素材复制到 `src/wearing/web/motion/`（idle 284KiB/5.04s、poster、双向换装各 ~2.8s）。`pajio.js` `mountLivingBear`：muted、playsinline、disablepictureinpicture、无 controls、loop 关；播一次后停在末帧安静停留，每 23 秒 `greet()` 一次；`document.hidden`/IntersectionObserver 离屏/`prefers-reduced-motion` 任一命中即暂停并回落 poster；视频 error 同样回落。其它七套睡衣与顶导航聊天入口保持各自静图（不穿错蓝色）。
+1. **顶部进展熊 idle（仅雾蓝）**：素材复制到 `src/pajio/web/motion/`（idle 284KiB/5.04s、poster、双向换装各 ~2.8s）。`pajio.js` `mountLivingBear`：muted、playsinline、disablepictureinpicture、无 controls、loop 关；播一次后停在末帧安静停留，每 23 秒 `greet()` 一次；`document.hidden`/IntersectionObserver 离屏/`prefers-reduced-motion` 任一命中即暂停并回落 poster；视频 error 同样回落。其它七套睡衣与顶导航聊天入口保持各自静图（不穿错蓝色）。
 2. **衣橱蓝↔奶油真实转身**：`views.js` `mountWardrobeStage` 新增 `filmPair` 分支——`mist-blue↔cream-moon` 双向播放对应 `blue-to-cream.mp4` / `cream-to-blue.mp4`（muted、内联、无控件），`ended` 后提交正确目标静图并清除影片层；`error` 立即提交目标静图；页面隐藏暂停/恢复继续；**其它组合仍走短试衣帘**。快速连点：新目标打断影片 → `clearFilm` 取消 → 回退试衣帘并只提交最新目标（实测 奶油→rose-dot 打断后最终 rose-dot）；离开页面由容器销毁兜底；全程**不自动保存穿搭**（实测 localStorage 全程无写入，仍需「穿上X并显示小熊」显式保存）。
 3. **实捞验证**（127.0.0.1:8765，真实浏览器）：idle 视频 muted=✓、controls=无、playsinline=✓、duration 5.04s，手动驱动播放→seek 末尾 `ended=true, paused=true` 停留 5.04 末帧；换装影片双向实测播放中 `playing=true` 且结束后 `shown=cream-moon` / `mist-blue` 正确提交；连点回退正确。注：IAB 嵌入浏览器拦截了初始静音自动播放（回落 poster），手动播放生命周期完整——常规 Chrome/Safari 静音自动播放不受此限。减少动态路径为结构测试覆盖（`reducedMotion` 分支 + CSS `@media` 停用试衣帘）。
 4. **桌面**：运行的 `Pajio.app`（pid 15570）窗口保持可见，已通过 Cmd+R 刷新其前端（窗口/App 名仍 "Pajio"）；图标维持临时开发单星（非定稿）。
@@ -143,7 +143,7 @@
 用户选定图标 C（被窝里的睡衣小熊），`icon-selection.json` 已 selected、`icon-manifest.json` 含 SHA（`app-icon.png` sha256 前缀 `4afacec34b2dfaadfebf`，与磁盘实测一致；1024×1024 无透明）。仅 Web/Desktop：
 
 - **替换**：`tauri icon` 以定稿 master 重导出桌面全套（icns/ico/各尺寸/Windows Square）；网页 favicon 换为品牌包 icon-32（`/assets/pajio-icon.png?v=2`）；临时开发图标 `dev-icon-TEMP-star-not-final.png` 已删除。字标 `wordmark-custom-v2.svg` 未动。
-- **构建与签名**：重建 `Pajio.app`（16.74 MiB）→ ad-hoc 重签 → `codesign --verify --deep --strict` 通过（valid on disk + satisfies Designated Requirement）；`CFBundleName=Pajio`、`io.luckyloading.wearing.desktop` 保留。构建仍需 `CARGO_PROFILE_RELEASE_STRIP=none`。
+- **构建与签名**：重建 `Pajio.app`（16.74 MiB）→ ad-hoc 重签 → `codesign --verify --deep --strict` 通过（valid on disk + satisfies Designated Requirement）；`CFBundleName=Pajio`、`io.luckyloading.pajio.desktop` 保留。构建仍需 `CARGO_PROFILE_RELEASE_STRIP=none`。
 - **进程切换**：旧 Pajio 预览（pid 15570）确认路径后仅退出该进程（其 WebUI 草稿随输入 180ms 防抖即时写入应用容器 localStorage，新实例同 bundle 复用同一存储，草稿不丢）；新包已启动并**保持运行**（pid 22555，App/窗口名 "Pajio"，1180×820，自动连接 8765）。
 - **图标提取目检**：从新 bundle icns 提取 128px 成员确认是「被窝里的睡衣小熊」（非单星、非 P+熊）。
 - **CSP 显示复核（实际截图，非结构测试）**：`pajio-icon-c-chat.png` 实拍——顶导航 26px 圆熊头可见、进展卡 52px 熊头紧邻两行文字 + 箭头且左侧无空白、字标正常、favicon 指向 `pajio-icon.png?v=2`；computed 复测 navBear=26 / progressBear=52 / video 在位。
@@ -222,7 +222,7 @@ QA 8891（PID 66072）真实路由 UI 点击验收：**带走我的数据**（�
 
 ## 草稿误报修复 + 安静时段文案 + 编辑幂等 · 2026-10-10
 
-**真实缺陷定位修复**：QA 页持续显示「草稿暂时只能留在当前页面」的根因是 WearingStore 缺 Storage 接口（drafts 模块调 getItem 抛错被吞）。补齐接口后 QA 三步实证：输入无误报、切页回聊天草稿恢复、**整页重载草稿恢复**；cloud 无 scope 模拟下内存可用且零 localStorage 泄漏（fail-closed 不受影响）。安静时段文案对齐 awaiting_registration 语义（重新登录恢复/仍有效才发/不保证手机已显示）。记录编辑提交接 request_key 固定 attempt（同 revision+patch 同键重放，对齐 offline-record-edits 服务端合同；该合同明确本机离线队列属 App）。**136/136**。
+**真实缺陷定位修复**：QA 页持续显示「草稿暂时只能留在当前页面」的根因是 PajioStore 缺 Storage 接口（drafts 模块调 getItem 抛错被吞）。补齐接口后 QA 三步实证：输入无误报、切页回聊天草稿恢复、**整页重载草稿恢复**；cloud 无 scope 模拟下内存可用且零 localStorage 泄漏（fail-closed 不受影响）。安静时段文案对齐 awaiting_registration 语义（重新登录恢复/仍有效才发/不保证手机已显示）。记录编辑提交接 request_key 固定 attempt（同 revision+patch 同键重放，对齐 offline-record-edits 服务端合同；该合同明确本机离线队列属 App）。**136/136**。
 
 ## 安静时段 QA 实机收口 · 2026-10-10
 
@@ -230,15 +230,15 @@ QA 8891（PID 19872，46 表数据保留）对 Web 安静时段做完整真实 U
 
 ## 技能移除 + 结果选项 + 品牌残留 · 2026-10-10
 
-QA 8891（PID 23615）真实 UI 验收：**技能移除**完整流程（预览含操作编号→确认→QA 活动任务 **423 如实**，零文件移除、技能保留，成功路径由严格回执校验 + 后端测试覆盖）；**结果选项**原生区（两选项→instruction 预览→二次确认→提交成功→「已排队，尚未执行」诚实回显；request_key 经 WearingStore 按身份+结果+选择持久；iframe 无桥）；**可见 Wearing 残留清理**（face/海报/叫一下 → Pajio，内部兼容名保留）。新增行为测试 2 项，全套 **138/138**。
+QA 8891（PID 23615）真实 UI 验收：**技能移除**完整流程（预览含操作编号→确认→QA 活动任务 **423 如实**，零文件移除、技能保留，成功路径由严格回执校验 + 后端测试覆盖）；**结果选项**原生区（两选项→instruction 预览→二次确认→提交成功→「已排队，尚未执行」诚实回显；request_key 经 PajioStore 按身份+结果+选择持久；iframe 无桥）；**可见 Pajio 残留清理**（face/海报/叫一下 → Pajio，内部兼容名保留）。新增行为测试 2 项，全套 **138/138**。
 
 ## 账户注销接入（可独立部分）· 2026-10-10
 
-新 `account-deletion.js` + 设置「注销账户」段，对齐两份冻结合同与 App 面板（只读）：范围展示（严格 plan 校验/三类 action 文案/blockers）→ 独立重新验证（Web CSRF 空 body → authorize_url）→ **凭证先存**（request_key/plan_revision/receipt_token 经 WearingStore 按账户持久）→ 恰四字段固定 key 提交 → 非 202/失响应用保存凭证查询同一申请 → completed 仅 verified+data_erased=true；已登出可凭回执只读查询；受理后清理**仅当前身份标记**的业务缓存（其他账户与凭证保留）。合成行为测试覆盖 plan/status 校验、凭证往返、缓存围栏；QA 网关未挂路由，真实 UI 如实降级（未假联调、未请求真实注销）。**139/139**。
+新 `account-deletion.js` + 设置「注销账户」段，对齐两份冻结合同与 App 面板（只读）：范围展示（严格 plan 校验/三类 action 文案/blockers）→ 独立重新验证（Web CSRF 空 body → authorize_url）→ **凭证先存**（request_key/plan_revision/receipt_token 经 PajioStore 按账户持久）→ 恰四字段固定 key 提交 → 非 202/失响应用保存凭证查询同一申请 → completed 仅 verified+data_erased=true；已登出可凭回执只读查询；受理后清理**仅当前身份标记**的业务缓存（其他账户与凭证保留）。合成行为测试覆盖 plan/status 校验、凭证往返、缓存围栏；QA 网关未挂路由，真实 UI 如实降级（未假联调、未请求真实注销）。**139/139**。
 
 ## 账户注销复核修正 · 2026-10-10
 
-按 Root 六点复核逐项修正：围栏改为 origin+user_id（精确归属段匹配，同 identity 不同账户不串）；按钮真实 id + 真实事件绑定；POST 携带 x-wearing-csrf（对照 gateway.py）；plan 必需字段缺失整份拒绝；status 白名单对齐 operator 契约；submit 异常必查同一申请、not_submitted 恢复业务；业务冻结门接入主轮询/发送/life 轮询 + 工作门 + 重载恢复。5 项行为测试（真实事件/CSRF/掉响应/围栏/门），全套 **143/143**。
+按 Root 六点复核逐项修正：围栏改为 origin+user_id（精确归属段匹配，同 identity 不同账户不串）；按钮真实 id + 真实事件绑定；POST 携带 x-pajio-csrf（对照 gateway.py）；plan 必需字段缺失整份拒绝；status 白名单对齐 operator 契约；submit 异常必查同一申请、not_submitted 恢复业务；业务冻结门接入主轮询/发送/life 轮询 + 工作门 + 重载恢复。5 项行为测试（真实事件/CSRF/掉响应/围栏/门），全套 **143/143**。
 
 ## 六项注销复审修复 + 三项新合同 · 2026-10-10
 
@@ -250,13 +250,13 @@ QA 8891（PID 23615）真实 UI 验收：**技能移除**完整流程（预览�
 
 ## 第十八轮收口与下一会话交接 · 2026-10-10
 
-第十八轮三项（清单/日历视图/任务停止撤回）已交付，但按用户指名**尚未完成**：calendar-series 完整 UI（重复日程/单次例外）、offline-record-lifecycle 归档恢复的 request_key 幂等、task-detail 同快照精确已读——QA 路由未挂载，本轮先完成交接。新增冻结合同 briefing-automation / record-reminders 同样待 QA 加载后接入。**完整交接、未做清单、验证命令已写入 [zcode-next-session.md](evidence/pajio-core-20261007/zcode-next-session.md)**——包含 SeriesCommand 精确闭集、AutomationSave/ReminderSave 字段、WearingStore/二次确认/409/幂等四套站内模式、QA 探活模板与桌面重启命令。技能移除与文件编辑的成功链验收等 root 停掉剩余合成任务后补做。当前 150/150 全绿。
+第十八轮三项（清单/日历视图/任务停止撤回）已交付，但按用户指名**尚未完成**：calendar-series 完整 UI（重复日程/单次例外）、offline-record-lifecycle 归档恢复的 request_key 幂等、task-detail 同快照精确已读——QA 路由未挂载，本轮先完成交接。新增冻结合同 briefing-automation / record-reminders 同样待 QA 加载后接入。**完整交接、未做清单、验证命令已写入 [zcode-next-session.md](evidence/pajio-core-20261007/zcode-next-session.md)**——包含 SeriesCommand 精确闭集、AutomationSave/ReminderSave 字段、PajioStore/二次确认/409/幂等四套站内模式、QA 探活模板与桌面重启命令。技能移除与文件编辑的成功链验收等 root 停掉剩余合成任务后补做。当前 150/150 全绿。
 
 ## 第十九轮 · 五项合同完整交付 + 两项成功链补验 · 2026-10-08
 
 接 zcode-next-session.md 交接清单，五项全部完成并 QA 8891 真实事件+浏览器 UI 验证：
 
-1. **重复日程完整 UI**（新 `series.js`，~490 行）：单入口九动作闭集、系列列表/编辑器/实例面板（仅这一次 vs 整个系列）、例外保留与恢复原规则、移除/恢复、月视图紫色事件与周/议程区段合并展示（只读投影）。request_key 单槽账本（WearingStore 先持久后发、未知沿用、已知错误换新 key、开新操作前尽力结算旧账）；409 双选择与合同文案一致。API 预验证含：CAS 409、同 create key 重放返回原回执、update 遗漏例外拒绝。
+1. **重复日程完整 UI**（新 `series.js`，~490 行）：单入口九动作闭集、系列列表/编辑器/实例面板（仅这一次 vs 整个系列）、例外保留与恢复原规则、移除/恢复、月视图紫色事件与周/议程区段合并展示（只读投影）。request_key 单槽账本（PajioStore 先持久后发、未知沿用、已知错误换新 key、开新操作前尽力结算旧账）；409 双选择与合同文案一致。API 预验证含：CAS 409、同 create key 重放返回原回执、update 遗漏例外拒绝。
 2. **归档/恢复幂等**：PATCH 带 request_key + 两击确认范围文案；同 key 重放返回旧回执且不重复改变当前记录（服务端实证）。
 3. **同快照精确已读**：openTask 在结果渲染后按 GET /api/tasks/{id} 的 activity_receipt 确认精确版本；cancelled 队列保持未读；服务端核对已读状态真实落库。
 4. **每天自动简报**：偏好区面板完整字段 + 偏好版本绑定/提示 + 回执列表 + 幂等；开启需偏好版本匹配、关闭不要求（API 实证）。

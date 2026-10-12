@@ -6,7 +6,7 @@ import json
 from pydantic import ValidationError
 import pytest
 
-from wearing.cloud.commands import (
+from pajio.cloud.commands import (
     CommandRejected, ConnectionAuthority, DeviceCommand, LeaseAuthority,
     ResourceGrant, Scope, TaskAuthority, authorize_command,
 )

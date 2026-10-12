@@ -7,7 +7,7 @@
 启动：
 
 ```sh
-/opt/pajio-native/venv/bin/python -m wearing.private_media --config /etc/pajio/media-host.json --port 8792
+/opt/pajio-native/venv/bin/python -m pajio.private_media --config /etc/pajio/media-host.json --port 8792
 ```
 
 该进程固定监听 `127.0.0.1:8792`。跨 VM 的信令必须由验证客户端证书的 TLS 代理转发；媒体与输入由设备 VM 和 App 之间的 WebRTC DTLS/SRTP/SCTP 通道传输，TURN 只转发密文。信令服务必须禁用请求/响应正文日志。每次 offer 的 TURN 凭据由可信 worker 短期签发，宿主文件不保存 TURN 长期密钥。
@@ -17,7 +17,7 @@
 ```json
 {
   "token": "独立生成的至少32字符随机宿主凭据",
-  "gateway_root": "/home/pajio-desktop/.wearing/device-gateway",
+  "gateway_root": "/home/pajio-desktop/.pajio/device-gateway",
   "resources": [{
     "resource_id": "computer_example",
     "tenant_id": "tenant_example",
@@ -30,7 +30,7 @@
 }
 ```
 
-X11 服务环境应设置同一 `HOME`、`DISPLAY`、`XAUTHORITY`。连接器、电脑驱动、私密媒体宿主使用同一 Gateway 数据库和同一 `~/.wearing/phone-locks/{resource_id}.lock`。执行 VM 的操作账户和承载模型/Agent 任意 shell 的账户、VM 必须隔离；同 UID 的不受限 shell 能修改数据库或读取凭据，这不属于本模块能够抵御的威胁模型。
+X11 服务环境应设置同一 `HOME`、`DISPLAY`、`XAUTHORITY`。连接器、电脑驱动、私密媒体宿主使用同一 Gateway 数据库和同一 `~/.pajio/phone-locks/{resource_id}.lock`。执行 VM 的操作账户和承载模型/Agent 任意 shell 的账户、VM 必须隔离；同 UID 的不受限 shell 能修改数据库或读取凭据，这不属于本模块能够抵御的威胁模型。
 
 连接器自动加载它的 `data/runtime/private-media.json`，同样要求私有所有权和 `0600`：
 
@@ -38,7 +38,7 @@ X11 服务环境应设置同一 `HOME`、`DISPLAY`、`XAUTHORITY`。连接器、
 {
   "endpoint": "http://127.0.0.1:8792",
   "token": "与宿主相同的随机凭据",
-  "gateway_root": "/home/pajio-desktop/.wearing/device-gateway"
+  "gateway_root": "/home/pajio-desktop/.pajio/device-gateway"
 }
 ```
 

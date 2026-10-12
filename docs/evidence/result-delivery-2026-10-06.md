@@ -32,7 +32,7 @@
 
 本地 `8765` 服务已更新到 profile v16 源码；更新前确认引擎离线、无执行中的对话，更新后逐条核对原 4 条对话的 ID、输入、回复和状态一致。结果 API 返回 200。引擎保持更新前的未连接状态，下次启动应用新 profile；没有恢复云 VM。
 
-本地证据位于 `.wearing/qa/result-delivery-20261006/`：`desktop.png`、`mobile.png`、`isolation.png`、`model-result.html` 与 `result-evidence.json`。该目录中的配置、日志与运行文件不作为公开附件。
+本地证据位于 `.pajio/qa/result-delivery-20261006/`：`desktop.png`、`mobile.png`、`isolation.png`、`model-result.html` 与 `result-evidence.json`。该目录中的配置、日志与运行文件不作为公开附件。
 
 验收结束后已停止独立的测试模型引擎，保留 `8789` 的只读结果查看服务供用户体验。页面中的既有结果仍可展开操作，提交新对话需要重新连接引擎。
 

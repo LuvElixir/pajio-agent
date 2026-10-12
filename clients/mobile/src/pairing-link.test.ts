@@ -43,7 +43,7 @@ test('installed Expo Router reproduces the rejected numeric-offset pairing expir
   assert.throws(() => pairingConnection(params), /配对凭据不完整/);
 });
 
-test('QR generator expiry survives real Expo Go extraction and Wearing validation', () => {
+test('QR generator expiry survives real Expo Go extraction and Pajio validation', () => {
   for (const expiresAt of [pair.expiresAt, '2026-10-07T21:00:00.900120+08:00', '2026-10-07T08:00:00.900120-05:00', '2026-10-07T13:00:00.900Z']) {
     const params = routeParams(pairingLink({...pair, expiresAt}, metro, now));
     const connection = pairingConnection(params);

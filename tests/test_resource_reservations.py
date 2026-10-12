@@ -9,9 +9,9 @@ from unittest.mock import patch
 
 import pytest
 
-from wearing.cloud.resource_reservations import RESOURCE_RESERVATIONS_SOURCE
-from wearing.cloud.proxmox_devices import REMOTE
-from wearing.cloud.device_provisioning import Inventory, ResourcePromise
+from pajio.cloud.resource_reservations import RESOURCE_RESERVATIONS_SOURCE
+from pajio.cloud.proxmox_devices import REMOTE
+from pajio.cloud.device_provisioning import Inventory, ResourcePromise
 
 
 def raw(value):
@@ -170,7 +170,7 @@ def test_new_record_does_not_rewrite_existing_core_or_other_reservations(tmp_pat
 
 def test_preclaim_and_operator_ledger_request_count_once_and_require_real_admission(tmp_path):
     from test_device_provisioning import Provider, spec, policy, SyntheticAdmission, NOW
-    from wearing.cloud.device_provisioning import ProvisionBook, ProvisionError, inspect_capacity
+    from pajio.cloud.device_provisioning import ProvisionBook, ProvisionError, inspect_capacity
     item = spec()
     promise = ResourcePromise(reservation_id='c'*32, reservation_sha256='d'*64,
                               purpose='invitation', expires_at=4102444800, tenant_id=item.tenant_id, kind=item.kind,
@@ -195,7 +195,7 @@ def test_preclaim_and_operator_ledger_request_count_once_and_require_real_admiss
 def test_host_clone_records_preclaim_owner_before_single_qm_dispatch(tmp_path):
     import ast
     from test_device_provisioning import spec, policy
-    from wearing.cloud.device_provisioning import Owner, fingerprint
+    from pajio.cloud.device_provisioning import Owner, fingerprint
     item=spec();owner=Owner(tenant_id=item.tenant_id,identity_id=item.identity_id,resource_id=item.resource_id,
         request_id=item.request_id,request_sha256=fingerprint(item.model_dump()),nonce='b'*64,kind=item.kind,
         vcpus=item.vcpus,memory_mib=item.memory_mib,disk_mib=item.disk_mib).model_dump()
@@ -220,7 +220,7 @@ def test_host_clone_records_preclaim_owner_before_single_qm_dispatch(tmp_path):
 
 def claimed_case():
     from test_device_provisioning import spec, Provider
-    from wearing.cloud.device_provisioning import Owner, fingerprint
+    from pajio.cloud.device_provisioning import Owner, fingerprint
     item = spec()
     owner = Owner(tenant_id=item.tenant_id, identity_id=item.identity_id,
                   resource_id=item.resource_id, request_id=item.request_id,
@@ -243,7 +243,7 @@ def claimed_case():
 ])
 def test_missing_vm_claim_survives_lost_operator_ledger_and_blocks_reclone(tmp_path, changes):
     from test_device_provisioning import policy, SyntheticAdmission, NOW
-    from wearing.cloud.device_provisioning import ProvisionBook, ProvisionError
+    from pajio.cloud.device_provisioning import ProvisionBook, ProvisionError
     item, owner, promise, provider = claimed_case()
     book = ProvisionBook(tmp_path/'fresh-ledger', operator=True, clock=lambda:NOW, admission=SyntheticAdmission())
     altered = item.model_copy(update=changes)
@@ -267,7 +267,7 @@ def test_expired_first_claim_remains_charged_but_cannot_be_bound(tmp_path):
         with pytest.raises(ValueError, match='preclaim_expired'):ns['bind_resource_claim'](promises[1], owner, str(base))
     assert not (folder/'claim-1901.json').exists()
     from test_device_provisioning import policy, NOW
-    from wearing.cloud.device_provisioning import inspect_capacity
+    from pajio.cloud.device_provisioning import inspect_capacity
     item, _, promise, provider = claimed_case()
     provider.extra = {'resource_promises':(promise.model_copy(update={'owner':None,'expires_at':2}),)}
     result=inspect_capacity(item, policy(), provider.inventory(), [], now=NOW)
@@ -307,7 +307,7 @@ def test_actual_host_clone_fence_rejects_missing_claim_and_expiry_without_dispat
 
 def test_unclaimed_invitation_cannot_be_bypassed_by_different_vmid():
     from test_device_provisioning import policy, NOW
-    from wearing.cloud.device_provisioning import inspect_capacity
+    from pajio.cloud.device_provisioning import inspect_capacity
     item, _, promise, provider=claimed_case()
     provider.extra={'resource_promises':(promise.model_copy(update={'owner':None}),)}
     changed=item.model_copy(update={'vmid':1201,'request_id':'f'*32,'resource_id':'computer_other'})

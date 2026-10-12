@@ -14,16 +14,16 @@ import httpx
 from fastapi import HTTPException, Request
 from filelock import FileLock
 
-from wearing.cloud_apps import CloudApps, FeishuCloudNetwork, FEATURES, TOKEN_PATH
-from wearing.cloud_apps_api import install_cloud_app_routes
-from wearing.messaging import MessagingBridge, ChannelNetwork
-from wearing.messaging_api import install_messaging_routes
-from wearing.memory_controls import mutate_memory, revision
-from wearing.notifications import NotificationService, NotificationConfig, NotificationError, SEND_URL, RECEIPT_URL
-from wearing.notifications_api import install_notification_routes
-from wearing.skills_api import install_skill_routes
-from wearing.store import now
-from wearing.durable_confirmations import encoded
+from pajio.cloud_apps import CloudApps, FeishuCloudNetwork, FEATURES, TOKEN_PATH
+from pajio.cloud_apps_api import install_cloud_app_routes
+from pajio.messaging import MessagingBridge, ChannelNetwork
+from pajio.messaging_api import install_messaging_routes
+from pajio.memory_controls import mutate_memory, revision
+from pajio.notifications import NotificationService, NotificationConfig, NotificationError, SEND_URL, RECEIPT_URL
+from pajio.notifications_api import install_notification_routes
+from pajio.skills_api import install_skill_routes
+from pajio.store import now
+from pajio.durable_confirmations import encoded
 
 APP_ID = 'cli_QASYNTHETIC'
 SECRET = 'QA_SYNTHETIC_SECRET_001'

@@ -8,7 +8,7 @@ import pytest
 
 
 def test_installed_openai_sdk_nonstream_stream_error_and_quota_boundaries(tmp_path):
-    installed = Path(__file__).parents[1] / '.wearing/runtime/installed.json'
+    installed = Path(__file__).parents[1] / '.pajio/runtime/installed.json'
     if not installed.exists(): pytest.skip('Managed Hermes SDK is not installed')
     python = Path(json.loads(installed.read_text())['python'])
     if not python.is_file(): pytest.skip('Managed Hermes SDK interpreter unavailable')
@@ -18,8 +18,8 @@ from pathlib import Path
 sys.path.insert(0, sys.argv[1])
 import httpx
 from openai import OpenAI, AsyncOpenAI
-from wearing.usage import UsageBook, UsagePolicy, UsageError
-from wearing.usage_guard import UsageGuardConfig, install_usage_guard
+from pajio.usage import UsageBook, UsagePolicy, UsageError
+from pajio.usage_guard import UsageGuardConfig, install_usage_guard
 b=UsageBook(Path(sys.argv[2]), UsagePolicy(model_calls=6, model_concurrency=1), enabled=True)
 os.environ.update(PAJIO_TRIAL_LIMITS='1', PAJIO_USAGE_DATA_DIR=sys.argv[2], PAJIO_USAGE_IDENTITY='daily')
 config=UsageGuardConfig.from_env()
@@ -104,7 +104,7 @@ print('guarded SDK requests:',len(seen))
 
 
 def test_installed_sdk_reserves_money_before_network_and_settles_cache_receipt(tmp_path):
-    installed = Path(__file__).parents[1] / '.wearing/runtime/installed.json'
+    installed = Path(__file__).parents[1] / '.pajio/runtime/installed.json'
     if not installed.exists(): pytest.skip('Managed Hermes SDK is not installed')
     python = Path(json.loads(installed.read_text())['python'])
     if not python.is_file(): pytest.skip('Managed Hermes SDK interpreter unavailable')
@@ -115,8 +115,8 @@ sys.path.insert(0,sys.argv[1])
 import httpx
 from openai import OpenAI
 from openai._base_client import SyncAPIClient
-from wearing.usage import UsageBook, UsageError
-from wearing.usage_guard import wrap_sdk_request
+from pajio.usage import UsageBook, UsageError
+from pajio.usage_guard import wrap_sdk_request
 b=UsageBook(Path(sys.argv[2]),enabled=True)
 b.configure_pricing({'version':'synthetic-sdk-v1','currency':'CNY','budget':'2.10','models':[{'provider':'unit.invalid','model':'fixture','input_per_million':'2','cached_input_per_million':'0.2','output_per_million':'8','max_input_tokens':1000000,'max_output_tokens':8192}]})
 seen=[]
@@ -154,7 +154,7 @@ print('money admission and receipt passed')
 
 
 def test_installed_sdk_rejects_cross_origin_and_host_override_before_network_or_reservation(tmp_path):
-    installed = Path(__file__).parents[1] / '.wearing/runtime/installed.json'
+    installed = Path(__file__).parents[1] / '.pajio/runtime/installed.json'
     if not installed.exists(): pytest.skip('Managed Hermes SDK is not installed')
     python = Path(json.loads(installed.read_text())['python'])
     if not python.is_file(): pytest.skip('Managed Hermes SDK interpreter unavailable')
@@ -166,8 +166,8 @@ sys.path.insert(0,sys.argv[1])
 import httpx
 from openai import OpenAI, AsyncOpenAI, APIStatusError
 from openai._base_client import SyncAPIClient, AsyncAPIClient
-from wearing.usage import UsageBook, UsageError
-from wearing.usage_guard import wrap_sdk_request
+from pajio.usage import UsageBook, UsageError
+from pajio.usage_guard import wrap_sdk_request
 b=UsageBook(Path(sys.argv[2]),enabled=True)
 b.configure_pricing({'version':'synthetic-origin-v1','currency':'CNY','budget':'10','models':[{'provider':'unit.invalid','model':'fixture','input_per_million':'2','cached_input_per_million':'0.2','output_per_million':'8','max_input_tokens':1000000,'max_output_tokens':8192}]})
 seen=[]

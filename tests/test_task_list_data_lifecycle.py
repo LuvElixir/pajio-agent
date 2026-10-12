@@ -6,13 +6,13 @@ import zipfile
 
 import pytest
 
-from wearing.account_deletion import DeletionJobs, digest
-from wearing.account_deletion_fixture import SyntheticDeletionAdapter
-from wearing.calendar_series import CalendarSeriesBook
-from wearing.identity_export import IdentityExports, ExportError
-from wearing.life import LifeBook, LifeDraft
-from wearing.store import Store, now
-from wearing.task_lists import ListChange
+from pajio.account_deletion import DeletionJobs, digest
+from pajio.account_deletion_fixture import SyntheticDeletionAdapter
+from pajio.calendar_series import CalendarSeriesBook
+from pajio.identity_export import IdentityExports, ExportError
+from pajio.life import LifeBook, LifeDraft
+from pajio.store import Store, now
+from pajio.task_lists import ListChange
 
 
 def populate(path):
@@ -59,7 +59,7 @@ def test_export_has_real_lists_members_and_series_with_no_foreign_or_internal_jo
 def test_new_export_sections_obey_global_row_limit_without_partial_file(tmp_path, monkeypatch):
     store, _, _ = populate(tmp_path/'state.sqlite3')
     exporter = IdentityExports(store)
-    monkeypatch.setattr('wearing.identity_export.MAX_ROWS', 4)
+    monkeypatch.setattr('pajio.identity_export.MAX_ROWS', 4)
     with pytest.raises(ExportError) as error: contents(exporter)
     assert error.value.status == 413
     assert not list(exporter.root.glob('*.zip'))
