@@ -1,6 +1,9 @@
 [Unit]
 Description=Pajio internal VM network boundaries
-After=local-fs.target
+# Ownership checks read VM configuration through pmxcfs; without it the unit
+# fails closed and pve-guests (which requires this unit) starts no guests.
+After=local-fs.target pve-cluster.service
+Requires=pve-cluster.service
 Before=pve-guests.service
 
 [Service]
