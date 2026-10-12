@@ -45,4 +45,4 @@ wheel/sdist 构建通过，迁移代码、Alembic 环境、权限组 SQL 和文�
 
 RLS 保护平台元数据查询；有权设置作用域的被攻破入口和数据库管理员不在其防御范围。默认独立 VM/microVM 架构不变，本机两个 Worker 不代表硬件隔离。真实 IdP、生产 TLS/mTLS、VM、备份/PITR、HA、Secret Manager/轮换、限流、过期记录维护、云端持久调度与远程设备连接器仍待完成。
 
-配置见[平台数据库](../control-postgres.md)，当前下一步见[进度表](../progress.md)。
+配置见[平台数据库](../architecture/control-postgres.md)，当前下一步见[进度表](../archive/progress-log-2026-09-30-to-10-12.md)。

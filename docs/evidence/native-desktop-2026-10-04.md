@@ -36,6 +36,6 @@
 
 ## 视觉收尾与范围
 
-使用 Impeccable 进行一次结构检测，结果为空；独立 finish review 初次发现连接窗口页脚裁切。将默认内部高度从 650 调整为 740，保留页面自然滚动，重新构建并捕获同一失败状态。复核结果 `remaining: clear`、`disposition: ship`，适用本机技术预览。[设计记录](../design-native-desktop.md)保留已确认的材料与操作规则。
+使用 Impeccable 进行一次结构检测，结果为空；独立 finish review 初次发现连接窗口页脚裁切。将默认内部高度从 650 调整为 740，保留页面自然滚动，重新构建并捕获同一失败状态。复核结果 `remaining: clear`、`disposition: ship`，适用本机技术预览。[设计记录](../design/native-desktop.md)保留已确认的材料与操作规则。
 
 未验收：后台全局唤起、Windows/Intel Mac、正式签名公证/升级、远端生产登录、真实麦克风/相机、手机原生 App、系统分享/日历/通知、多端离线冲突。未恢复腾讯云 VM，也未新增云资源。

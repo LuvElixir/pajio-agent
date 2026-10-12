@@ -8,4 +8,4 @@
 - `native-processing.mp4`：较早录屏，期间新增平台文件引发 Fast Refresh，不用于最终动画验收。出现开发运行时 ExpoAsset 缺失后已完整 Reload，最终页面和存储重新验收通过。
 - `activated-api.json`：更新后的实际 LAN 入口，两份合成中文音频转写、原件摘要一致性。未发送 agent 消息或创建任务。
 
-量化性能见 [报告](../../../perf/报告.md) 和 [配对数据](../../../perf/bench/voice-warm-20261007.json)。
+量化性能见 [报告](../../archive/voice-perf-2026-10-07/报告.md) 和 [配对数据](../../archive/voice-perf-2026-10-07/bench/voice-warm-20261007.json)。

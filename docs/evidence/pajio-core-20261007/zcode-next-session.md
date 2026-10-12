@@ -1,6 +1,6 @@
 # ZCode Web/Desktop 下一会话交接 · 2026-10-09（第二十二轮后更新）
 
-> 2026-10-10 用户变更分工：ZCode 已完成最后一项在途任务，后续 Web/Desktop 由 Codex 统一开发。本文件保留为历史记录，不再作为向 ZCode 派发后续任务的依据。现行计划：`docs/plans/pajio-unified-delivery-2026-10-10.md`。
+> 2026-10-10 用户变更分工：ZCode 已完成最后一项在途任务，后续 Web/Desktop 由 Codex 统一开发。本文件保留为历史记录，不再作为向 ZCode 派发后续任务的依据。现行计划：`docs/archive/plans/pajio-unified-delivery-2026-10-10.md`。
 
 作者：ZCode（Web/Desktop 负责人）。App/backend 只读不变；QA 8891（合成数据）是唯一验收环境；8765 不动；不真实注销/推送/模型/部署。
 
@@ -24,7 +24,7 @@ recovery-presentation-contract Web 侧已交付并 QA 实证（改动收敛在 a
 
 ### 后续（未开始）
 
-- **密码管理器**：root 设计文档 `docs/plans/pajio-private-credentials-2026-10-08.md`（用户需求，尚未实现）。合同冻结且后端路由就绪前，Web/桌面不做入口、不做假可用占位。
+- **密码管理器**：root 设计文档 `docs/archive/plans/pajio-private-credentials-2026-10-08.md`（用户需求，尚未实现）。合同冻结且后端路由就绪前，Web/桌面不做入口、不做假可用占位。
 
 ## 第二十四轮状态（2026-10-10，源码冻结待 root A/B）
 
@@ -63,7 +63,7 @@ onboarding Web/桌面已交付至修复终版（独立复核两批共 12 项问�
 
 - 桌面 Pajio.app 运行中（最近 pid 68347，重启命令见下）；构建需 `CARGO_PROFILE_RELEASE_STRIP=none`（Cargo.toml strip=true 会坏 proc-macro dylib），签名 `codesign --force --deep --sign -` 后 `codesign --verify --deep --strict` 通过。
 - 全套 Web 测试 **150/150**：`node --test tests/*-ui.test.cjs tests/web-core-closure.test.cjs tests/web-import-goal.test.cjs`（在仓库根运行）。
-- 本轮已写入交付文档：`docs/pajio-zcode-delivery-2026-10-07.md`（第一至十八轮）与 `docs/evidence/pajio-core-20261007/web-desktop-button-matrix.md`（第一至十八轮）。**第十八轮未完成项见下。**
+- 本轮已写入交付文档：`docs/archive/handoffs/pajio-zcode-delivery-2026-10-07.md`（第一至十八轮）与 `docs/evidence/pajio-core-20261007/web-desktop-button-matrix.md`（第一至十八轮）。**第十八轮未完成项见下。**
 
 ## 第十八轮明确未完成（本轮用户点名要做的）
 
@@ -111,4 +111,4 @@ curl -s -X POST http://127.0.0.1:8891/api/calendar-series -H "X-Pajio-Identity: 
 
 ## 会话恢复提示
 
-新会话先读本文件，再读 docs/pajio-zcode-delivery-2026-10-07.md 最后两轮 + web-desktop-button-matrix.md 第十七/十八轮，即可继续。优先顺序按「第十八轮明确未完成」1→5；root 通知 QA 重启或任务停完后随时穿插成功链验收。
+新会话先读本文件，再读 docs/archive/handoffs/pajio-zcode-delivery-2026-10-07.md 最后两轮 + web-desktop-button-matrix.md 第十七/十八轮，即可继续。优先顺序按「第十八轮明确未完成」1→5；root 通知 QA 重启或任务停完后随时穿插成功链验收。

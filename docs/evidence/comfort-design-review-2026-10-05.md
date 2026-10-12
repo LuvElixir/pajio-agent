@@ -8,7 +8,7 @@ Initial disposition: fix.
 | --- | --- | --- |
 | Capture kind/help/save destination diverged after restoring a task draft | Resolved | web-task-before-save.png and web-task-after-save.png; actual task created, input cleared, label/helper stay待办 |
 | Placeholder contrast | Resolved | var(--muted)#666d78,5.22:1white |
-| Design persistence | Resolved | DESIGN.md and docs/design-comfort.md explicitlysupersede oldtoolbar/nav and recordactualgeometry |
+| Design persistence | Resolved | DESIGN.md and docs/archive/design-comfort-2026-10-05.md explicitlysupersede oldtoolbar/nav and recordactualgeometry |
 
 Remaining: clear. No visible regressions introduced by the fix batch. The user's final3D-onlyportraitdirection preservesgreetingplacement and singleprimaryaction across allfourcurrentcaptures.
 

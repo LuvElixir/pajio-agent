@@ -54,7 +54,7 @@
 
 ## 决定：Proxmox VE + Ubuntu LTS 独立 VM
 
-采用 Proxmox VE 作为裸机宿主，在其上建立 Ubuntu LTS 控制服务 VM 与每租户独立 KVM VM。理由是本机已明确专用于服务器且可重装，集中管理 VM、控制台、备份和恢复更适合当前操作条件，也保持[每租户独立 VM 产品基线](../../saas-architecture-2026-10-03.md)。普通 Docker / LXC 可在租户 VM 内使用，不能替代跨租户 VM 隔离。[Proxmox 官方能力](https://proxmox.com/en/products/proxmox-virtual-environment/features)
+采用 Proxmox VE 作为裸机宿主，在其上建立 Ubuntu LTS 控制服务 VM 与每租户独立 KVM VM。理由是本机已明确专用于服务器且可重装，集中管理 VM、控制台、备份和恢复更适合当前操作条件，也保持[每租户独立 VM 产品基线](../../architecture/saas.md)。普通 Docker / LXC 可在租户 VM 内使用，不能替代跨租户 VM 隔离。[Proxmox 官方能力](https://proxmox.com/en/products/proxmox-virtual-environment/features)
 
 Ubuntu Server + KVM / libvirt 同样能提供独立 VM，是可选宿主路线，但需要自行组织 VM 管理与备份运维；本次不并行落地。安装 Linux 后必须验证硬件虚拟化和真实 VM 启动，不能把 Windows 功能状态当成 Linux 验收。[Ubuntu libvirt 文档](https://ubuntu.com/server/docs/how-to/virtualisation/libvirt/)
 
@@ -62,7 +62,7 @@ Ubuntu Server + KVM / libvirt 同样能提供独立 VM，是可选宿主路线�
 
 ## 接下来按证据验收
 
-1. 完成旧资料备份与恢复抽查，核验安装介质；现场按 UEFI USB → Proxmox Terminal UI → 唯一 1TB kimtigo 内置盘操作。网络与凭据从私有安装记录取，不编固定 IP 或密码。详细步骤见[接入文档](../../on-prem-host.md#现场安装步骤)。
+1. 完成旧资料备份与恢复抽查，核验安装介质；现场按 UEFI USB → Proxmox Terminal UI → 唯一 1TB kimtigo 内置盘操作。网络与凭据从私有安装记录取，不编固定 IP 或密码。详细步骤见[接入文档](../../operations/on-prem-host.md#现场安装步骤)。
 2. 安装后核对新宿主身份、Linux 网卡 / NVMe / KVM，取得完整磁盘健康数据，验证备份与一次实际恢复。
 3. 建立私有管理边界、公司 LAN 隔离及至少两个租户 VM；同时测试 IPv4 / IPv6 的跨租户、管理面与办公网拒绝访问。
 4. 验证任务不依赖开发 Mac 常驻、断网 / 重启后恢复及手机结果通知，再按真实 VM 资源、磁盘增长和公网测量建立容量模型。

@@ -1,6 +1,6 @@
 # App 个人记忆修改记录
 
-2026-10-10。范围为 App 原生界面与既有 `/api/memory` 客户端；服务端契约见 `docs/memory-management.md`。
+2026-10-10。范围为 App 原生界面与既有 `/api/memory` 客户端；服务端契约见 `docs/features/memory-management.md`。
 
 ## 用户能做什么
 

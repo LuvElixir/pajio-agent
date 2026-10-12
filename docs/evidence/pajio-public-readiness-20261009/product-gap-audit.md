@@ -25,7 +25,7 @@
 - **P0 收费前**：开始出售订阅前必须完成，免费公开不因缺少购买页单独受阻。
 - **P1**：在稳定公开基础上继续实现的产品范围，不能冒充当前可用功能。
 
-优先采用 10 月 8–9 日具体契约和验收。`docs/progress.md` 最新进度仍停在 10 月 7 日；`PRODUCT.md`、`docs/product-definition.md` 中按时间保留的旧状态存在“尚未实现”与后续已完成代码并存的情况。它们用于确认承诺，不能整段当作当前实现状态。
+优先采用 10 月 8–9 日具体契约和验收。`docs/archive/progress-log-2026-09-30-to-10-12.md` 最新进度仍停在 10 月 7 日；`docs/archive/product-log-2026-09-30-to-10-10.md`、`docs/archive/product-definition-v0.5.md` 中按时间保留的旧状态存在“尚未实现”与后续已完成代码并存的情况。它们用于确认承诺，不能整段当作当前实现状态。
 
 ## 本轮可确认的基线
 
@@ -44,7 +44,7 @@
 | 用户关 Mac、关 App 后继续办事 | 持久任务、worker、实例与 gateway 接口、会话和设备连接器已有；S/Q，历史局部 R | 真正在线的公网入口和 worker；关闭开发 Mac、杀 App、跨日、重启 worker 后执行 / 确认 / 结果找回；升级、健康检查、队列积压与恢复可操作。当前停机试验 VM 不构成常驻服务 | **P0 公开阻塞** |
 | iPhone 公开安装、升级 | `app.json` / `eas.json` 有 store 构建配置；iOS Release 模拟器构建和分享扩展 N | Apple Developer、有效分发签名、发行配置、物理 iPhone 首装 / 升级 / 回退验证；公开分发渠道与审核材料。签名完成不等于商店或测试渠道发布成功 | **P0 公开阻塞**（主要用户为 iPhone） |
 | Android 独立安装、升级 | 10/9 独立 ARM64 Release 测试包已校验 bundle、签名和对齐；S/Q；10/8 旧包曾安装 R | 正式签名保管和升级链；最新候选真实安装、进程回收、录音 / 相机 / 分享 / 通知 / 网络矩阵；如面向其他架构需明确包支持范围。最新 App polish 未重新生成 APK | **P0 Android 公开阻塞** |
-| 试用不失控、停止后仍可取回结果 | `UsageBook`、模型 SDK guard、ASR 预占与幂等账本、`UsagePanel` 已实现；S/Q；[试用限额](../../trial-usage.md) | 正式部署显式启用 `PAJIO_TRIAL_LIMITS=1`；目前默认开发环境不启用。部署前拒绝未覆盖供应商 / 外部引擎；真实达到额度时停止新执行，同时保留读取 / 导出 / 停止。搜索、设备和其他第三方费用尚非统一金额总账 | **P0 公开阻塞**；金额总账 P1 |
+| 试用不失控、停止后仍可取回结果 | `UsageBook`、模型 SDK guard、ASR 预占与幂等账本、`UsagePanel` 已实现；S/Q；[试用限额](../../architecture/trial-usage.md) | 正式部署显式启用 `PAJIO_TRIAL_LIMITS=1`；目前默认开发环境不启用。部署前拒绝未覆盖供应商 / 外部引擎；真实达到额度时停止新执行，同时保留读取 / 导出 / 停止。搜索、设备和其他第三方费用尚非统一金额总账 | **P0 公开阻塞**；金额总账 P1 |
 | Pajio 自身付费订阅 | 未检出 StoreKit / RevenueCat / App 购买、订单、权益账本、恢复购买或订阅事件实现。云实例 `billing` 和控制面 `membership` 均非产品订阅 | 商品和权益模型、可信服务端订单 / 回执校验、续订 / 到期 / 退款 / 恢复购买、跨账户绑定、对账与客服；渠道规则与上线地区需另行核实。不能先做会员卡样式就声称收费链路成立 | **P0 收费前**；免费公开时 P1 |
 | 离开 App 后收到结果通知 | `notifications.py`、outbox、设备登记、lease、generation、ticket / receipt、深链、安静时段；S/Q | 当前 App config 未检出 EAS projectId / Firebase 服务配置；APNs / FCM 及签名、真实手机通知到达、冷启动正确任务、拒绝与撤权、失效 token、换账号不串通知。Expo 接受 / provider 回执不等于手机显示 | **P0 公开核心体验** |
 | 用户理解服务和数据规则 | 各功能有局部说明、系统权限文案和来源确认；S/Q | 本次检索 App 源码与配置未找到正式 Pajio 隐私政策 / 服务条款入口或版本确认记录。需以真实数据流、运营主体、服务供应商、留存与退出能力制作并接通；完整地区 / 渠道要求需专项核实，不能凭模板宣称合规 | **P0 公开阻塞** |
@@ -78,14 +78,14 @@
 | Skills 可管理、实际可执行 | 安装、禁用、删除与状态接口 / App；S/Q/N | 真来源、安装失败恢复、依赖与授权、执行验收；被删除不等于撤销 skill 已取得的外部账号访问。更新与回滚 / 环境清理还需完善 | **P0 可执行技能启用前**；完善生命周期 P1 |
 | 自带 Mac / Windows / Android 配对 | offer / 配对、设备清单、范围、暂停 / 恢复 / 撤销、未知结果核对、常驻安装脚本；S/Q，Mac / MI 6X 历史局部 R | 新用户非开发机可安装和卸载的连接器；Windows 真设备、重启自启、证书更新、恢复和迁移；云端经公网访问真实手机全链未通过 | **P0 设备服务启用前** |
 | 用户远程接入物理手机，登录后交还 Agent | 10/9 实现持久所有权、epoch、互斥、断连暂停、agent 旧截图 / 回执抑制；S/Q。生产 `human_access_ready` 默认关闭 | **未实现可用远程接管**：实时画面、触控、中文输入、媒体鉴权 / 加密、短期票据、buffer 清理、断连 / 锁屏交还、frame / 旋转防误点、宿主 OS 隔离，以及 iPhone → 独占 Android 真机 E2E | **P0 能力启用前**，是原规划重要未完成项 |
-| Agent 能用密码但不知道密码 | `PRODUCT.md` 与私密凭据设计已明确方案；目前只有方案与边界审计 | 安全保险库、原生解锁、域名 / 账号 / 任务 / 时间授权、隔离填充代理、凭据全生命周期；截图 / accessibility / 日志 / shell / ADB / 网络 /会话 token 的泄漏验证。当前没有可用保险库或私密自动填充 | **P0 能力启用前**；不能通过普通密码输入框或遮罩交付 |
+| Agent 能用密码但不知道密码 | `docs/archive/product-log-2026-09-30-to-10-10.md` 与私密凭据设计已明确方案；目前只有方案与边界审计 | 安全保险库、原生解锁、域名 / 账号 / 任务 / 时间授权、隔离填充代理、凭据全生命周期；截图 / accessibility / 日志 / shell / ADB / 网络 /会话 token 的泄漏验证。当前没有可用保险库或私密自动填充 | **P0 能力启用前**；不能通过普通密码输入框或遮罩交付 |
 | 手机上下文采集可控 | 选定聊天预览 / 作者确认 / 明确提交 / 批次删除已有；远程访问 scope 基础 S/Q/N | 社交平台账号、内容种类、时间与条数的具体授权和回执；`scope_confirmed=true` 不能替代真实范围。登录成功不等于允许持续读取全部历史或为聊天参与者建立画像 | **P0 能力启用前** |
 
 设备接管的详细缺口见 [device-handoff-check.md](../pajio-context-20261009/device-handoff-check.md)。隔离必须同时约束同宿主的 shell / ADB / 截图等旁路；只在 Python phone proxy 加锁不足以实现“Agent 看不到秘密”。
 
 ## D. 最初产品规划中还没有兑现的范围
 
-依据 [PRODUCT.md](../../../PRODUCT.md)、[初版产品定义](../../product-definition.md)、[整合落地总方案](../../implementation-blueprint.md)。以下没有被本轮新增 App 页面或已有测试取代：
+依据 [docs/archive/product-log-2026-09-30-to-10-10.md](../../archive/product-log-2026-09-30-to-10-10.md)、[初版产品定义](../../archive/product-definition-v0.5.md)、[整合落地总方案](../../archive/implementation-blueprint-v0.4.md)。以下没有被本轮新增 App 页面或已有测试取代：
 
 | 最初要求 | 当前能合理表述的程度 | 仍需实际推进 |
 | --- | --- | --- |
@@ -141,9 +141,9 @@
 
 - [外测缺口矩阵（10/8 基线）](../pajio-core-20261007/external-test-gaps.md)、[10/8 原生验收](../pajio-core-20261007/native-acceptance-20261008.md)
 - [10/9 首次认识](../pajio-onboarding-20261009/acceptance.md)、[上下文入口](../pajio-context-20261009/acceptance.md)、[App 体验优化](../pajio-app-polish-20261009/acceptance.md)
-- [公开前云实例快照](cloud-current.json)、[私人云入口范围](../../private-cloud-entry.md)、[试用预算](../../trial-usage.md)
+- [公开前云实例快照](cloud-current.json)、[私人云入口范围](../../architecture/private-cloud-entry.md)、[试用预算](../../architecture/trial-usage.md)
 - [注销操作者契约](../pajio-core-20261007/account-deletion-operator-contract.md)、[注销 gateway 契约](../pajio-core-20261007/account-deletion-gateway-contract.md)、[诊断反馈契约](../pajio-core-20261007/diagnostics-contract.md)
-- [真机接管边界](../pajio-context-20261009/device-handoff-check.md)、[私密凭据方案](../../plans/pajio-private-credentials-2026-10-08.md)
+- [真机接管边界](../pajio-context-20261009/device-handoff-check.md)、[私密凭据方案](../../archive/plans/pajio-private-credentials-2026-10-08.md)
 - 当前源码抽查：`clients/mobile/app.json`、`eas.json`、`src/CloudSessionPanel.tsx`、`native-session.ts`、`notification-native.ts`、`NativeActionPanel.tsx`、`native-action-driver.ts`、`AccountDeletionPanel.tsx`、`UsagePanel.tsx`；共享服务的 cloud、usage、notifications、diagnostics、onboarding、device access 相关模块。
 
 本报告只认已有可定位证据；“未找到”指本轮审计范围中无可支持完成的实现或验收记录，不代表已经对所有依赖、运行账户或远端系统做穷尽检查。

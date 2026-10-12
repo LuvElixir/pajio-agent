@@ -7,7 +7,7 @@
 - 新用户：使用邀请码 → 创建账号 → 进入自己的 Pajio。已加入的用户直接登录，不重复消耗邀请码。
 - 官方服务固定为 `https://pajio.luckyloading.com`。正式客户端不显示服务器地址、endpoint、token 输入框；旧自定义服务凭据不会自动带入官方账号。
 - App 使用系统浏览器、OIDC / PKCE、一次性回调和 SecureStore。自定义连接仅供显式开启的开发构建使用。
-- 邀请码只能绑定一个事先准备好的空白独立空间。它不是登录凭据，也不自动创建 Linux 电脑或 Android 云手机。运维步骤见 [准入说明](../invitation-admission.md)。
+- 邀请码只能绑定一个事先准备好的空白独立空间。它不是登录凭据，也不自动创建 Linux 电脑或 Android 云手机。运维步骤见 [准入说明](../architecture/invitation-admission.md)。
 
 ## 真实服务验收
 

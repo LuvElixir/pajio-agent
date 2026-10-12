@@ -1,6 +1,6 @@
 # Pajio 持久健康历史与脱敏支持导出
 
-2026-10-08。对应 `PRODUCT.md` 中持续运行、资源健康、失效恢复、结果可核对，以及 `external-test-gaps.md` 中 P0 运维闭环。此包是共享后端软件，App 由 root 接线，Web/Desktop 仍由 ZCode 按契约接入。
+2026-10-08。对应 `docs/archive/product-log-2026-09-30-to-10-10.md` 中持续运行、资源健康、失效恢复、结果可核对，以及 `external-test-gaps.md` 中 P0 运维闭环。此包是共享后端软件，App 由 root 接线，Web/Desktop 仍由 ZCode 按契约接入。
 
 ## 已实现范围
 

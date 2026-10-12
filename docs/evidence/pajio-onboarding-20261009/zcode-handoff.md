@@ -4,7 +4,7 @@
 
 ## 先读这些
 
-1. `docs/plans/pajio-onboarding-2026-10-09.md`：产品判断、研究来源、流程与未验证的假设。
+1. `docs/archive/plans/pajio-onboarding-2026-10-09.md`：产品判断、研究来源、流程与未验证的假设。
 2. `docs/evidence/pajio-core-20261007/onboarding-contract.md`：冻结的真实 API、状态、枚举、作用域、CAS、请求回执和上下文语义。
 3. 只读 `clients/mobile/src/OnboardingPanel.tsx`、`OnboardingConnections.tsx`、`onboarding-model.ts`、`onboarding-client.ts`、`useOnboarding.ts` 及其测试，参考 `Mobile.tsx`、`PersonalHub.tsx` 的入口。
 4. 本目录的 `confirm-day.png`、`confirm-night.png`、`expression-day-final.png` 和 `acceptance.md`。最终 iOS 与 Android 源码均包含表达样例修正。

@@ -39,4 +39,4 @@ Python 回归命令：`uv run --offline pytest -q`，168 项通过（6.53 秒）
 
 尚无 OIDC、平台会员库、可信入口路由、密钥轮换/撤销、真实 VM/microVM 的 guest kernel/卷/网络证据、设备出站转发、云端持久唤醒或自动备份。因此 `hardware_isolation_verified` 固定为 false；内部服务凭据不等于用户身份认证。两份本地目录不能代替独立 VM。
 
-运行与后续部署要求见 [租户运行入口](../tenant-runtime.md)；完整项目状态见 [当前进度](../progress.md)。
+运行与后续部署要求见 [租户运行入口](../architecture/tenant-runtime.md)；完整项目状态见 [当前进度](../archive/progress-log-2026-09-30-to-10-12.md)。

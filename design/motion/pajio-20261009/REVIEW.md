@@ -2,7 +2,7 @@
 
 2026-10-09。本轮交付：动效规划与角色候选源片；未修改 App 业务代码，未将候选片替换生产素材。
 
-- 完整方案：[`pajio-motion-system-2026-10-09.md`](../../../docs/plans/pajio-motion-system-2026-10-09.md)。17 个场景、7 类角色动作，含触发、优先级、减少动态与性能验收。
+- 完整方案：[`pajio-motion-system-2026-10-09.md`](../../../docs/archive/plans/pajio-motion-system-2026-10-09.md)。17 个场景、7 类角色动作，含触发、优先级、减少动态与性能验收。
 - 可播放审阅页：[`index.html`](index.html)，本次本机预览地址 `http://127.0.0.1:8878/`。
 - WorkBuddy 制作单：[`BRIEF.md`](workbuddy/BRIEF.md)；该工具写入的原始过程记录：[`GENERATION-RECORD.md`](workbuddy/output/GENERATION-RECORD.md)。工具自己的质量判断不等同于产品验收。
 

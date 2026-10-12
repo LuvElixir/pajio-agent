@@ -1,6 +1,6 @@
 # Pajio backend profile regression · 2026-10-07
 
-The backend command recorded in `docs/pajio-zcode-delivery-2026-10-07.md:37`
+The backend command recorded in `docs/archive/handoffs/pajio-zcode-delivery-2026-10-07.md:37`
 now passes all **131 tests**. The earlier failure was an outdated test expectation
 for the life connector's confirmation settings. Only `tests/test_life.py` was
 changed; `src/pajio/profile.py`, live configuration, services and mobile sources
@@ -24,7 +24,7 @@ to exactly equal the input connector. The actual mapping additionally contained:
 
 These are intentional owned profile fields in `src/pajio/profile.py:118–119`.
 `src/pajio/life_proxy.py` exposes `request_confirmation` through the same MCP
-connector. `docs/confirmation-cards.md` specifies the existing 300-second decision
+connector. `docs/features/confirmation-cards.md` specifies the existing 300-second decision
 window; the 360-second tool timeout allows that window to complete. Removing
 these fields to satisfy the old assertion would weaken the confirmation path.
 

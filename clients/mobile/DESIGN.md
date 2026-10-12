@@ -123,11 +123,11 @@ components:
 
 **Creative North Star: "放心交代，回来能用"**
 
-当前 App 实现记录，2026-10-07。正式名称为 **Pajio**，中文与英文界面统一使用；默认助手为已确认的睡衣小熊。语音交代、明确接收、执行进展与结果构成产品核心。近中性日夜色面、单四角星、账户与能力前置和个性化二级入口已写入当前源码。数字品牌资产已完成，市场验证尚未完成。[本轮交付证据](../../docs/evidence/pajio-delivery-2026-10-07.md)记录当前检查边界；[Pro 研究](../../docs/review/brand-reset-20261007/pro-review.txt)与[独立审视](../../docs/review/brand-reset-20261007/independent-review.md)是设计输入，不代替真实用户证据。
+当前 App 实现记录，2026-10-07。正式名称为 **Pajio**，中文与英文界面统一使用；默认助手为已确认的睡衣小熊。语音交代、明确接收、执行进展与结果构成产品核心。近中性日夜色面、单四角星、账户与能力前置和个性化二级入口已写入当前源码。数字品牌资产已完成，市场验证尚未完成。[本轮交付证据](../../docs/evidence/pajio-delivery-2026-10-07.md)记录当前检查边界；[Pro 研究](../../docs/archive/review/brand-reset-20261007/pro-review.txt)与[独立审视](../../docs/archive/review/brand-reset-20261007/independent-review.md)是设计输入，不代替真实用户证据。
 
 作用域是 `clients/mobile` 与 `src/pajio/web/mobile-host.css` 的 App 宿主样式。常规网页与桌面由 ZCode 负责；旧根设计保留，不应覆盖 App。当前运行界面名称为 Pajio；底层 pajio 包名、协议、存储键与安装标识保留兼容。
 
-当前品牌方向为[睡衣小熊](../../docs/plans/pajama-bear-brand-direction-2026-10-07.md)。八套资产已接入；无有效保存选择时默认雾蓝条纹小熊，已有 v1 穿搭和有效 v2 明确形象选择继续保留。外观二级页按睡衣小熊／简洁标记排列，切换不改变能力。正式名称为 Pajio；技术安装标识继续兼容，数字品牌文件见 [Pajio 品牌包](../../design/brand/pajio/README.md)。主张为「你先休息，这件事我来」，日常交互为「你说，我来做」。
+当前品牌方向为[睡衣小熊](../../docs/archive/plans/pajama-bear-brand-direction-2026-10-07.md)。八套资产已接入；无有效保存选择时默认雾蓝条纹小熊，已有 v1 穿搭和有效 v2 明确形象选择继续保留。外观二级页按睡衣小熊／简洁标记排列，切换不改变能力。正式名称为 Pajio；技术安装标识继续兼容，数字品牌文件见 [Pajio 品牌包](../../design/brand/pajio/README.md)。主张为「你先休息，这件事我来」，日常交互为「你说，我来做」。
 
 **Key Characteristics:**
 - 中性浅灰／石墨色面承接持续阅读，主操作与小面积钴蓝强调各有语义。
@@ -149,7 +149,7 @@ components:
 
 ## Typography
 
-采用系统字体。frontmatter 中 px 对应原生逻辑尺寸，非物理像素。聊天正文 17pt，长文约 16pt，关键操作不得只依赖小字。保留系统文字大小支持，长标题换行，全文进入阅读视图。原生 fontScale 已通过受控脚本传给保留的聊天 WebView，宿主正文、气泡、状态和搜索使用同一缩放变量；输入栏允许内容随字号增长。浏览器宿主 200% 文本缩放已检查无横向溢出，这不是实体 iPhone 的系统大字号验收。全页字级、触达和所有原件类型仍需按 [研究决策矩阵](../../docs/review/brand-reset-20261007/research-decisions.md)继续核对。
+采用系统字体。frontmatter 中 px 对应原生逻辑尺寸，非物理像素。聊天正文 17pt，长文约 16pt，关键操作不得只依赖小字。保留系统文字大小支持，长标题换行，全文进入阅读视图。原生 fontScale 已通过受控脚本传给保留的聊天 WebView，宿主正文、气泡、状态和搜索使用同一缩放变量；输入栏允许内容随字号增长。浏览器宿主 200% 文本缩放已检查无横向溢出，这不是实体 iPhone 的系统大字号验收。全页字级、触达和所有原件类型仍需按 [研究决策矩阵](../../docs/archive/review/brand-reset-20261007/research-decisions.md)继续核对。
 
 ## Layout
 
@@ -195,7 +195,7 @@ components:
 - 不用人物表情、循环动画或假百分比代表实际任务进度。
 - 不把构建、截图或合成测试作为真机跨夜执行、品牌偏好或市场需求的证明。
 
-当前验证入口为 [Pajio 交付证据](../../docs/evidence/pajio-delivery-2026-10-07.md)，最终测试计数、TypeScript、源码 ESLint 与 iOS bundle 导出状态以该证据文件为准，避免把共享活动缓存新增前的一轮成绩当作最终版本。浏览器宿主大字号检查只证明被测页面布局，不证明实体 iPhone、跨夜运行或市场验证。既有 [局部检查](../../docs/evidence/brand-ux-audit-2026-10-07.md)须核对采集版本。`/experience` 已同步 Pajio、睡衣小熊与生产浅色 token，但仍是标注示例的交互预览，不是真机或真实委托验收。后续工程和用户研究继续按 [决策矩阵](../../docs/review/brand-reset-20261007/research-decisions.md)追踪。
+当前验证入口为 [Pajio 交付证据](../../docs/evidence/pajio-delivery-2026-10-07.md)，最终测试计数、TypeScript、源码 ESLint 与 iOS bundle 导出状态以该证据文件为准，避免把共享活动缓存新增前的一轮成绩当作最终版本。浏览器宿主大字号检查只证明被测页面布局，不证明实体 iPhone、跨夜运行或市场验证。既有 [局部检查](../../docs/evidence/brand-ux-audit-2026-10-07.md)须核对采集版本。`/experience` 已同步 Pajio、睡衣小熊与生产浅色 token，但仍是标注示例的交互预览，不是真机或真实委托验收。后续工程和用户研究继续按 [决策矩阵](../../docs/archive/review/brand-reset-20261007/research-decisions.md)追踪。
 
 ## 2026-10-12 原生聊天
 

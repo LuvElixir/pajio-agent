@@ -49,52 +49,11 @@ exclude = ["src/pajio/web/**"]
 "deploy/control/postgres-roles.sql" = "pajio/cloud/postgres-roles.sql"
 
 [tool.hatch.build.targets.sdist]
-include = ["src/pajio", "tests", "pyproject.toml", "uv.lock", "README.md", "PRODUCT.md", "DESIGN.md", "docs/getting-started.md", "docs/engine-productization.md", "docs/identity-foundation.md", "docs/personal-continuity.md", "docs/evidence/personal-continuity-2026-10-03.md", "docs/research/personal-agent-definition-2026-10-03.md", "docs/research/personal-agent-source-manifest-2026-10-03.json", "docs/saas-architecture-2026-10-03.md", "docs/contracts", "docs/research/saas-source-review-2026-10-03.md", "docs/research/saas-source-manifest-2026-10-03.json", "THIRD_PARTY_NOTICES.md"]
+include = ["src/pajio", "tests", "docs", "deploy", "pyproject.toml", "uv.lock", "README.md", "README.zh-CN.md", "PRODUCT.md", "THIRD_PARTY_NOTICES.md"]
+exclude = ["docs/archive", "**/__pycache__"]
 
 [tool.hatch.build.targets.sdist.force-include]
 "src/pajio/web" = "src/pajio/web"
-"docs/evidence/goal-conversation-2026-10-03.md" = "docs/evidence/goal-conversation-2026-10-03.md"
-"docs/personal-memory.md" = "docs/personal-memory.md"
-"docs/evidence/personal-memory-2026-10-03.md" = "docs/evidence/personal-memory-2026-10-03.md"
-"docs/progress.md" = "docs/progress.md"
-"docs/tenant-runtime.md" = "docs/tenant-runtime.md"
-"docs/evidence/tenant-worker-2026-10-03.md" = "docs/evidence/tenant-worker-2026-10-03.md"
-"deploy/tenant/pajio-tenant.service" = "deploy/tenant/pajio-tenant.service"
-"deploy/tenant/bootstrap.py" = "deploy/tenant/bootstrap.py"
-"deploy/vm/tencent-trial.py" = "deploy/vm/tencent-trial.py"
-"docs/gateway-runtime.md" = "docs/gateway-runtime.md"
-"docs/evidence/gateway-2026-10-03.md" = "docs/evidence/gateway-2026-10-03.md"
-"docs/control-postgres.md" = "docs/control-postgres.md"
-"docs/evidence/control-postgres-2026-10-03.md" = "docs/evidence/control-postgres-2026-10-03.md"
-"deploy/control/postgres-roles.sql" = "deploy/control/postgres-roles.sql"
-"docs/cloud-vm-selection-2026-10-03.md" = "docs/cloud-vm-selection-2026-10-03.md"
-"deploy/vm/selection-example.json" = "deploy/vm/selection-example.json"
-"deploy/vm/tencent-quote-example.json" = "deploy/vm/tencent-quote-example.json"
-"docs/tencent-cloud-first-run-2026-10-03.md" = "docs/tencent-cloud-first-run-2026-10-03.md"
-"docs/evidence/tencent-vm-2026-10-03.md" = "docs/evidence/tencent-vm-2026-10-03.md"
-"docs/device-connectors.md" = "docs/device-connectors.md"
-"docs/evidence/remote-device-2026-10-03.md" = "docs/evidence/remote-device-2026-10-03.md"
-"deploy/tenant/pajio-device-relay.service" = "deploy/tenant/pajio-device-relay.service"
-"docs/private-cloud-entry.md" = "docs/private-cloud-entry.md"
-"docs/evidence/private-cloud-entry-2026-10-03.md" = "docs/evidence/private-cloud-entry-2026-10-03.md"
-"docs/device-pairing.md" = "docs/device-pairing.md"
-"docs/evidence/device-pairing-2026-10-03.md" = "docs/evidence/device-pairing-2026-10-03.md"
-"docs/connector-service.md" = "docs/connector-service.md"
-"docs/evidence/connector-service-2026-10-03.md" = "docs/evidence/connector-service-2026-10-03.md"
-"docs/desktop-input.md" = "docs/desktop-input.md"
-"docs/evidence/desktop-input-2026-10-04.md" = "docs/evidence/desktop-input-2026-10-04.md"
-"docs/evidence/approval-continuation-2026-10-04.md" = "docs/evidence/approval-continuation-2026-10-04.md"
-"docs/device-permissions.md" = "docs/device-permissions.md"
-"docs/evidence/device-permissions-2026-10-04.md" = "docs/evidence/device-permissions-2026-10-04.md"
-"docs/life-tools.md" = "docs/life-tools.md"
-"docs/design-life-tools.md" = "docs/design-life-tools.md"
-"docs/evidence/life-tools-2026-10-04.md" = "docs/evidence/life-tools-2026-10-04.md"
-"docs/evidence/life-tools-design-review-2026-10-04.md" = "docs/evidence/life-tools-design-review-2026-10-04.md"
-"docs/plans/life-tools-and-native-capture-2026-10-04.md" = "docs/plans/life-tools-and-native-capture-2026-10-04.md"
-"docs/capture-input.md" = "docs/capture-input.md"
-"docs/evidence/capture-input-2026-10-04.md" = "docs/evidence/capture-input-2026-10-04.md"
-"docs/evidence/capture-input-design-review-2026-10-04.md" = "docs/evidence/capture-input-design-review-2026-10-04.md"
-"docs/design-capture-input.md" = "docs/design-capture-input.md"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

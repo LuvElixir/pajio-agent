@@ -16,4 +16,4 @@ reviewer remaining：clear。
 
 该结果仅针对原三项和界面完成度，不证明原生功能、安装包或全平台发布通过。父任务后续真机发现旧 WebView 对话未通过，详见[真实验收](mobile-client-2026-10-04.md)。
 
-文档由 fresh documenter 增补 DESIGN.md、docs/design-mobile-client.md 和 .impeccable/design.json，保留既有设计规范及已确认品牌。
+文档由 fresh documenter 增补 DESIGN.md、docs/design/mobile-client.md 和 .impeccable/design.json，保留既有设计规范及已确认品牌。

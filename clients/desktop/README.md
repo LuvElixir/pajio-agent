@@ -6,7 +6,7 @@ The first launch offers **使用邀请码** (`https://pajio.luckyloading.com/joi
 
 Production builds do not show or accept custom server addresses. A valid legacy custom URL is replaced locally with the official origin, without contacting that URL; the user is asked to log in again. No cookies, tokens or records are copied between origins. Invalid settings remain on disk for recovery and are not used to connect. The native settings file only contains a URL.
 
-See [implementation and platform boundaries](../../docs/native-clients.md), [acceptance](../../docs/evidence/native-desktop-2026-10-04.md) and [design](../../docs/design-native-desktop.md).
+See [implementation and platform boundaries](../../docs/architecture/native-clients.md), [acceptance](../../docs/evidence/native-desktop-2026-10-04.md) and [design](../../docs/design/native-desktop.md).
 
 ```sh
 npm ci --ignore-scripts

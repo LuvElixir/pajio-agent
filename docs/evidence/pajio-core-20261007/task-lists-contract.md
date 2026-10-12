@@ -1,6 +1,6 @@
 # 我的清单：App / 服务端 / ZCode 只读接入合同
 
-日期：2026-10-08。依据 `docs/plans/life-tools-and-native-capture-2026-10-04.md` 的购物/行李/快速勾选及排序定义。
+日期：2026-10-08。依据 `docs/archive/plans/life-tools-and-native-capture-2026-10-04.md` 的购物/行李/快速勾选及排序定义。
 
 ## 已实现范围
 

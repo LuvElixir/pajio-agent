@@ -2,7 +2,7 @@
 
 更新于 2026-10-08。本文件按当前源码与隔离验收更新；`button-audit.md` 是最初审计快照，不能继续据其判定已补齐的按钮仍缺失。代码与合成测试通过不等于真机、生产环境或外部服务验收通过。
 
-产品依据仍为 `PRODUCT.md`、`DESIGN.md`、`docs/plans/app-first-experience-2026-10-06.md`、`life-tools-and-native-capture-2026-10-04.md`、`ios-personal-alpha-2026-10-06.md`、`now-intent-entry-2026-10-06.md`、`product-standard-review-2026-10-06.md`、`voice-streaming-2026-10-07.md`、`product-brand-ux-strategy-2026-10-07.md`、`product-validation-kit-2026-10-07.md`，以及 `docs/connector-service.md`、`device-connectors.md`、`personal-continuity.md`、`personal-memory.md`。名称 Pajio、睡衣小熊、C 图标、五入口和 App 优先采用用户后续决定；历史视觉和开发机状态不覆盖当前事实。
+产品依据仍为 `docs/archive/product-log-2026-09-30-to-10-10.md`、`DESIGN.md`、`docs/archive/plans/app-first-experience-2026-10-06.md`、`life-tools-and-native-capture-2026-10-04.md`、`ios-personal-alpha-2026-10-06.md`、`now-intent-entry-2026-10-06.md`、`product-standard-review-2026-10-06.md`、`voice-streaming-2026-10-07.md`、`product-brand-ux-strategy-2026-10-07.md`、`product-validation-kit-2026-10-07.md`，以及 `docs/architecture/connector-service.md`、`device-connectors.md`、`personal-continuity.md`、`personal-memory.md`。名称 Pajio、睡衣小熊、C 图标、五入口和 App 优先采用用户后续决定；历史视觉和开发机状态不覆盖当前事实。
 
 ## 当前判断
 
@@ -57,7 +57,7 @@
 | 试用限额与用量 | UsageBook 持久模型/ASR 次数、音频时长、并发预占、已花/未知分离；guard 实际包装支持的模型调用；NativeUsagePanel/API | 正式环境显式启用 PAJIO_TRIAL_LIMITS；实际支持模型/ASR达到限额停止新调用。当前是调用/时长限额，不是供应商金额账单或平台全局计费 | I+C+V；金额 B／P0-P2 |
 | 运行观察与支持 | 原探针/脱敏快照 + 定期HealthMonitor、最近7天持久采样/问题/恢复、可信owner投影、用户手动检查、24小时诊断导出；App已实际读取历史、检查状态、预览未发送的JSON报告 | 真环境杀引擎/断设备/断网、跨进程恢复待验证；采样不代表连续在线率。支持工单收件尚未接入，分享由用户选接收人 | I+B+V／P0 |
 | 数据与隐私 | IdentityExports + NativeDataPanel 当前身份可读 ZIP；注销已有可信 ownership/冻结、0002迁移/RLS、gateway 新近 OIDC/PKCE、限定回执凭证、HTTP/WSS 在途撤权。App 注销入口、本机按账户清理、限定凭证查进度及 waiting/completed 精确终态已接线。独立 operator 接持久作业、tenant tombstone/撤权/drain、固定 Tencent API 与读回证据；支持显式登记的专属按量 CVM/CBS/普通同区域快照 | 当前无真实注销/云资源清除证据；实际资产/存储完整性登记、专用凭据、保留政策及真机清理/查询需验收。共享空间按用户外部撤权、聊天 bot 上游凭据撤销未齐；在途未知动作、额外存储、回收站/保留快照阻止完成。waiting/completed 仍需新包原生验收；受理/冻结均不等于删除完成 | I+B+C+V／P0 |
-| 密码与代理登录（10月8日新增需求） | 已完成 [私密凭据方案](../../plans/pajio-private-credentials-2026-10-08.md) 和独立源码/官方资料审查：秘密留在保险库，由隔离组件填充，Agent仅得状态 | 保险库、原生安全管理、可信目标、独占登录租约与旁路隔离尚未实现；需防同UID终端、CDP、截图、AX、预植监听。未满足时由本人登录，不展示可用的私密自动填充 | B+V／P0隔离、P1能力 |
+| 密码与代理登录（10月8日新增需求） | 已完成 [私密凭据方案](../../archive/plans/pajio-private-credentials-2026-10-08.md) 和独立源码/官方资料审查：秘密留在保险库，由隔离组件填充，Agent仅得状态 | 保险库、原生安全管理、可信目标、独占登录租约与旁路隔离尚未实现；需防同UID终端、CDP、截图、AX、预植监听。未满足时由本人登录，不展示可用的私密自动填充 | B+V／P0隔离、P1能力 |
 | 品牌、日夜、衣橱 | Pajio、睡衣熊、八套衣服与动画、移除简洁标记、C 图标，源码与模拟器证据已有 | 签名包实际图标/名、低端帧率、减弱动态、Dynamic Type、深浅对比原生验收；不得以视觉完成代替能力交付 | I+V／P1 |
 | 电话、支付/收款、沙盒 | 原产品中的后续资源方向，当前未完整接入 | 产品电话/邮箱、支付/收款平台、sandbox 各自权限/账本/真回执；不把模拟下单、到登录页或已有命令行当业务完成 | B+C／P2 |
 
@@ -70,7 +70,7 @@
 - 真实路由/合成传输：`tests/test_qa_support.py` 13项；本轮诊断8项后端、9项TS；搜索8项后端、5项TS由搜索agent提供。QA+诊断+搜索共29项Python通过；本agent诊断TS、相关lint和全App tsc通过。root此前225项核心Python与367项TS通过是此前集合，不能将不同轮次相加成一个未跑过的全量结果。
 - 较早的路由挂载快照：[api-route-audit.md](api-route-audit.md) 与 [api-route-inventory.json](api-route-inventory.json) 记录18个 installer、127个 HTTP/WebSocket 路由及1个静态挂载，无重复或遮挡。该快照早于 native-actions、技能移除、结果选择与 gateway 注销扩展；其中“尚未实现”的段落及路由数量不能当成当前全量审计。本次未重跑全路由枚举。
 - 注销证据分层：[account-deletion-contract.md](account-deletion-contract.md) 的22项测试只证明作业核心与临时合成文件清除；其“未挂 gateway/未做控制面迁移”是历史状态，已由较新的 [control 契约](account-deletion-control-contract.md) 和 [gateway 契约](account-deletion-gateway-contract.md) 更新。后两者记录私有 Unix-socket PostgreSQL 迁移/RLS检查与模拟 OIDC/在途撤权回归。[operator 契约](account-deletion-operator-contract.md) 进一步记录可执行生产 adapter 的固定资源范围、tombstone、撤权/drain、云 API 独立读回和未接通的 shared/bot 边界；其开发验证使用临时库与假 Tencent CLI，没有真实云变更。不以源码或模拟回执宣称真实身份供应商或云资源已删除。
-- [原生命令](native-action-contract.md)、[技能移除](skills-remove-contract.md)、[结果选择](artifact-choice-contract.md)、[系统分享](../../../SHARE-INTAKE-CONTRACT.md)、[通知](notifications.md) 与 [安静时段](quiet-hours-contract.md) 记录各自软件范围、隔离验证与未验收边界。系统分享合同中的 root 接线清单已落实至 `Mobile.tsx`、`VoiceComposer.tsx`、`share-chat-drafts.ts`；原生候选包已使用Xcode模拟器标准临时签名重新构建，系统分享的App Group已实际可用；不是设备分发签名。本轮不将各份合同的测试数相加成一次全量结果。
+- [原生命令](native-action-contract.md)、[技能移除](skills-remove-contract.md)、[结果选择](artifact-choice-contract.md)、[系统分享](../../contracts/share-intake.md)、[通知](notifications.md) 与 [安静时段](quiet-hours-contract.md) 记录各自软件范围、隔离验证与未验收边界。系统分享合同中的 root 接线清单已落实至 `Mobile.tsx`、`VoiceComposer.tsx`、`share-chat-drafts.ts`；原生候选包已使用Xcode模拟器标准临时签名重新构建，系统分享的App Group已实际可用；不是设备分发签名。本轮不将各份合同的测试数相加成一次全量结果。
 - [文件分页](workspace-pages.md)、[简报](briefings-contract.md)、[结果查看](artifact-panel-contract.md)、[持久确认](durable-confirmations-contract.md)、[搜索](search-contract.md)、[诊断](diagnostics-contract.md) 保留各自契约。Web/Desktop 的 [button matrix](web-desktop-button-matrix.md) 是 ZCode 端侧记录，其中网页 UI 点击不替代 App 原生点击或手机授权。
 - [链接收藏合同](bookmarks-contract.md)、[对话引用范围合同](conversation-source-controls-contract.md)记录新能力的数据语义、owner/identity范围、幂等/冲突与未完成的真实验收。合同中的早期全App测试数和“待root挂线”条目以本页最新检查点为准；root挂线已经完成，两项新增原生流程见最新验收记录。收藏完整响应体的超时/账户切换中止已补回归；对话来源排除保留历史，不是彻底遗忘。
 - [Android交付检查](android-delivery-check.md)：隔离候选`/tmp/pajio-android-review-XKwtST`最终Android JS导出4113模块/8.6 MB、prebuild与32个Expo模块解析通过；选图恢复及邻接73项TS、3项分享插件测试通过。此后用户明确同意官方SDK许可，独立安装并校验JDK17与官方SDK，完成Gradle构建及MI 6X安装回读。独立APK位于 `~/Downloads/Pajio-test-20261008/`，SHA256 `1ca187b67c55dfdc10a9e83c7b4d8b97110ec2585d7f7f0876cd2edf47f7d4e3`；未完成Android真机功能验收，未使用付费构建。安装包详情以该检查文件为准，此局部测试集合不与682项全App测试相加。

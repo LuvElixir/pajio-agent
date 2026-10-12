@@ -45,7 +45,7 @@ The brand preview's 13 automatic style advisories compare it against legacy root
 
 The scene-verification standalone package passed a home-screen launch into the real Pajio chat on the iPhone Air iOS 27 simulator. The final icon and final native package remain pending selection and a later build; the startup crash is no longer the current blocker. Expo Go screenshots alone do not verify native resources. Physical-device interruption/real-network/system-font/overnight and push delivery were not retested by these checks. Market/user studies and subscription entitlements are not fabricated. Current-delegation attachment binding and cross-night notification/resilience remain separate engineering work; this brand/UX delivery does not silently mark them complete.
 
-Web/Desktop are assigned to ZCode with `docs/pajio-zcode-handoff-2026-10-07.md`. Completion requires its implementation and evidence, not this handoff document.
+Web/Desktop are assigned to ZCode with `docs/archive/handoffs/pajio-zcode-handoff-2026-10-07.md`. Completion requires its implementation and evidence, not this handoff document.
 
 ## Resumed UI verification
 

@@ -19,6 +19,6 @@ Review of the served Web UI while ZCode was implementing Desktop. These findings
 - Day palette, card separation and five-entry navigation are present when the viewport is at the top.
 - Night appearance and the eight outfit assets render. The original system theme was restored through UI and `aria-checked=true` confirmed. No outfit was saved by the independent review.
 
-ZCode's first delivery report is now present at `docs/pajio-zcode-delivery-2026-10-07.md`. Its declaration of completion does not close the findings above. A follow-up implementation and independent verification are pending.
+ZCode's first delivery report is now present at `docs/archive/handoffs/pajio-zcode-delivery-2026-10-07.md`. Its declaration of completion does not close the findings above. A follow-up implementation and independent verification are pending.
 
 No product business message/task was sent during review. The engineering follow-up was delivered to ZCode; this document does not yet establish that the findings are fixed.

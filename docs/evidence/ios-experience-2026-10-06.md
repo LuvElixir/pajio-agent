@@ -40,4 +40,4 @@
 
 iPhone真实录音/中断、键盘避让、触觉、边缘返回、Dynamic Type、VoiceOver及系统回收恢复尚未验收。生产登录、可达HTTPS服务、推送和真实Apple日历也不因示例可点而视为接通。账号归属确认与会员激活后再开始签名、设备安装和TestFlight路径。
 
-体验设计规则见 [iPhone设计记录](../design-ios-experience.md)，分阶段交付见 [内测计划](../plans/ios-personal-alpha-2026-10-06.md)。
+体验设计规则见 [iPhone设计记录](../design/ios-experience.md)，分阶段交付见 [内测计划](../archive/plans/ios-personal-alpha-2026-10-06.md)。

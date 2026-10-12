@@ -23,12 +23,12 @@
 
 ```sh
 say -v 'Tingting (中文（中国大陆）)' -o /tmp/pajio-voice-bench/sample.aiff '明天下午三点提醒我拿快递，周末想找一个人少一点的地方走走，预算五百块。'
-.venv/bin/python perf/bench/voice-warm.py --audio /tmp/pajio-voice-bench/sample.aiff --output perf/bench/voice-warm-20261007.json
+.venv/bin/python docs/archive/voice-perf-2026-10-07/bench/voice-warm.py --audio /tmp/pajio-voice-bench/sample.aiff --output docs/archive/voice-perf-2026-10-07/bench/voice-warm-20261007.json
 ```
 
-[完整原始结果](../../perf/bench/voice-warm-20261007.json) 保存素材 SHA-256、模型清单 SHA-256、运行时版本、源码 SHA-256、每一组顺序/耗时/转写及汇总。
+[完整原始结果](../archive/voice-perf-2026-10-07/bench/voice-warm-20261007.json) 保存素材 SHA-256、模型清单 SHA-256、运行时版本、源码 SHA-256、每一组顺序/耗时/转写及汇总。
 
-[旧冷进程基线](../../perf/bench/voice-cold-baseline.py) 冻结旧实现；[基准脚本](../../perf/bench/voice-warm.py) 独立测量新进程首请求，然后做十组 cold→warm / warm→cold 交替配对。每组顺序执行，无并发竞争。p95 使用 nearest-rank，因此十次采样下等于该组最大值。这个结果测量服务端本地转写，不包含 iPhone 录音停止、上传、SQLite、本机网络和界面展示时间，不能当作真机端到端延迟，也不能当作准确率评测。
+[旧冷进程基线](../archive/voice-perf-2026-10-07/bench/voice-cold-baseline.py) 冻结旧实现；[基准脚本](../archive/voice-perf-2026-10-07/bench/voice-warm.py) 独立测量新进程首请求，然后做十组 cold→warm / warm→cold 交替配对。每组顺序执行，无并发竞争。p95 使用 nearest-rank，因此十次采样下等于该组最大值。这个结果测量服务端本地转写，不包含 iPhone 录音停止、上传、SQLite、本机网络和界面展示时间，不能当作真机端到端延迟，也不能当作准确率评测。
 
 最终源码的十组结果：
 
@@ -47,4 +47,4 @@ p50 减少 17.0%。新解码器第一次请求仍需 3.0237 秒，不能把热�
 
 要进一步逼近即时口述体验，应让录音采集与网络上传/识别重叠，而不是等文件全部结束后才发起。火山官方提供两种可评估协议：[单向流式输入](https://docs.volcengine.com/docs/DoubaoVoice/unidirectional-streaming-automatic-speech-recognition-websocket?lang=zh) 适合语音输入法/IM，在句末输出完整结果；[双向实时识别](https://docs.volcengine.com/docs/DoubaoVoice/bidirectional-streaming-automatic-speech-recognition-websocket?lang=zh) 持续返回会修正的中间结果。它们的产品适用说明可以支持选型，但不能证明豆包或微信 App 内部采用了哪一种实现。
 
-若引入云识别，需要独立评估中文专名、口音、噪音、网络异常、费用与音频传输同意；本轮没有启用。已确认 Expo 57 提供实时 PCM 接口，当前整段输入是 Pajio 应用的实现方式，并非 Expo Go 的框架限制。后续接入见 [流式语音计划](../plans/voice-streaming-2026-10-07.md)。
+若引入云识别，需要独立评估中文专名、口音、噪音、网络异常、费用与音频传输同意；本轮没有启用。已确认 Expo 57 提供实时 PCM 接口，当前整段输入是 Pajio 应用的实现方式，并非 Expo Go 的框架限制。后续接入见 [流式语音计划](../archive/plans/voice-streaming-2026-10-07.md)。

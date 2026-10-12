@@ -14,4 +14,4 @@
 
 **disposition: ship**
 
-独立 documenter 将实际增量记录在 `DESIGN.md`、`.impeccable/design.json` 与 [生活工具设计](../design-life-tools.md)，保留既有品牌内容和组件，不把局部尺寸推广为全局规范。
+独立 documenter 将实际增量记录在 `DESIGN.md`、`.impeccable/design.json` 与 [生活工具设计](../design/life-tools.md)，保留既有品牌内容和组件，不把局部尺寸推广为全局规范。

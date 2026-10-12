@@ -4,7 +4,7 @@
 
 ## 现状和原始承诺
 
-- `PRODUCT.md`“个人记忆与检索”、`docs/personal-memory.md` 定义：Hermes native memory + session_search；完整遗忘尚未实现，不另造向量库。`src/pajio/identity.md` 也明确移除个人记忆不等于删掉全部历史。
+- `docs/archive/product-log-2026-09-30-to-10-10.md`“个人记忆与检索”、`docs/features/memory.md` 定义：Hermes native memory + session_search；完整遗忘尚未实现，不另造向量库。`src/pajio/identity.md` 也明确移除个人记忆不等于删掉全部历史。
 - `memory_controls.mutate_memory` 仅 CAS 修改当前身份的 `USER.md` 或 `MEMORY.md` 条目；`set_memory_enabled` 仅改变内建记忆的后续读取/写入标志。两者都没有会话抑制、来源标签或遗忘 journal。
 - `MemoryEditor` 已显示“本页只管理当前身份条目；聊天、其他记忆页、文件和已完成任务保留”，清空确认也只承诺本页。这些界限应保留。
 - `/api/memory` 由 app token 与 identity 路由保护，转交该 identity 的 Hermes client。并非 owner 私有存储；所有获准访问此身份的账户按既有共享语义管理同一记忆页。没有独立 memory admin/条目作者权限。

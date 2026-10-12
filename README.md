@@ -1,84 +1,57 @@
-![Pajio · Your personal agent](design/brand/pajio/signature.png)
+![Pajio](design/brand/pajio/signature.png)
 
 <p align="center"><strong>English</strong> · <a href="README.zh-CN.md">简体中文</a></p>
-<p align="center"><a href="docs/getting-started.md">Get started</a> · <a href="docs/progress.md">Current progress</a> · <a href="design/brand/pajio/README.md">Brand and character</a></p>
+<p align="center"><a href="PRODUCT.md">Product route</a> · <a href="docs/roadmap.md">Roadmap</a> · <a href="docs/getting-started.md">Run locally</a> · <a href="docs/README.md">Docs</a></p>
 
-# A personal agent you can keep working with
+# Pajio
 
-Pajio is being built around an ongoing relationship with one person. Conversations retain their context, goals carry their progress forward, and the agent can work with connected files and devices within the access you provide.
+Pajio is a personal Agent platform. Each user gets an isolated runtime plus a dedicated cloud computer and cloud phone, so the Agent can operate on the user's behalf. Personas are pluggable packs distributed one-to-one through invitation codes; the default persona is the pajama bear.
 
-You can return to a conversation, correct a remembered preference, or continue a goal you have already discussed. Separate identities keep their own conversations and file spaces. When a task returns a result, you can review the evidence before marking it verified.
+Pajio is in a **small, invitation-only closed test in mainland China**. The route and its boundaries are defined in [PRODUCT.md](PRODUCT.md) (Chinese).
 
-The current release is a **0.2 local development build**. A cloud service with a separate runtime for each person is under development.
+## Repository layout
 
-## What stays with you
-
-| Capability | In the current build |
+| Path | Contents |
 | --- | --- |
-| Conversation | Original messages, shared multi-turn sessions, and recovery after a page refresh. |
-| Memory | Inspectable preferences and memory entries, with correction and retrieval of past conversations. |
-| Daily tools | Built-in calendar, grouped todos and short notes; direct editing and the agent share the same identity-scoped records, with recoverable removal and revision checks. |
-| Goals | Saved scope and progress, bounded continuation, follow-up discussion, pause, and human review. |
-| Identity | Separate conversations and file spaces for each identity. |
-| Action | File access, local Mac control, and Android connections, with device-specific acceptance records. |
-
-## How Pajio works
-
-```mermaid
-flowchart TB
-  U[You] <--> W[Pajio conversation]
-  W <--> M[Identity and memory]
-  W <--> G[Goals and progress]
-  W --> R[Pajio personal runtime]
-  R --> H[Hermes agent components]
-  H --> F[Files and connected devices]
-  F --> V[Result and human verification]
-  V --> W
-  style W fill:#edf1ff,stroke:#4264df,color:#29313c
-  style R fill:#4264df,stroke:#4264df,color:#fff
-  style V fill:#faf5eb,stroke:#c8bcaa,color:#29313c
-```
-
-Pajio owns the product identity, personal context, goal lifecycle, and interface. Its personal runtime reuses selected Hermes components. The upstream engine is installed separately at a pinned revision, with its license retained.
+| `src/pajio/` | Python core: FastAPI service, CLI, Hermes integration, goals, memory, devices, usage |
+| `src/pajio/cloud/` | Cloud control plane: OIDC gateway, invitations, tenant workers, PostgreSQL, device provisioning |
+| `src/pajio/connectors/` | Device connectors: filesystem, Android, remote devices |
+| `src/pajio/web/` | Web client (role under review, see the roadmap) |
+| `clients/mobile/` | Native app: React Native / Expo, the primary client |
+| `clients/desktop/` | Desktop preview: a Tauri shell, to be replaced by a native implementation |
+| `native/private-input/` | Android private input method |
+| `deploy/` | Control plane, tenant VM, on-prem host and Keycloak deployment files |
+| `design/` | Pajio brand files and the pajama bear character and motion assets |
+| `docs/` | Architecture, features, operations, decisions and acceptance records — see the [docs index](docs/README.md) |
 
 ## Run locally
 
 Python 3.11+ and uv are required.
 
 ```bash
-git clone https://github.com/LuvElixir/pajio.git
-cd pajio
 uv sync --extra dev
 uv run pajio serve
 ```
 
-Open **http://127.0.0.1:8765**. Follow the connection panel to install the local engine and configure a model. You can also use the CLI.
+Open **http://127.0.0.1:8765** and follow the connection panel to install the engine and configure a model, or use the CLI:
 
 ```bash
 uv run pajio engine install
 uv run pajio engine model
 ```
 
-Messages can be saved before a model is connected. Real agent responses and execution require a working engine and model connection. Local state is stored in the private `.pajio/` directory and is excluded from Git.
+Local state lives in `.pajio/` and is excluded from Git.
 
-## Development status
+## Tests
 
-Local Mac behavior and selected Android flows have been exercised on real devices. Windows support still needs device acceptance. The local service listens on loopback.
+```bash
+uv run pytest -q
+node --test tests/*.cjs
+cd clients/mobile && npm test && ./node_modules/.bin/tsc --noEmit
+```
 
-The SaaS foundation includes tenant workers, OIDC routing, and PostgreSQL isolation. Production identity-provider integration, TLS, per-user VM provisioning, and remote device transport are still being connected. See the [progress record](docs/progress.md) for the verified scope of each capability.
+Tests that need an installed engine or a disposable PostgreSQL cluster are skipped when those are unavailable.
 
-| Start here | What it covers |
-| --- | --- |
-| [Getting started](docs/getting-started.md) | Engine, model, computer, and phone setup. |
-| [Personal continuity](docs/personal-continuity.md) | Goals, continuation, and review. |
-| [Personal memory](docs/personal-memory.md) | Preferences, memory, and conversation search. |
-| [Daily tools](docs/life-tools.md) | Calendar, todos, notes, shared agent access and current native-input boundaries. |
-| [Native clients](docs/native-clients.md) | Mac desktop preview, shared records and mobile implementation boundaries. |
-| [Mobile client](docs/mobile-client.md) | React Native / Expo capture, offline outbox and device acceptance boundaries. |
-| [Engine productization](docs/engine-productization.md) | Pajio's runtime and upstream boundaries. |
-| [SaaS architecture](docs/saas-architecture-2026-10-03.md) | Tenant isolation and implementation sequence. |
-| [Technical reference](README.reference.md) | Detailed setup and acceptance links. |
-
-Run `uv run pytest -q` for the Python suite. Tests requiring an installed engine or a disposable PostgreSQL test cluster are conditional. The [third-party notices](THIRD_PARTY_NOTICES.md) record upstream components. [SOURCE-SNAPSHOT.json](SOURCE-SNAPSHOT.json) preserves the initial October 3 source inventory; the current source is identified by its Git commit.
+Upstream components and licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 <p align="center">Built at <a href="https://luckyloading.com/">Luckyloading</a></p>

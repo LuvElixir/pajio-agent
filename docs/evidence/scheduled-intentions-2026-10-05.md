@@ -38,6 +38,6 @@ Impeccable fresh-context reviewer：`disposition: ship`。四张桌面/手机表
 
 ## 未完成边界
 
-本轮是时间唤醒通用层，不是完整自主生活管家。事件唤醒、按事项费用硬上限、可追溯且有时效的上下文、系统推送、完整网页/skills 能力供给、账单导入与真实支付交接仍在后续规划。它没有启用 Hermes 原生 Gateway cron，也没有添加固定生活业务 workflow。详见 `docs/personal-proactivity.md`。
+本轮是时间唤醒通用层，不是完整自主生活管家。事件唤醒、按事项费用硬上限、可追溯且有时效的上下文、系统推送、完整网页/skills 能力供给、账单导入与真实支付交接仍在后续规划。它没有启用 Hermes 原生 Gateway cron，也没有添加固定生活业务 workflow。详见 `docs/features/proactivity.md`。
 
 日常身份隔离不等于独立租户 VM 隔离。当前单实例调度不会自动解决跨设备重放、外部业务 exactly-once 或多 worker 并发。

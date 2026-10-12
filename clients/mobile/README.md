@@ -2,7 +2,7 @@
 
 React Native + Expo 57 的手机客户端开发基础。沿用 Pajio 的角色、字标及同一 `/api/life`、`/api/captures` 记录，不另建数据后台。
 
-已在小米 6X Android 9 的 Expo Go 57.0.9 中运行，验证拍照、录音、离线重启与恢复同步；也可运行同源码网页预览；Android/iOS 的 JS/Hermes 运行资源已导出，尚未交付 APK/IPA。完整验收与限制见 [手机客户端](../../docs/mobile-client.md)。
+已在小米 6X Android 9 的 Expo Go 57.0.9 中运行，验证拍照、录音、离线重启与恢复同步；也可运行同源码网页预览；Android/iOS 的 JS/Hermes 运行资源已导出，尚未交付 APK/IPA。完整验收与限制见 [手机客户端](../../docs/architecture/mobile-client.md)。
 
 ```sh
 cd clients/mobile

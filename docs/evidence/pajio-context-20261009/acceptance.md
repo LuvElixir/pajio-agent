@@ -46,7 +46,7 @@ iOS 隔离候选已完成 `Release iphonesimulator arm64` 构建、签名验证�
 
 [native-flow-requests.json](native-flow-requests.json) 是共享 8892 服务的早期审计快照：其中 3 次 POST 只有 1 次属于原生确认路径，不能合并成 3 次原生验收。后续 root 在独立桌面壳真实点击完成文件选择、预览、确认、重开读回、来源详情、两步删除与关闭，新增 1 个自建合成批次已清理；详见 [desktop-ui-check.md](desktop-ui-check.md) 与 [桌面删除检查](desktop-delete-check.json)。
 
-ZCode 按 `docs/plans/pajio-chat-import-zcode-handoff-2026-10-09.md` 只读 App 后实现 Web / Desktop；其浏览器点击链与源码交付见 [zcode-delivery.md](zcode-delivery.md)。[独立真实模块复核](web-review-check.md) 发现并推动修复了异步切账户串草稿、关闭/冻结后仍提交、超大文件读取过早、存储删除失败误报、入口与关闭接线问题；最后一次同时拒绝 get/remove 的存储边界也已复验通过。桌面和浏览器结果分别记录，没有以浏览器通过替代桌面通过。
+ZCode 按 `docs/archive/plans/pajio-chat-import-zcode-handoff-2026-10-09.md` 只读 App 后实现 Web / Desktop；其浏览器点击链与源码交付见 [zcode-delivery.md](zcode-delivery.md)。[独立真实模块复核](web-review-check.md) 发现并推动修复了异步切账户串草稿、关闭/冻结后仍提交、超大文件读取过早、存储删除失败误报、入口与关闭接线问题；最后一次同时拒绝 get/remove 的存储边界也已复验通过。桌面和浏览器结果分别记录，没有以浏览器通过替代桌面通过。
 
 ## 仍需完成的产品链路
 
