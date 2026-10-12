@@ -29,6 +29,8 @@ Pajio is in a **small, invitation-only closed test in mainland China**. The rout
 Python 3.11+ and uv are required.
 
 ```bash
+git clone https://github.com/LuvElixir/pajio-agent.git
+cd pajio-agent
 uv sync --extra dev
 uv run pajio serve
 ```

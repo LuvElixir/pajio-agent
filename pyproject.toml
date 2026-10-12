@@ -38,6 +38,9 @@ private-media = ["aiortc>=1.14,<2", "mss>=10,<11"]
 [project.scripts]
 pajio = "pajio.cli:main"
 
+[project.urls]
+Repository = "https://github.com/LuvElixir/pajio-agent"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/pajio"]
 # Include web assets explicitly, regardless of inherited VCS ignore rules.

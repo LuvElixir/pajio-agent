@@ -29,6 +29,8 @@ Pajio 是一套个人 Agent 底座。每位用户拥有独立的运行环境，�
 需要 Python 3.11+ 和 uv。
 
 ```bash
+git clone https://github.com/LuvElixir/pajio-agent.git
+cd pajio-agent
 uv sync --extra dev
 uv run pajio serve
 ```
