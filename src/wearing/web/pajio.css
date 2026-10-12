@@ -49,22 +49,18 @@ html:not(.mobile-host) #activity-return{position:sticky;top:calc(var(--pajio-hea
 
 /* ---------- 聊天：平静正文，单一进展入口 ---------- */
 html:not(.mobile-host) .welcome{flex-direction:column;justify-content:center;gap:14px;min-height:calc(100svh - 330px)}
-html:not(.mobile-host) .welcome .presence{display:none}
 html:not(.mobile-host) .welcome-copy{max-width:600px;text-align:center;padding:0}
 html:not(.mobile-host) .welcome h1{font-size:34px;letter-spacing:-.5px;margin:0 0 10px}
 html:not(.mobile-host) .welcome .welcome-copy>p{font-size:15px}
 html:not(.mobile-host) .welcome-bear{display:block;width:200px;margin:0 auto}
 html:not(.mobile-host) .message-assistant{gap:0}
-html:not(.mobile-host) .wearing-face{display:none}
 html:not(.mobile-host) .assistant-copy{background:transparent;border:0;border-radius:0;padding:2px 0;color:var(--ink)}
 html:not(.mobile-host) .assistant-content{padding-top:0}
 html:not(.mobile-host) .user-bubble{background:var(--soft);color:var(--ink);border-radius:20px 20px 6px 20px}
 html:not(.mobile-host) .message .delivery-note{margin-left:0}
 html:not(.mobile-host) .turn-tools{gap:14px;margin-top:10px}
-html:not(.mobile-host) .companion-seat{display:none}
 html:not(.mobile-host) .companion-bar{min-height:64px}
 html:not(.mobile-host) .goal-updates-summary{display:none!important}
-html:not(.mobile-host) .desktop-input-heading>img{display:none}
 html:not(.mobile-host) .life-heading img{display:none}
 html:not(.mobile-host) #activity-return{align-items:center;gap:12px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
 html:not(.mobile-host) #activity-return .nav-chip{display:grid;place-items:center;width:52px;height:52px;flex:0 0 auto}

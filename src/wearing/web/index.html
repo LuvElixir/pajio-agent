@@ -17,9 +17,7 @@
   <link rel="stylesheet" href="/assets/schedules.css?v=1">
   <script src="/assets/scoped-store.js?v=3" defer></script>
   <script src="/assets/request-id.js?v=1" defer></script>
-  <script src="/assets/presence.js?v=5" defer></script>
   <script src="/assets/research.js?v=2" defer></script>
-  <script src="/assets/face.js?v=4" defer></script>
   <script src="/assets/artifacts.js?v=4" defer></script>
   <script src="/assets/conversation-drafts.js?v=1" defer></script>
   <script src="/assets/conversation-submissions.js?v=2" defer></script>
@@ -63,13 +61,6 @@
   <script src="/assets/native-composer.js?v=1" defer></script>
 </head>
 <body>
-<!-- COMFORT: Established Wearing world refinement; comp A selected by delegated judgment. A stable side rail, single capture surface, actual day/tasks/notes, thumb navigation on phones. Native chrome, keyboard focus and reduced-motion are functional adaptations. See .impeccable/surfaces/comfort.md. FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->
-<!-- THESIS: A continuous personal conversation with Wearing, a small living presence that acts with you.
-OWN-WORLD: Full cream and cobalt sleeve character, white space, soft blue conversation, quiet human typography.
-STORY: Arrive, speak freely, continue the same conversation; real actions and results return in context.
-FIRST VIEWPORT: Small wordmark, full character beside a greeting, an open invitation, a bottom conversation field.
-FORM: Presence beside the conversation; grounded structure 3, seed b2a311f4. Approved Wearing IP governs the world.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->
 <a class="skip-link" href="#life-main">跳转到内容</a>
 <header class="app-header">
   <div class="brand-context"><a class="wordmark" href="#conversation-main" aria-label="Pajio · 回到聊天"><svg class="pajio-wordmark" viewBox="12 20 574 240" width="72" height="30" role="img" aria-hidden="true" fill="currentColor"><path fill-rule="evenodd" d="M36 32H94C132 32 156 54 156 90C156 125 134 148 96 148H56V196C56 203 51 206 41 206C31 206 26 203 26 196V43C26 36 30 32 36 32ZM56 59V121H94C115 121 128 109 128 90C128 70 115 59 94 59Z"/><path fill-rule="evenodd" d="M219 77C184 77 161 103 161 143C161 182 184 208 219 208C240 208 254 198 262 184V193C262 201 267 206 276 206C285 206 290 201 290 193V93C290 85 285 80 276 80C267 80 262 85 262 93V102C254 87 240 77 219 77ZM224 104C202 104 189 120 189 143C189 166 202 181 224 181C247 181 262 166 262 143C262 120 247 104 224 104Z"/><path fill-rule="evenodd" d="M322 93C322 85 327 81 336 81C345 81 350 85 350 93V202C350 234 331 252 300 252C286 252 277 247 277 237C277 230 282 225 289 225C294 225 296 226 300 226C314 226 322 217 322 202ZM351 47A15 15 0 1 1 321 47A15 15 0 1 1 351 47Z"/><path fill-rule="evenodd" d="M384 93C384 85 389 81 398 81C407 81 412 85 412 93V195C412 203 407 206 398 206C389 206 384 203 384 195ZM413 47A15 15 0 1 1 383 47A15 15 0 1 1 413 47Z"/><path fill-rule="evenodd" d="M508 77C548 77 572 103 572 143C572 183 548 209 508 209C468 209 444 183 444 143C444 103 468 77 508 77ZM508 104C486 104 472 120 472 143C472 167 486 182 508 182C530 182 544 167 544 143C544 120 530 104 508 104Z"/></svg><span class="now-name">Pajio</span></a><button class="identity-pill" id="open-identities" aria-haspopup="dialog" aria-label="切换身份" disabled><span class="identity-pip" aria-hidden="true"></span><span id="identity-name">日常</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button></div>
@@ -84,12 +75,6 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 </header>
 <p class="identity-context" id="identity-context" aria-live="polite"></p>
 <button class="identity-running" id="identity-running" hidden></button>
-<!-- THESIS: Everyday records and Wearing share one place; a small useful action begins a calendar habit.
-OWN-WORLD: Existing cobalt sleeve IP, near-white surfaces, rounded controls and quiet system typography.
-STORY: Jot a thought, give a small task a place, see the day; edit directly or ask Wearing to help.
-FIRST VIEWPORT: One chat entry, identity, and a secondary review panel. Calendar, tasks and notes remain review destinations.
-FORM: Extension of the approved Wearing conversation; no new identity or visual-world selection.
-FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md -->
 <dialog id="review-panel" class="side-panel review-panel" aria-labelledby="review-title">
   <div class="panel-header"><h2 id="review-title">更多</h2><button class="icon-button" data-close="review-panel" aria-label="关闭更多"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button></div>
 <div class="review-more">  <nav aria-label="Pajio 导航">
@@ -105,7 +90,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <main id="life-main" class="life-main" tabindex="-1" hidden>
   <header class="life-heading">
     <div><h1 id="life-title">补记记录</h1><p id="life-subtitle">也可以直接核对和修改已有内容。</p></div>
-    <img id="life-greeting-avatar" src="/assets/companion-portrait.png?v=1" width="64" height="64" alt="Pajio 在这里">
+    <span id="life-greeting-avatar" class="life-greeting-avatar" data-pajio-bear="64" aria-hidden="true"></span>
     <button id="life-add" class="quiet-button" hidden>新建</button>
     <button id="life-series-add" class="quiet-button" type="button" data-series-manage hidden>重复日程</button>
   </header>
@@ -156,30 +141,21 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 <main id="conversation-main" tabindex="-1">
   <button id="activity-return" class="activity-return" hidden aria-haspopup="dialog"><span class="nav-chip" data-pajio-chip="progress"></span><span><strong id="activity-return-title"></strong><span id="activity-return-detail" class="activity-return-detail"></span></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button>
   <section id="goal-updates-summary" class="updates-summary" hidden aria-label="Pajio 的新进展">
-    <img src="/assets/companion-portrait.png?v=1" width="30" height="30" alt="">
+    <span data-pajio-bear="30" aria-hidden="true"></span>
     <div><p id="goal-updates-greeting"></p><span id="goal-updates-preview"></span></div>
     <button id="open-goal-updates" class="text-button">看看进展</button>
   </section>
   <section class="welcome" id="welcome" aria-labelledby="welcome-title">
-    <div class="presence" id="presence">
-      <button type="button" class="character-stage" id="character-stage" aria-label="叫一下 Pajio">
-        
-        <video id="character-video" muted playsinline preload="metadata" aria-hidden="true" hidden></video>
-        <video id="character-video-next" muted playsinline preload="metadata" aria-hidden="true" hidden></video>
-        <img id="character-poster" src="/assets/character-poster.png?v=4" alt="Pajio 旧形象（已停用）">
-      </button>
-    </div>
     <div class="welcome-copy"><span class="welcome-bear" data-pajio-bear="200" aria-hidden="true"></span><h1 id="welcome-title">你说，我来做。</h1><p>交代一件事，随时回来看进展。</p></div>
   </section>
   <section class="conversation" id="conversation" aria-label="你和 Pajio 的对话" hidden>
-    <div class="conversation-intro"><img src="/assets/chat-portrait.png?v=1" alt="" width="32" height="32"><span>接着聊，我在这里。</span></div>
+    <div class="conversation-intro"><span data-pajio-bear="32" aria-hidden="true"></span><span>接着聊，我在这里。</span></div>
     <div id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
     <button id="newest-message" class="newest-message" hidden>回到最新消息 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14m-6-6 6 6 6-6"/></svg></button>
   </section>
   <section id="desktop-input-section" class="desktop-input-section" hidden aria-label="电脑操作确认"><div id="desktop-input-cards" aria-live="polite"></div><p id="desktop-input-feedback" class="inline-feedback" role="status"></p></section>
   <div class="composer-dock">
     <div class="companion-bar" id="companion-bar" hidden>
-      <div id="companion-seat" class="companion-seat"></div>
       <div class="companion-copy"><p id="companion-line">说一声，我来做。</p><span id="companion-detail">交代要做的事，有进展会回到这里。</span></div>
       <button type="button" id="companion-stop" class="soft-button" hidden>先停一下</button>
       <button type="button" id="computer-takeover" class="soft-button" hidden>我来接管</button>
@@ -303,8 +279,6 @@ hermes gateway</pre><p>工具权限与设备控制需要在执行电脑上验证
 <dialog id="keeps-panel" class="side-panel" aria-labelledby="keeps-title">
   <div class="panel-header"><h2 id="keeps-title">目标与定时任务</h2><button class="icon-button" data-close="keeps-panel" aria-label="关闭记录"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"/></svg></button></div>
   <p class="panel-lead">有些事情，需要一起惦记得久一点。</p>
-  <!-- SCHEDULES: An extension of the existing keeps panel. Operate mode; one save action,
-  quiet rows, existing cobalt/system type, current 3D presence unchanged. No workflow gallery. -->
   <section id="schedules-section" class="schedules-section" aria-labelledby="schedules-heading">
     <div class="schedule-heading"><div><h3 id="schedules-heading">到时我来</h3><p>交代一次，我会按约定回来。</p></div><button id="new-schedule" class="text-button" type="button">添个安排</button></div>
     <div id="schedules-list"><p class="field-help">正在查看安排……</p></div>

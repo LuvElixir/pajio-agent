@@ -78,7 +78,6 @@ button:not(:disabled):active{transform:scale(.98)}
  .life-main{margin-top:64px}
  #conversation-main{padding-top:28px}
  .welcome{min-height:calc(100svh - 195px);gap:25px;padding:24px 30px}
- .presence{width:clamp(260px,32vw,400px);flex-basis:clamp(260px,32vw,400px)}
  .welcome h1{font-size:44px}
  .welcome-copy{max-width:320px}
  .conversation{min-height:calc(100svh - 220px);margin-top:32px;padding:0 32px}

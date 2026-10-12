@@ -82,7 +82,7 @@ function turnMarkup(message){
   const goalContext=message.goal_id&&!isGoal?`<div class="goal-conversation-label"><button class="text-button" data-goal="${esc(message.goal_id)}">${message.goal_mode==="note"?"补充新情况":"聊聊这件事"} · ${esc(message.goal_title)}</button></div>`:"";
   const user=isSchedule?`<div class="goal-conversation-label"><button class="text-button" data-open-schedule="${esc(message.schedule_id)}">${message.trigger==="life_change"?"有变化，我来看看":"到时我来"}：${esc(message.content)}</button></div>`:message.kind==="goal_step"?`<div class="goal-conversation-label"><button class="text-button" data-goal="${esc(message.goal_id)}">一起记着：${esc(message.content)}</button></div>`:goalContext+`<div class="message message-user"><div class="user-bubble">${esc(message.content)}</div></div>`;
   let response="";
-  if(turn.output){response=`<div class="message message-assistant">${wearingFaceMarkup()}<div class="assistant-content"><div class="assistant-copy">${esc(turn.output)}</div>${artifactMarkup(turn.artifacts)}${researchMarkup(turn.research,turn.id)}${turnActions(turn)}${turn.verification_note?`<p class="note-saved">核对记录：${esc(turn.verification_note)}</p>`:""}<div id="verify-${esc(id)}"></div></div></div>`;}
+  if(turn.output){response=`<div class="message message-assistant"><div class="assistant-content"><div class="assistant-copy">${esc(turn.output)}</div>${artifactMarkup(turn.artifacts)}${researchMarkup(turn.research,turn.id)}${turnActions(turn)}${turn.verification_note?`<p class="note-saved">核对记录：${esc(turn.verification_note)}</p>`:""}<div id="verify-${esc(id)}"></div></div></div>`;}
   if(!turn.output&&turn.artifacts?.length)response+=`<div class="message message-assistant artifact-message"><div class="artifact-avatar-space" aria-hidden="true"></div><div class="assistant-content">${artifactMarkup(turn.artifacts)}</div></div>`;
   if(turn.status==="draft"&&isSchedule)response+='<div class="delivery-note"><p>这次安排正在等候执行；超过有效时间会跳过。</p></div>';
   if(turn.status==="draft"&&isGoal)response+=`<div class="delivery-note"><p>${state.connected?"这一步已安排，轮到时会自动推进。":"这一步等待连接恢复。目标与约定仍然保留。"}</p><button class="text-button" data-goal="${esc(message.goal_id)}">查看目标与进展</button></div>`;
@@ -92,11 +92,11 @@ function turnMarkup(message){
     const note=isRecovery?(state.connected?"这次重新核对还没有开始；点按钮并再确认一次后才会送出，不会直接执行原提案。":"这次重新核对已经保留。连接 Pajio 后，才能继续。"):state.connected?"这条还没有送出。你可以从这里继续。":"这句话已经保留。连接 Pajio 后，才能获得真实回应。";
     response+=`<div class="delivery-note"><p>${note}</p>${turn.blocked_reason?`<p class="muted">${esc(turn.blocked_reason)}</p>`:""}${turn.can_retry===false?"":`<button class="text-button" ${state.connected?`data-action="start" data-task="${esc(id)}"`:'data-open-settings'}>${startLabel}</button>`}${turn.can_cancel===true?`<button class="text-button" data-action="cancel-message" data-task="${esc(id)}">撤回这条</button>`:""}</div>`;
   }
-  if(["starting","running","stopping"].includes(turn.status)&&!turn.output)response+=`<div class="message response-wait">${wearingFaceMarkup()}<span>${turn.status==="stopping"?"正在等待本轮停止……":"Pajio 正在回应……"}</span></div>`;
+  if(["starting","running","stopping"].includes(turn.status)&&!turn.output)response+=`<div class="message response-wait"><span>${turn.status==="stopping"?"正在等待本轮停止……":"Pajio 正在回应……"}</span></div>`;
   if(["connection_lost","ambiguous","failed"].includes(turn.status))response+=`<div class="delivery-note error"><p>${esc(failureText(turn))}</p>${turnActions(turn)}${["connection_lost","ambiguous"].includes(turn.status)?`<details class="setup-guide"><summary>已在执行电脑上处理完毕</summary><p>确认原运行和设备操作已经结束后，记录处理结果。这不会替你终止远端进程。</p><form class="note-form decision-card" data-resolve="${esc(id)}"><label for="resolve-${esc(id)}">处理记录</label><textarea id="resolve-${esc(id)}" name="note" required minlength="5" maxlength="2000"></textarea><button class="secondary">记录并结束</button></form></details>`:""}</div>`;
   if(turn.status==="waiting_for_approval"){
     const a=turn.approval;
-    response+=a?.kind==="desktop_input"?`<div class="delivery-note">${a.desktop_unavailable?"这一步的界面或运行已经变化，等待执行端结束确认。":"任务交托在下方，交给我后会接着处理。"}</div>`:a?.request_id?`<div class="message message-assistant">${wearingFaceMarkup()}<div class="assistant-content">${WearingConfirmations.pending(id,a,pendingDecisions.has(id+":"+a.request_id))}</div></div>`:`<div class="delivery-note">执行端有一步等待确认，但还没有返回完整内容。${turnActions(turn)}</div>`;
+    response+=a?.kind==="desktop_input"?`<div class="delivery-note">${a.desktop_unavailable?"这一步的界面或运行已经变化，等待执行端结束确认。":"任务交托在下方，交给我后会接着处理。"}</div>`:a?.request_id?`<div class="message message-assistant"><div class="assistant-content">${WearingConfirmations.pending(id,a,pendingDecisions.has(id+":"+a.request_id))}</div></div>`:`<div class="delivery-note">执行端有一步等待确认，但还没有返回完整内容。${turnActions(turn)}</div>`;
   }
   const decisionHistory=WearingConfirmations.history(turn.confirmations,turn.status==="waiting_for_approval"?turn.approval?.request_id:null);
   if(decisionHistory)response+=`<div class="message message-assistant"><div class="artifact-avatar-space" aria-hidden="true"></div><div class="assistant-content">${decisionHistory}</div></div>`;
@@ -497,18 +497,12 @@ $("phone-resources").addEventListener("click",event=>{
   busy(button,async()=>{const action=button.dataset.phoneAction;await api(`/api/phone/${action}`,{method:"POST",body:JSON.stringify({resource_id:button.dataset.resourceId})});$("phone-feedback").textContent=action==="pause"?"已暂停这部手机的新操作；已经发出的动作可能仍需片刻返回。":"这部手机已恢复使用。";await loadPhone();});
 });
 
-// One physical character moves from the welcome scene to the conversation.
-// Reparenting keeps the same decoded video and its current frame.
-let companionMode="idle",presencePlayer=null;
+let companionMode="idle";
 const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)");
-function motionStopped(){return reduceMotion.matches;}
+function syncMotion(){state.motionPaused=reduceMotion.matches;document.body.classList.toggle("motion-paused",reduceMotion.matches);}
+reduceMotion.addEventListener("change",syncMotion);
 function updateCompanion(){
-  const chatting=state.messages.length>0;
-  const seat=chatting?$("companion-seat"):$("welcome");
-  if($("presence").parentElement!==seat){
-    if(chatting)seat.append($("presence"));else seat.prepend($("presence"));
-  }
-  $("companion-bar").hidden=!chatting;
+  $("companion-bar").hidden=!state.messages.length;
   const turn=state.messages.find(m=>active.has(m.turn.status))?.turn;
   let mode="idle",line="说一声，我来做。",detail="交代要做的事，有进展会回到这里。";
   if(!state.connected){mode="offline";line="先把想法留在这里。";detail="连接恢复后，就能接着聊。";}
@@ -529,7 +523,7 @@ function updateCompanion(){
     mode="handoff";line="电脑交给你，我先等一等。";detail="接管期间，电脑读取和操作都已暂停。";
   }
   $("companion-line").textContent=line;$("companion-detail").textContent=detail;
-  $("presence").dataset.mood=mode;$("companion-bar").dataset.mood=mode;
+  $("companion-bar").dataset.mood=mode;
   $("companion-stop").hidden=!turn?.run_id||["stopping","waiting_for_approval"].includes(turn.status);
   $("companion-stop").dataset.task=turn?.id||"";
   const remote=state.remoteDevices.filter(r=>r.kind==='computer'&&r.methods.includes('computer.input'));
@@ -538,27 +532,8 @@ function updateCompanion(){
   $("computer-takeover").textContent=state.deployment==='cloud'?(remoteComputer?.control_pending?'正在交接……':remoteComputer?.control_pending?'正在交接……':remoteComputer?.paused?'查看并交还':'我来接管'):computer?.control?.holder==='human'?'交回 Pajio':'我来接管';
   $("computer-takeover").disabled=!!remoteComputer?.control_pending;
   companionMode=mode;
-  presencePlayer?.setState(mode==="offline"?"idle":mode==="handoff"?"waiting":mode==="working"?(state.sending||turn?.status==="starting"?"working":"thinking"):mode);
-  syncMotion();
 }
-function syncMotion(){presencePlayer?.sync();}
-async function loadCharacter(){
-  if(document.documentElement.classList.contains('native-composer-host')){
-    // The approved iPhone shell uses the still character; input belongs to the
-    // native dock, so a welcome tap must not focus the hidden web composer.
-    $("character-stage").disabled=true;
-    updateCompanion();return;
-  }
-  presencePlayer=new WearingPresence({stage:$("presence"),poster:$("character-poster"),
-    videos:[$("character-video"),$("character-video-next")],preference:reduceMotion,
-    onReduced:reduced=>{state.motionPaused=reduced;document.body.classList.toggle("motion-paused",reduced);}});
-  try{presencePlayer.configure(await api("/assets/character.json"));}catch{/* The independent poster remains. */}
-  updateCompanion();
-}
-$("character-stage").addEventListener("click",()=>{
-  if(reduceMotion.matches){$("message-input").focus();return;}
-  presencePlayer?.attention();
-});
+async function loadCharacter(){syncMotion();updateCompanion();}
 $("message-input").addEventListener("input",updateCompanion);
 $("companion-stop").addEventListener("click",()=>busy($("companion-stop"),async()=>{await api(`/api/tasks/${$("companion-stop").dataset.task}/stop`,{method:"POST",body:"{}"});await loadConversation(true);}));
 let computerLoading=false,lastComputerCheck=0;
@@ -765,7 +740,7 @@ async function loadDesktopApprovals(){
     const p=a.action,names={click:'点击',set_value:'填写',type:'输入',key:'按键',scroll:'滚动'};
     const detail=p.action==='click'?p.element_label:p.action==='set_value'?`${p.element_label}\n${p.value}`:p.text??p.keys??`${p.direction} · ${p.amount}`;
     const status={awaiting_user:a.task_eligible?'这件事，交给我来做。':'这里需要你定一下。',queued:'你已允许，正在送到电脑。',executing:'正在电脑上做这一步。',completed:'这一步已收到电脑回执。',unknown:'这一步的结果还不确定。',device_error:'电脑没能完成这一步。',blocked:'这一步已停止，没有继续执行。',denied:'这次先不做，我停在这里。',expired:'这一帧已过期，需要重新看一眼。',cancelled:'电脑状态变化，这一步停下了。'}[a.state];
-    return `<article class="desktop-input-card decision-card"><div class="desktop-input-heading"><img src="/assets/companion-portrait.png?v=1" alt="" width="36" height="36"><strong>${status}</strong></div><p>${esc(a.reason)}</p><div class="desktop-input-preview"><span>${esc(p.app)} · ${names[p.action]}</span><pre>${esc(detail)}</pre></div>${a.state==='awaiting_user'&&a.can_decide?`<p class="field-help">${a.task_eligible?`本轮在 ${esc(p.app)} 连续处理，最长 30 分钟。付款、发送内容或账号安全变更前会停下来。`:'这一步涉及关键动作，确认后我会接着处理。'}</p><div class="button-row decision-actions"><button class="primary" data-desktop-decision="${a.task_eligible?'task':'once'}" data-id="${esc(a.approval_id)}" data-revision="${esc(a.revision)}">${a.task_eligible?'交给 Pajio':'确认并继续'}</button><button class="secondary" data-desktop-decision="deny" data-id="${esc(a.approval_id)}" data-revision="${esc(a.revision)}">先停一下</button></div>`:`<p class="field-help">${a.state==='awaiting_user'?(a.run_wait?.state==='answered'?'已收到你的决定，等待执行端继续。':'正在连接本轮确认，请稍等。'):a.state==='completed'?(a.run_wait?'电脑已返回回执，我会接着核对并回应。':'回执不等于事情办成了；接下来重新观察并核对结果。'):['unknown','device_error'].includes(a.state)?'先到设备设置核对实际结果，旧动作不会重做。':'可以随时在设备设置里接管电脑。'}</p>`}</article>`;
+    return `<article class="desktop-input-card decision-card"><div class="desktop-input-heading"><strong>${status}</strong></div><p>${esc(a.reason)}</p><div class="desktop-input-preview"><span>${esc(p.app)} · ${names[p.action]}</span><pre>${esc(detail)}</pre></div>${a.state==='awaiting_user'&&a.can_decide?`<p class="field-help">${a.task_eligible?`本轮在 ${esc(p.app)} 连续处理，最长 30 分钟。付款、发送内容或账号安全变更前会停下来。`:'这一步涉及关键动作，确认后我会接着处理。'}</p><div class="button-row decision-actions"><button class="primary" data-desktop-decision="${a.task_eligible?'task':'once'}" data-id="${esc(a.approval_id)}" data-revision="${esc(a.revision)}">${a.task_eligible?'交给 Pajio':'确认并继续'}</button><button class="secondary" data-desktop-decision="deny" data-id="${esc(a.approval_id)}" data-revision="${esc(a.revision)}">先停一下</button></div>`:`<p class="field-help">${a.state==='awaiting_user'?(a.run_wait?.state==='answered'?'已收到你的决定，等待执行端继续。':'正在连接本轮确认，请稍等。'):a.state==='completed'?(a.run_wait?'电脑已返回回执，我会接着核对并回应。':'回执不等于事情办成了；接下来重新观察并核对结果。'):['unknown','device_error'].includes(a.state)?'先到设备设置核对实际结果，旧动作不会重做。':'可以随时在设备设置里接管电脑。'}</p>`}</article>`;
   }).join('');
 }
 $('desktop-input-cards').addEventListener('click',event=>{
