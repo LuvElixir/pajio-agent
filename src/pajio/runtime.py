@@ -23,6 +23,7 @@ from filelock import FileLock, Timeout
 
 from .config import private_directory, write_private_json
 from .profile import ENGINE_MODE, PROFILE_VERSION, ProfileError, prepare_profile
+from .personas import PersonaError, selected_persona
 from . import computer
 from .filesystem import PACKAGE, VERSION as FILESYSTEM_VERSION, configuration as filesystem_configuration
 from . import android, mobile
@@ -167,7 +168,8 @@ class HermesRuntime:
                 "running": alive and self.phase == "running", "phase": self.phase,
                 "error": self.error, "revision": HERMES_REVISION[:12],
                 "product": {"name": "Pajio", "profile_version": PROFILE_VERSION,
-                            "mode": ENGINE_MODE, "applied": self.profile is not None},
+                            "mode": ENGINE_MODE, "applied": self.profile is not None,
+                            "persona": (self.profile or {}).get("persona")},
                 "model": self.model_state,
                 "files": {"installed": filesystem_configuration(self.root, self.workspace) is not None,
                           "phase": self.files_phase, "error": self.files_error,
@@ -552,8 +554,9 @@ class HermesRuntime:
                                                self.local_devices and self.identity_id == DEFAULT_IDENTITY and computer.enrolled(self.data_dir), remote,
                                                life={"command": sys.executable,
                                                      "args": [str(Path(__file__).with_name("life_proxy.py")), str(self.data_dir), self.identity_id],
-                                                     "timeout": 30})
-            except ProfileError as error:
+                                                     "timeout": 30},
+                                               persona=selected_persona(self.data_dir, local_devices=self.local_devices))
+            except (ProfileError, PersonaError) as error:
                 raise RuntimeError(str(error)) from error
             self.phase, self.error = "starting", None
             # Ask the OS for a free loopback port; an authenticated probe guards reuse/races.

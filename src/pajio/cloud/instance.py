@@ -14,6 +14,7 @@ from pydantic import AwareDatetime, Field, field_validator
 
 from .commands import Identifier, Record
 from ..config import private_directory, write_private_json
+from ..personas import DEFAULT_PERSONA, PersonaError, load_persona
 from ..profile import write_private_text
 from ..runtime import HERMES_REVISION
 
@@ -29,6 +30,18 @@ class TenantInstance(Record):
     public_origin: str
     hermes_revision: str = HERMES_REVISION
     created_at: AwareDatetime
+    # Fixed when the operator creates the instance for an invitation. Records
+    # written before persona packs carry no field and keep the default persona.
+    persona_id: str = DEFAULT_PERSONA
+
+    @field_validator("persona_id")
+    @classmethod
+    def known_persona(cls, value):
+        try:
+            load_persona(value)
+        except PersonaError as error:
+            raise ValueError(str(error)) from error
+        return value
 
     @field_validator("public_origin")
     @classmethod
@@ -90,11 +103,16 @@ def load_instance(root: Path, *, allow_deleting=False):
     return instance
 
 
-def initialize_instance(root: Path, tenant_id: str, public_origin: str):
+def initialize_instance(root: Path, tenant_id: str, public_origin: str, persona_id: str = DEFAULT_PERSONA):
     root = checked_root(root)
     try:
+        load_persona(persona_id)
+    except PersonaError as error:
+        raise InstanceError(str(error)) from error
+    try:
         desired = TenantInstance(tenant_id=tenant_id, instance_id="instance_" + uuid.uuid4().hex,
-                                 public_origin=public_origin, created_at=datetime.now(timezone.utc))
+                                 public_origin=public_origin, created_at=datetime.now(timezone.utc),
+                                 persona_id=persona_id)
     except ValueError as error:
         raise InstanceError("租户编号或网页来源格式不正确。") from error
     root.parent.mkdir(parents=True, exist_ok=True)
@@ -103,6 +121,8 @@ def initialize_instance(root: Path, tenant_id: str, public_origin: str):
             current = load_instance(root)
             if current.tenant_id != desired.tenant_id or current.public_origin != desired.public_origin:
                 raise InstanceError("已有实例不能改成另一个租户或网页来源；请使用独立新目录。")
+            if current.persona_id != desired.persona_id:
+                raise InstanceError("已有实例的人格在创建时已固定，不能改成另一个人格；请使用独立新目录。")
             return current
         private_directory(root)
         private_directory(root / "data")
@@ -116,5 +136,6 @@ def instance_status(root: Path):
     instance = load_instance(root)
     return {"tenant_id": instance.tenant_id, "instance_id": instance.instance_id,
             "public_origin": instance.public_origin, "hermes_revision": instance.hermes_revision,
+            "persona_id": instance.persona_id,
             "mode": "tenant-worker", "hardware_isolation_verified": False,
             "note": "实例归属已固定；VM/microVM 与网络隔离需要提供商实测。"}

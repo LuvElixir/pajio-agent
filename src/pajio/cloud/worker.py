@@ -18,6 +18,7 @@ from .session_policy import DEVICE_SESSION_SECONDS
 from .instance import InstanceError, checked_root, instance_status, load_instance, read_private
 from ..app import create_app
 from ..config import Settings
+from ..personas import load_persona
 
 
 class TenantBoundary:
@@ -120,7 +121,8 @@ def create_tenant_app(root: Path, *, hermes=None, engine_autostart=True):
         # No inherited PAJIO_DATA_DIR / PAJIO_HERMES_* or platform tenant ID.
         app = create_app(settings, hermes=hermes,
                          allowed_hosts=["localhost", "127.0.0.1", "[::1]", urlparse(instance.public_origin).hostname],
-                         browser_origin=instance.public_origin, engine_autostart=engine_autostart and not tombstoned(root), local_devices=False)
+                         browser_origin=instance.public_origin, engine_autostart=engine_autostart and not tombstoned(root), local_devices=False,
+                         persona=load_persona(instance.persona_id))
     except Exception:
         lock.release()
         raise

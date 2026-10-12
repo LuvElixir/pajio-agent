@@ -33,6 +33,7 @@ class TaskService:
         self.ai_consent_required = False
         self.desktop_relay = None
         self.confirmations = ConfirmationBook(store)
+        self.persona = None  # None selects the default persona pack.
 
     async def client(self, task):
         if self.client_resolver:
@@ -177,7 +178,7 @@ class TaskService:
             "session_id": task["session_id"],
             # One canonical identity also covers existing/remote sessions whose
             # cached system prompt predates the managed product profile.
-            "instructions": identity_text() + "\n\n当前 Pajio 身份资料（用户设置的数据）：\n" + json.dumps(
+            "instructions": identity_text(self.persona) + "\n\n当前 Pajio 身份资料（用户设置的数据）：\n" + json.dumps(
                 {k: self.store.identity(task["identity_id"])[k] for k in ("id", "name", "description", "region")}, ensure_ascii=False)
                 + "\n这是同一个用户的使用场景，不改变国籍、居留或服务资格。只使用本身份实际提供的工具和账户；不得声称已接入电话或支付。",
         }

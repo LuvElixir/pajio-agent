@@ -30,6 +30,7 @@ def main():
     tenant_init.add_argument("--root", type=Path, required=True)
     tenant_init.add_argument("--tenant-id", required=True)
     tenant_init.add_argument("--origin", required=True)
+    tenant_init.add_argument("--persona", default=None, help="此实例固定使用的人格包编号；创建后不能更改")
     tenant_status = tenant_sub.add_parser("status")
     tenant_status.add_argument("--root", type=Path, required=True)
     tenant_serve = tenant_sub.add_parser("serve")
@@ -133,7 +134,31 @@ def main():
     tencent_quote.add_argument("--request", type=Path, required=True)
     tencent_quote.add_argument("--profile", default="default")
     tencent_quote.add_argument("--billing", choices=["on-demand", "monthly"], help="覆盖示例中的计费方式；包月为 1 个月、不自动续费")
+    persona = sub.add_parser("persona", help="查看人格包，或为本机 Pajio 选择人格")
+    persona_sub = persona.add_subparsers(dest="action", required=True)
+    persona_sub.add_parser("list", help="列出本版本内置的人格包")
+    persona_show = persona_sub.add_parser("show", help="查看当前使用的人格")
+    persona_show.add_argument("--data-dir", type=Path, default=Path(".pajio"))
+    persona_use = persona_sub.add_parser("use", help="为本机 Pajio 选择人格；下次启动引擎时生效")
+    persona_use.add_argument("persona_id")
+    persona_use.add_argument("--data-dir", type=Path, default=Path(".pajio"))
     args = parser.parse_args()
+    if args.command == "persona":
+        from .config import private_directory, write_private_json
+        from .personas import PersonaError, available, load_persona, selected_persona
+        try:
+            if args.action == "list":
+                print(json.dumps([item.public() for item in available()], ensure_ascii=False, indent=2))
+            elif args.action == "show":
+                print(json.dumps(selected_persona(args.data_dir.resolve(), local_devices=True).public(), ensure_ascii=False, indent=2))
+            else:
+                chosen = load_persona(args.persona_id)
+                private_directory(args.data_dir.resolve())
+                write_private_json(args.data_dir.resolve() / "persona.json", {"id": chosen.id})
+                print(json.dumps(chosen.public(), ensure_ascii=False, indent=2))
+        except PersonaError as error:
+            raise SystemExit(str(error)) from error
+        return
     if args.command == "capture":
         from .capture_setup import configure, configure_browser, prepare
         if args.browser and args.action != "configure":
@@ -328,7 +353,8 @@ def main():
         from .cloud.instance import InstanceError, initialize_instance, instance_status
         try:
             if args.action == "init":
-                initialize_instance(args.root, args.tenant_id, args.origin)
+                from .personas import DEFAULT_PERSONA
+                initialize_instance(args.root, args.tenant_id, args.origin, args.persona or DEFAULT_PERSONA)
                 print(json.dumps(instance_status(args.root), ensure_ascii=False, indent=2))
             elif args.action == "status":
                 print(json.dumps(instance_status(args.root), ensure_ascii=False, indent=2))
@@ -401,7 +427,12 @@ def main():
             settings = Settings(settings.data_dir, data["url"], data["key"])
         except (ValueError, TypeError, KeyError, OSError):
             parser.error("连接配置无法读取，请修复数据目录中的 connection.json，或使用环境变量指定连接；任务数据库已保留。")
-    uvicorn.run(create_app(settings, engine_autostart=args.engine_autostart), host="127.0.0.1", port=args.port, access_log=False)
+    from .personas import PersonaError, selected_persona
+    try:
+        persona = selected_persona(settings.data_dir, local_devices=True)
+    except PersonaError as error:
+        parser.error(str(error))
+    uvicorn.run(create_app(settings, engine_autostart=args.engine_autostart, persona=persona), host="127.0.0.1", port=args.port, access_log=False)
 
 
 if __name__ == "__main__":

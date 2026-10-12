@@ -9,18 +9,20 @@ from pathlib import Path
 import yaml
 
 from .config import private_directory, write_private_json
+from .personas import Persona, load_persona, soul_text
 
-PROFILE_VERSION = 24
+PROFILE_VERSION = 25
 ENGINE_MODE = "pajio-personal"
-IDENTITY_PATH = Path(__file__).with_name("identity.md")
+# Stripped SHA-256 of identities this product wrote before persona packs existed.
+LEGACY_IDENTITY_SHA256 = frozenset({"6d71c1fef4e6eeb96aa113187cbe81d5e542fc3e56c4c05af5177cf95f4ef4c1"})
 
 
 class ProfileError(Exception):
     pass
 
 
-def identity_text():
-    return IDENTITY_PATH.read_text(encoding="utf-8").strip()
+def identity_text(persona: Persona | None = None):
+    return soul_text(persona)
 
 
 def digest(text):
@@ -48,7 +50,8 @@ def upstream_default_identity(source):
     return None
 
 
-def prepare_profile(home: Path, source: Path, filesystem=None, phone=None, computer=False, remote=None, life=None):
+def prepare_profile(home: Path, source: Path, filesystem=None, phone=None, computer=False, remote=None, life=None,
+                    persona: Persona | None = None):
     """Migrate only owned product fields, preserving credentials and custom config.
 
     Existing custom SOUL files are never silently replaced. Backups contain private
@@ -67,9 +70,11 @@ def prepare_profile(home: Path, source: Path, filesystem=None, phone=None, compu
             raise ValueError()
     except (ValueError, yaml.YAMLError) as error:
         raise ProfileError("本地配置格式无法读取；请先检查配置，原文件已保留。") from error
+    persona = persona or load_persona()
     soul = soul_path.read_text(encoding="utf-8") if soul_path.exists() else ""
-    wanted = identity_text() + "\n"
-    owned = not soul.strip() or soul.strip() in (identity_text(), upstream_default_identity(source)) or digest(soul) == manifest.get("identity_sha256")
+    wanted = identity_text(persona) + "\n"
+    owned = (not soul.strip() or soul.strip() in (wanted.strip(), upstream_default_identity(source))
+             or digest(soul) == manifest.get("identity_sha256") or digest(soul.strip()) in LEGACY_IDENTITY_SHA256)
     if not owned:
         raise ProfileError("发现你自定义的 SOUL.md，未覆盖。请先合并 Pajio 身份设定后再启动。")
 
@@ -128,7 +133,8 @@ def prepare_profile(home: Path, source: Path, filesystem=None, phone=None, compu
                 if not backup.exists():
                     write_private_text(backup, before)
             write_private_text(path, after)
-    result = {"version": PROFILE_VERSION, "mode": ENGINE_MODE, "identity_sha256": digest(wanted), "toolsets": toolsets,
+    result = {"version": PROFILE_VERSION, "mode": ENGINE_MODE, "identity_sha256": digest(wanted),
+              "persona": persona.receipt(), "toolsets": toolsets,
               "background_review": False, "messaging_gateway": False, "scheduler": False}
     write_private_json(manifest_path, result)
     return result

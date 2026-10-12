@@ -33,8 +33,12 @@ def main():
     if os.geteuid() != 0 or not Path("/etc/os-release").read_text().startswith("PRETTY_NAME=\"Ubuntu 24.04"):
         raise RuntimeError("Bootstrap requires the new Ubuntu 24.04 VM and root.")
     context = json.loads(args.context.read_text())
-    if set(context) != {"deployment_id", "tenant_id", "origin", "data_disk_id", "data_disk_gib", "wheel_sha256"}:
+    fixed = {"deployment_id", "tenant_id", "origin", "data_disk_id", "data_disk_gib", "wheel_sha256"}
+    # "persona" is optional; without it the instance keeps the release's default persona.
+    if set(context) not in (fixed, fixed | {"persona"}):
         raise RuntimeError("Unexpected deployment context")
+    if "persona" in context and not re.fullmatch(r"[a-z][a-z0-9-]{1,39}", str(context["persona"])):
+        raise RuntimeError("Invalid persona pack identifier")
     if not re.fullmatch(r"[0-9a-f]{32}", context["deployment_id"]) or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}", context["tenant_id"]):
         raise RuntimeError("Invalid fixed deployment identity")
     if hashlib.sha256(args.wheel.read_bytes()).hexdigest() != context["wheel_sha256"]:
@@ -94,7 +98,8 @@ def main():
     run("chmod", "-R", "g+rX", "/opt/pajio/venv")
     cli = "/opt/pajio/venv/bin/pajio"
     run("runuser", "-u", "pajio", "--", cli, "tenant", "init", "--root", str(home / "instance"),
-        "--tenant-id", context["tenant_id"], "--origin", context["origin"])
+        "--tenant-id", context["tenant_id"], "--origin", context["origin"],
+        *(("--persona", context["persona"]) if "persona" in context else ()))
     shutil.copyfile(args.service, "/etc/systemd/system/pajio-tenant.service")
     run("systemctl", "daemon-reload")
     run("systemctl", "enable", "--now", "pajio-tenant.service")

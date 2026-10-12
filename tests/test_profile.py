@@ -115,7 +115,8 @@ def test_owned_previous_brand_migrates_with_backup_and_preserves_custom_changes(
     result = prepare_profile(home, source)
     assert result['version'] == PROFILE_VERSION
     assert result['mode'] == 'pajio-personal'
-    assert '你的名字是 Pajio。' in soul.read_text()
+    assert '你的名字是 Pajio，' in soul.read_text()
+    assert result['persona']['id'] == 'pajama-bear'
     assert any(path.read_text() == previous for path in (home / 'pajio-backups').glob('SOUL.md.*'))
 
     custom = soul.read_text() + '\n用户自定义：只用简短中文回答。\n'

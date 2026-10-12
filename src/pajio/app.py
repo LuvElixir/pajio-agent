@@ -38,6 +38,7 @@ from .schedules import ScheduleBook, ScheduleCoordinator
 from .schedule_api import install_schedule_routes
 from .activity import ActivityBook
 from .activity_api import install_activity_routes
+from .personas import load_persona
 from .task_visibility import request_owner, ids as visible_task_ids, visible as task_visible
 
 
@@ -137,12 +138,14 @@ def public_task(task, *, store, local_devices=False):
 
 
 def create_app(settings: Settings | None = None, hermes: HermesClient | None = None, *,
-               allowed_hosts=None, browser_origin=None, engine_autostart=False, local_devices=True):
+               allowed_hosts=None, browser_origin=None, engine_autostart=False, local_devices=True, persona=None):
     settings = settings or Settings.from_env()
     store = Store(settings.data_dir / "pajio.sqlite3")
     def task_view(task):
         return public_task(task, store=store, local_devices=local_devices)
     service = TaskService(store, hermes or HermesClient(settings))
+    persona = persona or load_persona()
+    service.persona = persona
     goals = GoalBook(store)
     goal_coordinator = GoalCoordinator(goals, service)
     schedules = ScheduleBook(store)
@@ -472,7 +475,7 @@ def create_app(settings: Settings | None = None, hermes: HermesClient | None = N
     async def bootstrap(request: Request):
         return {"token": token, "version": "0.2.0", "default_identity_id": DEFAULT_IDENTITY, "identities": store.identities(), "hermes_url": service.hermes.http.base_url.__str__().rstrip("/"),
                 "configured": service.hermes.configured, "deployment": "local" if local_devices else "cloud",
-                "storage_scope": request.scope.get("pajio.storage_scope"),
+                "storage_scope": request.scope.get("pajio.storage_scope"), "persona": persona.public(),
                 "goal_policy": {"default_steps": DEFAULT_GOAL_STEPS, "max_steps": MAX_GOAL_STEPS, "extension_steps": GOAL_EXTENSION_STEPS}}
 
     @app.get("/api/devices")
